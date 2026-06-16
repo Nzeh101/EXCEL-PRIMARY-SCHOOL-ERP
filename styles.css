@@ -526,18 +526,14 @@ button {
   padding: 26px 28px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.94), rgba(237, 242, 255, 0.9)),
-    url("/erp/assets/hillside-cover.png") center / cover;
+  background: linear-gradient(135deg, var(--panel), #f7faff);
   box-shadow: var(--shadow);
 }
 
 :root[data-theme="dark"] .school-hero,
 :root[data-theme="dark"] .finance-overview,
 :root[data-theme="dark"] .role-overview {
-  background:
-    linear-gradient(135deg, rgba(21, 28, 45, 0.94), rgba(29, 38, 56, 0.9)),
-    url("/erp/assets/hillside-cover.png") center / cover;
+  background: linear-gradient(135deg, #151c2d, #1d2638);
 }
 
 .school-hero h2,
@@ -570,22 +566,16 @@ button {
 }
 
 .admissions-overview {
-  background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(232, 250, 234, 0.88)),
-    url("/erp/assets/hillside-student-hero.png") right bottom / auto 150% no-repeat;
+  background: linear-gradient(135deg, var(--panel), #f4fff6);
 }
 
 .exams-overview {
-  background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(237, 242, 255, 0.9)),
-    url("/erp/assets/hillside-cover.png") center / cover;
+  background: linear-gradient(135deg, var(--panel), #f6f8ff);
 }
 
 :root[data-theme="dark"] .admissions-overview,
 :root[data-theme="dark"] .exams-overview {
-  background:
-    linear-gradient(135deg, rgba(21, 28, 45, 0.96), rgba(29, 38, 56, 0.9)),
-    url("/erp/assets/hillside-student-hero.png") right bottom / auto 150% no-repeat;
+  background: linear-gradient(135deg, #151c2d, #1d2638);
 }
 
 .compact-form {
@@ -729,7 +719,8 @@ button {
 }
 
 .finance-strip {
-  grid-template-columns: 300px minmax(0, 1fr) 280px 280px;
+  grid-template-columns: 300px minmax(420px, 1fr) minmax(420px, .78fr);
+  align-items: stretch;
 }
 
 .teacher-layout {
@@ -1400,23 +1391,24 @@ button {
 
 .money-stack {
   display: grid;
-  gap: 24px;
+  gap: 18px;
 }
 
 .money-card {
   display: flex;
-  gap: 16px;
+  gap: 14px;
   align-items: center;
-  padding: 18px 22px;
+  min-height: 108px;
+  padding: 18px 20px;
 }
 
 .money-card .metric-icon {
-  width: 58px;
-  height: 58px;
+  width: 56px;
+  height: 56px;
 }
 
 .money-card h3 {
-  font-size: 28px;
+  font-size: 26px;
   margin: 0 0 6px;
 }
 
@@ -1430,7 +1422,7 @@ button {
 }
 
 .line-chart.compact {
-  height: 210px;
+  height: 232px;
 }
 
 .line-chart svg {
@@ -1465,7 +1457,78 @@ button {
 }
 
 .progress-card {
-  padding: 28px 22px;
+  min-height: 128px;
+  padding: 22px 20px;
+}
+
+.finance-progress-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.finance-strip .trend-card,
+.finance-strip .finance-progress-grid {
+  min-height: 360px;
+}
+
+.finance-strip .trend-card {
+  overflow: hidden;
+}
+
+.finance-strip .trend-card .card-head {
+  min-height: 54px;
+}
+
+.finance-strip .line-chart {
+  border-top: 0;
+}
+
+.finance-strip .progress-card {
+  display: grid;
+  align-content: space-between;
+  box-shadow: 0 8px 20px rgba(14, 23, 50, 0.05);
+}
+
+.finance-strip .progress-card p {
+  margin: 18px 0 0;
+  line-height: 1.25;
+}
+
+.finance-strip .progress-card .track {
+  margin-top: 18px;
+}
+
+.payment-launch-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin: 24px 0;
+  padding: 18px 20px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background:
+    linear-gradient(90deg, rgba(20, 168, 55, 0.08), rgba(52, 87, 219, 0.05)),
+    var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.payment-launch-panel > div {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.payment-launch-panel h2,
+.payment-launch-panel p {
+  margin: 0;
+}
+
+.payment-launch-panel h2 {
+  margin-bottom: 4px;
+  font-size: 18px;
 }
 
 .fees-summary-strip .progress-card {
@@ -2241,13 +2304,6 @@ th {
   opacity: 0.98;
 }
 
-.login-card-head .avatar {
-  background: #fff;
-  color: #050505;
-  border: 1px solid var(--line);
-  box-shadow: 0 8px 22px rgba(16, 26, 55, 0.1);
-}
-
 .login-mark {
   color: #fff;
 }
@@ -2329,14 +2385,28 @@ th {
 }
 
 .login-card-head {
-  display: flex;
-  align-items: center;
-  gap: 14px;
+  display: grid;
+  justify-items: center;
+  text-align: center;
+  gap: 6px;
   margin-bottom: 28px;
 }
 
+.login-card-logo {
+  width: 150px;
+  margin-bottom: 8px;
+}
+
+.login-card-logo .school-logo {
+  width: 100%;
+}
+
+.login-card-logo .school-logo img {
+  filter: brightness(0);
+}
+
 .login-card-head h2 {
-  margin: 0 0 4px;
+  margin: 0;
   font-size: 28px;
 }
 
@@ -2439,43 +2509,6 @@ th {
 .role-grid span:hover {
   background: var(--blue);
   color: #fff;
-}
-
-.demo-credentials {
-  display: grid;
-  gap: 10px;
-  margin-top: 22px;
-  padding-top: 22px;
-  border-top: 1px solid var(--line);
-}
-
-.demo-credentials h3 {
-  margin: 0 0 4px;
-  font-size: 14px;
-}
-
-.demo-credentials button {
-  display: grid;
-  grid-template-columns: 92px minmax(0, 1fr) 78px;
-  align-items: center;
-  gap: 10px;
-  min-height: 44px;
-  padding: 8px 10px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: var(--bg);
-  color: var(--text);
-  text-align: left;
-}
-
-.demo-credentials button:hover {
-  border-color: var(--blue);
-  background: var(--blue-soft);
-}
-
-.demo-credentials span,
-.demo-credentials small {
-  color: var(--muted);
 }
 
 .modal-backdrop {
@@ -2675,6 +2708,10 @@ th {
   .record-form {
     grid-template-columns: repeat(3, minmax(150px, 1fr));
   }
+
+  .finance-progress-grid {
+    grid-template-columns: repeat(2, minmax(220px, 1fr));
+  }
 }
 
 @media (max-width: 960px) {
@@ -2723,6 +2760,7 @@ th {
   .grid.two,
   .grid.three,
   .grid.four,
+  .finance-progress-grid,
   .directory,
   .directory.parents,
   .curriculum-cards,

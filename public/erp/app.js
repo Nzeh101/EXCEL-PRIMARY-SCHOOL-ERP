@@ -13,25 +13,19 @@ const navGroups = [
 
 const roleNavGroups = {
   "Super Admin": [
-    ["Main", [["dashboard", "Dashboard", "layout-dashboard"]]],
-    ["People & Records", [["students", "Students", "graduation-cap"], ["parents", "Parents", "users"], ["teachers", "Teachers", "presentation"]]],
-    ["Admissions", [["admissions", "Admissions Register", "user-plus"], ["classes", "Classes & Sections", "network"], ["academic-years", "Academic Years", "calendar-days"], ["terms", "Terms", "calendar-days"]]],
-    ["Fees & Accounts", [["fees", "Fees Management", "wallet"], ["receipts", "Receipts", "receipt"], ["student-balances", "Student Balances", "banknote"], ["arrears", "Arrears", "triangle-alert"], ["daily-collections", "Daily Collections", "bar-chart"], ["term-collections", "Term Collections", "file-chart"]]],
-    ["Academic", [["timetable", "Time Table", "calendar-days"], ["subjects", "Subjects", "book-open"], ["curriculum", "Curriculum Design", "network"], ["lesson-planning", "Lesson Planning", "book-open"], ["assessment", "Assessment", "clipboard-check"], ["learning-materials", "Learning Materials", "archive"]]],
-    ["Teacher & Staff Management", [["staff", "Staff Profiles", "id-card"], ["payroll", "Payroll", "receipt"], ["leave", "Leave Management", "calendar-minus"], ["performance", "Performance Reviews", "chart-line"]]],
-    ["Communication", [["parent-communication", "Parent Communication", "megaphone"], ["messaging", "Messaging", "messages"], ["student-report", "Students Report", "file-chart"]]],
-    ["Inventory", [["supplies", "Supplies", "package"], ["purchase", "Purchase", "shopping-cart"], ["stock-alerts", "Stock Alerts", "bell"]]],
-    ["Health & Safety", [["health-records", "Health Records", "heart-pulse"], ["incident-reports", "Incident Reports", "triangle-alert"], ["safety-protocols", "Safety Protocols", "shield-check"]]],
-    ["Reporting & Analytics", [["analytics", "Analytics Dashboard", "bar-chart"], ["financial-reports", "Financial Reports", "banknote"], ["enrollment-reports", "Enrollment Reports", "user-plus"], ["academic-progress", "Academic Progress", "trending-up"], ["compliance-reports", "Compliance Reports", "shield"]]],
-    ["Exams Management", [["exam-lists", "Candidate Lists", "file-chart"], ["eligible-students", "Eligible Students", "clipboard-check"], ["exam-export", "Excel / PDF Export", "download"], ["exam-settings", "Exam Settings", "shield-check"]]],
-    ["System Administration", [["users", "Users", "users"], ["roles", "Roles & Permissions", "shield-check"], ["audit-logs", "Audit Logs", "file-chart"]]]
+    ["Main", [["dashboard", "System Dashboard", "layout-dashboard"]]],
+    ["User Access", [["users", "Users", "users"], ["roles", "Roles & Permissions", "shield-check"]]],
+    ["System Controls", [["system-settings", "System Settings", "settings"], ["audit-logs", "Audit Logs", "file-chart"], ["admin-maintenance", "Database / Admin Maintenance", "database"]]]
   ],
   "Director": [
     ["Main", [["dashboard", "Dashboard", "layout-dashboard"]]],
-    ["Executive Records", [["students", "Student Overview", "graduation-cap"], ["teachers", "Teacher Overview", "presentation"], ["classes", "Class Overview", "network"]]],
-    ["Approvals & Audit", [["arrears", "Arrears Review", "triangle-alert"], ["eligible-students", "Exam Eligibility Review", "clipboard-check"], ["audit-logs", "Audit Logs", "file-chart"], ["compliance-reports", "Compliance Reports", "shield"]]],
-    ["Leadership Reports", [["analytics", "Analytics Dashboard", "bar-chart"], ["financial-reports", "Financial Reports", "banknote"], ["enrollment-reports", "Enrollment Reports", "user-plus"], ["academic-progress", "Academic Progress", "trending-up"]]],
-    ["Communication", [["messaging", "Leadership Messaging", "messages"], ["parent-communication", "Announcements", "megaphone"]]]
+    ["Students & Admissions", [["students", "Students", "graduation-cap"], ["parents", "Guardians", "users"], ["admissions", "Admissions", "user-plus"], ["classes", "Classes & Sections", "network"]]],
+    ["Finance Oversight", [["fees", "Fees", "wallet"], ["receipts", "Receipts", "receipt"], ["student-balances", "Student Balances", "banknote"], ["arrears", "Arrears", "triangle-alert"], ["daily-collections", "Daily Collections", "bar-chart"], ["term-collections", "Term Collections", "file-chart"]]],
+    ["Reports", [["analytics", "Analytics Dashboard", "bar-chart"], ["financial-reports", "Financial Reports", "banknote"], ["enrollment-reports", "Enrollment Reports", "user-plus"], ["academic-progress", "Academic Progress", "trending-up"], ["compliance-reports", "Compliance Reports", "shield"]]],
+    ["Exams", [["exam-lists", "Candidate Lists", "file-chart"], ["eligible-students", "Eligible Students", "clipboard-check"], ["exam-export", "Excel / PDF Export", "download"], ["exam-settings", "Exam Settings", "shield-check"]]],
+    ["Staff", [["teachers", "Teachers", "presentation"], ["staff", "Staff Profiles", "id-card"], ["payroll", "Payroll Review", "receipt"], ["leave", "Leave Review", "calendar-minus"], ["performance", "Performance Reviews", "chart-line"]]],
+    ["Communication", [["messaging", "Messages", "messages"], ["parent-communication", "Announcements", "megaphone"], ["notifications", "Notifications", "bell"]]],
+    ["Governance", [["approvals", "Approvals", "shield-check"], ["audit-logs", "Audit Logs", "file-chart"]]]
   ],
   "Admissions Officer": [
     ["Main", [["dashboard", "Dashboard", "layout-dashboard"]]],
@@ -67,10 +61,10 @@ const roleAliases = {
 };
 
 function currentRole() {
-  const stored = localStorage.getItem("erpRole") || "Super Admin";
+  const stored = localStorage.getItem("erpRole") || "Director";
   const normalized = roleAliases[stored] || stored;
   if (normalized !== stored) localStorage.setItem("erpRole", normalized);
-  return roleNavGroups[normalized] ? normalized : "Super Admin";
+  return roleNavGroups[normalized] ? normalized : "Director";
 }
 
 function navForRole(role = currentRole()) {
@@ -82,7 +76,7 @@ function flatNav(groups = navGroups) {
 }
 
 function labelForRoute(id) {
-  return flatNav(roleNavGroups["Super Admin"]).find((item) => item[0] === id)?.[1] || id.split("-").map((part) => part[0].toUpperCase() + part.slice(1)).join(" ");
+  return flatNav(roleNavGroups["Director"]).concat(flatNav(roleNavGroups["Super Admin"])).find((item) => item[0] === id)?.[1] || id.split("-").map((part) => part[0].toUpperCase() + part.slice(1)).join(" ");
 }
 
 function routeAllowed(id, role = currentRole()) {
@@ -101,6 +95,7 @@ const iconPaths = {
   "chevron-right": '<path d="m9 18 6-6-6-6"/>',
   "clipboard-check": '<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4a3 3 0 0 1 6 0"/><path d="m9 14 2 2 4-5"/>',
   "clock": '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  "database": '<ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/>',
   "download": '<path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/>',
   "edit": '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
   "eye": '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>',
@@ -124,6 +119,7 @@ const iconPaths = {
   "receipt": '<path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2z"/><path d="M8 7h8M8 11h8M8 15h5"/>',
   "refresh": '<path d="M21 12a9 9 0 0 1-15.5 6.3"/><path d="M3 12A9 9 0 0 1 18.5 5.7"/><path d="M18 2v4h4M6 22v-4H2"/>',
   "search": '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
+  "settings": '<path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6V21a2 2 0 1 1-4 0v-.2a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.6-1H3a2 2 0 1 1 0-4h.2a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1A2 2 0 1 1 7.2 4.2l.1.1A1.7 1.7 0 0 0 9 4.6 1.7 1.7 0 0 0 10 3V3a2 2 0 1 1 4 0v.2a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1H21a2 2 0 1 1 0 4h-.2a1.7 1.7 0 0 0-1.4 1Z"/>',
   "shield": '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/>',
   "shield-check": '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-5"/>',
   "shopping-cart": '<circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h8.8a2 2 0 0 0 2-1.6L23 6H6"/>',
@@ -142,8 +138,8 @@ function icon(name, size = 18) {
 }
 
 const demoAccounts = [
-  ["Super Admin", "admin@hillside.edu", "password"],
   ["Director", "director@hillside.edu", "password"],
+  ["Super Admin", "admin@hillside.edu", "password"],
   ["Admissions Officer", "admissions@hillside.edu", "password"],
   ["Finance Officer", "finance@hillside.edu", "password"],
   ["Exams Officer", "exams@hillside.edu", "password"],
@@ -187,7 +183,7 @@ function demoLogin(form) {
     location.hash = "#/dashboard";
     return;
   }
-  const chosenRole = localStorage.getItem("erpRole") || "Super Admin";
+  const chosenRole = localStorage.getItem("erpRole") || "Director";
   form.querySelector(".login-error").textContent = `Sign in failed. Select the ${chosenRole} account below, or use the matching email and password.`;
 }
 
@@ -734,11 +730,9 @@ function loginPage() {
     <section class="login-form-panel">
       <form class="login-card" onsubmit="event.preventDefault(); demoLogin(this);">
         <div class="login-card-head">
-          <span class="avatar">HSS</span>
-          <div>
-            <h2>Welcome Back</h2>
-            <p class="muted">Sign in to continue to your dashboard</p>
-          </div>
+          <div class="login-card-logo">${schoolLogo(false)}</div>
+          <h2>Welcome Back</h2>
+          <p class="muted">Sign in to continue to your dashboard</p>
         </div>
         <label class="form-field">
           <span>Email or Username</span>
@@ -756,10 +750,6 @@ function loginPage() {
         <p class="login-error"></p>
         <div class="role-grid" onclick="if(event.target.dataset.role){const account = demoAccounts.find(([role]) => role === event.target.dataset.role); localStorage.setItem('erpRole', event.target.dataset.role); document.querySelectorAll('.role-grid span').forEach(el => el.classList.remove('selected')); event.target.classList.add('selected'); this.closest('form').querySelector('[name=email]').value = account[1]; this.closest('form').querySelector('[name=password]').value = account[2]; this.closest('form').querySelector('.login-error').textContent = '';}">
           ${demoAccounts.map(([role]) => `<span class="${role === activeRole ? "selected" : ""}" data-role="${role}">${role}</span>`).join("")}
-        </div>
-        <div class="demo-credentials">
-          <h3>Available Accounts</h3>
-          ${demoAccounts.map(([role, email, password]) => `<button type="button" onclick="localStorage.setItem('erpRole','${role}'); this.closest('form').querySelector('[name=email]').value='${email}'; this.closest('form').querySelector('[name=password]').value='${password}'; document.querySelectorAll('.role-grid span').forEach(el => el.classList.toggle('selected', el.dataset.role === '${role}'));"><strong>${role}</strong><span>${email}</span><small>${password}</small></button>`).join("")}
         </div>
       </form>
     </section>
@@ -785,25 +775,34 @@ function filters(extra = "") {
 
 function dashboard() {
   const activeRole = currentRole();
-  if (activeRole !== "Super Admin") return roleDashboard(activeRole);
+  if (activeRole === "Super Admin") return superAdminDashboard();
+  return roleDashboard(activeRole);
+}
+
+function superAdminDashboard() {
   const metrics = [
-    ["graduation-cap", "3654", "Total Students", "Present : 3643", "Absent : 11", "red"],
-    ["presentation", "284", "Total Teachers", "Present : 254", "Absent : 30", "blue"],
-    ["users", "162", "Total Staff", "Present : 161", "Absent : 02", "amber"],
-    ["book-open", "82", "Total Subjects", "Inactive : 81", "Active : 01", "green"]
+    ["users", "6", "Active Users", "Locked : 00", "Pending : 01", "blue"],
+    ["shield-check", "6", "Role Profiles", "Custom : 02", "Default : 04", "green"],
+    ["file-chart", "38", "Audit Events", "Review : 04", "Critical : 01", "amber"],
+    ["database", "151 MB", "SQLite Database", "Backups : 03", "Health : OK", "red"]
   ];
-  return `${pageHead("Admin Dashboard", "Dashboard / Admin Dashboard", `<button class="btn primary" onclick="openAdmissionModal()">${icon("user-plus")} Add New Student</button><a class="btn ghost" href="#/fees">${icon("wallet")} Fees Details</a>`)}
-    <section class="school-hero"><div><p class="eyebrow">Hillside Secondary School</p><h2>School operations at a glance</h2><p>Admissions, classes, fees, communication, and reports are ready for today’s work.</p></div><span>${icon("calendar-days", 16)} ${todayLabel()}</span></section>
+  return `${pageHead("System Dashboard", "Dashboard / System Administration", `<a class="btn ghost" href="#/audit-logs">${icon("file-chart")} View Audit Logs</a><a class="btn primary" href="#/admin-maintenance">${icon("database")} Maintenance</a>`)}
+    <section class="school-hero"><div><p class="eyebrow">Super Admin</p><h2>Technical administration only</h2><p>Manage user access, permissions, system settings, audit trails, backups, and database maintenance.</p></div><span>${icon("shield-check", 16)} Restricted</span></section>
     <div class="grid metrics">${metrics.map(metricCard).join("")}</div>
     <div class="grid two">
-      <section class="card">${cardHead("Fees Collection", `<span class="muted">◆ Total Fee &nbsp;&nbsp; ◆ Collected Fee</span>`)}${bars()}</section>
-      <section class="card">${cardHead("Leave Requests", `<span class="muted">▣ This Week⌄</span>`)}${leaveRequests()}</section>
+      <section class="card">${cardHead("Access Control", `<span class="muted">Least privilege</span>`)}<div class="request-list">
+        ${[["Director account", "Leadership access enabled", "green"], ["Finance Officer", "Payments and receipts only", "blue"], ["Teacher Demo", "Assigned student view", "amber"], ["Dormant account review", "1 user needs confirmation", "red"]].map(([title, meta, color]) => `<article class="request-item"><div class="person-line"><span class="nav-icon">${icon("shield-check")}</span><div><strong>${title}</strong><span class="muted">${meta}</span></div><span class="badge ${color}">Open</span></div></article>`).join("")}
+      </div></section>
+      <section class="card">${cardHead("Maintenance Status", `<span class="muted">${icon("calendar-days", 14)} Today</span>`)}<div class="request-list">
+        ${[["Configuration cache", "Ready to clear after deployment", "blue"], ["Database backup", "Last backup: today 14:52", "green"], ["Storage link", "Public files reachable", "green"], ["Audit review", "Payment deletion request flagged", "amber"]].map(([title, meta, color]) => `<article class="request-item"><div class="person-line"><span class="nav-icon">${icon("database")}</span><div><strong>${title}</strong><span class="muted">${meta}</span></div><span class="badge ${color}">Check</span></div></article>`).join("")}
+      </div></section>
     </div>
-    <div class="grid three" style="margin-top:24px">
-      <section class="card">${cardHead("Schedules", `<a href="#" class="muted">⊞ Add New</a>`)}${calendar()}</section>
-      <section class="card">${cardHead("Attendance", `<span class="muted">▣ Today⌄</span>`)}${attendance()}</section>
-      <section class="card">${cardHead("Quick Links", "")}${quickLinks()}</section>
-    </div>`;
+    <section class="section-panel" style="margin-top:24px"><div class="section-toolbar"><h2>System Administration Shortcuts</h2><div class="filters"><a class="btn ghost" href="#/users">${icon("users")} Users</a><a class="btn ghost" href="#/roles">${icon("shield-check")} Roles</a><a class="btn ghost" href="#/system-settings">${icon("settings")} Settings</a></div></div><div class="table-wrap">${systemAdminTable()}</div></section>`;
+}
+
+function systemAdminTable() {
+  const rows = [["Users", "Account lifecycle", "Super Admin", "Create, suspend, reset", "Active"], ["Roles & Permissions", "Access policy", "Super Admin", "Grant least-privilege permissions", "Active"], ["System Settings", "School configuration", "Super Admin", "Academic year, security, integrations", "Review"], ["Database Maintenance", "Backups and cache", "Super Admin", "Backup, optimize, clear cache", "Ready"], ["Audit Logs", "Compliance trace", "Director read-only", "Review sensitive actions", "Ready"]];
+  return `<table><thead><tr><th>Area</th><th>Purpose</th><th>Owner</th><th>Actions</th><th>Status</th></tr></thead><tbody>${rows.map(([a,b,c,d,e]) => `<tr><td>${a}</td><td>${b}</td><td>${c}</td><td>${d}</td><td><span class="badge ${statusClass(e)}">• ${e}</span></td></tr>`).join("")}</tbody></table>`;
 }
 
 function roleDashboard(role) {
@@ -847,23 +846,23 @@ function directorTable() {
 }
 
 function financeDashboard() {
-  const metrics = [
-    ["banknote", "MWK 245K", "Today Collections", "Cash / Mobile / Bank", "Receipts : 128", "green"],
-    ["wallet", "MWK 835K", "Pending Fees", "Partly Paid", "Unpaid : 47", "amber"],
-    ["receipt", "1,208", "Receipts Issued", "This Term", "Voids : 03", "blue"],
-    ["triangle-alert", "214", "Students With Arrears", "Director Review", "Critical : 36", "red"]
-  ];
   const outstanding = backendData.stats?.balances_outstanding ? money(backendData.stats.balances_outstanding) : "MWK 2,050,050";
-  return `${pageHead("Finance Dashboard", "Dashboard / Finance", `<a class="btn ghost" href="#/login">${icon("log-out")} Switch Role</a><button class="btn primary" onclick="openPaymentModal()">${icon("receipt")} Record Payment</button>`)}
-    <section class="finance-overview"><div><p class="eyebrow">Finance Office</p><h2>Fees, receipts, and balances</h2><p>Track Kwacha collections, parent balances, and receipt activity for the current academic year.</p></div><strong>${money(backendData.stats?.payments_total || 2450000)}</strong></section>
-    <div class="grid metrics">${metrics.map(metricCard).join("")}</div>
+  return `${pageHead("Fees Management", "Dashboard / Finance / Fees Group", `<button class="icon-btn" title="Refresh" onclick="loadBackendData(true); showToast('Refreshed','Latest finance records loaded.','success')">${icon("refresh")}</button><button class="icon-btn" title="Print" onclick="window.print()">${icon("printer")}</button><button class="btn ghost" onclick="notifyAction('Export prepared','Finance records are ready for download.')">${icon("download")} Export</button>`)}
     <div class="stats-strip finance-strip">
-      <div class="money-stack">${moneyCard("banknote", money(backendData.stats?.payments_total || 5050050), "Fees Collected", "green")}${moneyCard("wallet", outstanding, "Pending Fees", "amber")}${moneyCard("triangle-alert", outstanding, "Overdue Payments", "red")}</div>
-      <section class="card">${cardHead("Collection Trend", `<span class="muted">${icon("calendar-days", 14)} This Month</span>`)}<div class="line-chart"><svg viewBox="0 0 600 220" preserveAspectRatio="none"><path d="M0 140 C80 142, 140 120, 210 92 S330 65, 390 95 S500 150, 600 70" fill="none" stroke="#4263e6" stroke-width="3"/></svg></div></section>
-      <div class="grid" style="gap:24px">${progressCard("Tuition Fee", 80, "MWK 3,000,000/2,600,000 Collected", "var(--cyan)")}${progressCard("Activities", 20, "MWK 1,500,000/500,000 Collected", "var(--amber)")}</div>
-      <div class="grid" style="gap:24px">${progressCard("Books & Supplies", 63, "MWK 2,500,000/1,000,000 Collected", "var(--blue)")}${progressCard("Miscellaneous", 98, "MWK 500,000/430,000 Collected", "var(--green)")}</div>
+      <div class="money-stack">
+        ${moneyCard("banknote", money(backendData.stats?.payments_total || 5050050), "Fees Collected", "green")}
+        ${moneyCard("wallet", outstanding, "Pending Fees", "amber")}
+        ${moneyCard("triangle-alert", outstanding, "Overdue Payments", "red")}
+      </div>
+      <section class="card trend-card">${cardHead("Fees Collection Trend", `<span class="muted">${icon("calendar-days", 14)} This Month</span>`)}${lineAreaChart("blue", true)}</section>
+      <div class="finance-progress-grid">
+        ${progressCard("Tuition Fee", 80, "MWK 3,000,000/2,600,000 Collected", "var(--cyan)")}
+        ${progressCard("Books & Supplies", 63, "MWK 2,500,000/1,000,000 Collected", "var(--blue)")}
+        ${progressCard("Activities", 20, "MWK 1,500,000/500,000 Collected", "var(--amber)")}
+        ${progressCard("Miscellaneous", 98, "MWK 500,000/430,000 Collected", "var(--green)")}
+      </div>
     </div>
-    <section class="section-panel"><div class="section-toolbar"><h2>Recent Payments</h2><div class="filters"><button class="pill">${icon("calendar-days", 14)} Today</button><button class="pill">${icon("sort", 14)} Sort By A-Z</button></div></div><div class="table-wrap">${feesTable()}</div></section>`;
+    <section class="section-panel"><div class="section-toolbar"><h2>Fees Collection</h2><div class="filters"><button class="pill" onclick="openPaymentModal()">${icon("receipt", 14)} Record Payment</button><button class="pill">+ Generate Invoice</button><select class="select"><option>This Month</option></select><select class="select"><option>All Status</option></select><select class="select"><option>All Classes</option></select></div></div><div class="section-toolbar"><span>Row Per Page <select class="select"><option>10</option></select> Entries</span><div class="search"><input placeholder="Search"></div></div><div class="table-wrap">${feesTable()}</div></section>`;
 }
 
 function admissionsDashboard() {
@@ -1036,18 +1035,6 @@ function feesPage() {
       <div class="grid" style="gap:24px">${progressCard("Tuition Fee", 80, "MWK 3,000,000/2,600,000 Collected", "var(--cyan)")}${progressCard("Activities", 20, "MWK 1,500,000/500,000 Collected", "var(--amber)")}</div>
       <div class="grid" style="gap:24px">${progressCard("Books & Supplies", 63, "MWK 2,500,000/1,000,000 Collected", "var(--blue)")}${progressCard("Miscellaneous", 98, "MWK 500,000/430,000 Collected", "var(--green)")}</div>
     </div>
-    <section class="section-panel compact-form">
-      <div class="section-toolbar"><h2>Record Payment</h2><span class="muted">Saved to the finance register</span></div>
-      <form class="record-form" onsubmit="event.preventDefault(); createPayment(this);">
-        ${paymentStudentSearchHtml()}
-        <label><span>Fee Type</span><select name="fee_type"><option>Tuition Fee</option><option>Examination Fee</option><option>Trip Fee</option><option>Other Fee</option></select></label>
-        <label><span>Academic Year</span><select name="academic_year"><option>${activeAcademicYear()}</option><option>2024 / 2025</option><option>2026 / 2027</option></select></label>
-        <label><span>Term</span><select name="term"><option>Term 1</option><option>Term 2</option><option>Term 3</option></select></label>
-        <label><span>Amount (MWK)</span><input name="amount" type="number" min="1" value="250000" required></label>
-        <label><span>Method</span><select name="method"><option>Mobile Money</option><option>Cash</option><option>Bank Transfer</option></select></label>
-        <button class="btn primary" type="submit">${icon("receipt")} Save Payment</button>
-      </form>
-    </section>
     <section class="section-panel">
       <div class="section-toolbar"><h2>Fees Collection</h2><div class="filters"><button class="pill">+ Generate Invoice</button><select class="select"><option>This Month</option></select><select class="select"><option>All Status</option></select><select class="select"><option>All Classes</option></select></div></div>
       <div class="section-toolbar"><span>Row Per Page <select class="select"><option>10</option></select> Entries</span><div class="search"><input placeholder="Search"></div></div>
@@ -1527,12 +1514,28 @@ function setupPage(kind) {
 
 function adminPage(kind) {
   const map = {
-    users: ["Users", "System Administration / Users", "System Users", [["USR-001", "Admin User", "Super Admin", "admin@hillside.edu", "Full access", "Active"], ["USR-002", "Director", "Director", "director@hillside.edu", "Leadership", "Active"], ["USR-003", "Accounts Desk", "Finance Officer", "finance@hillside.edu", "Fees only", "Active"], ["USR-004", "Teacher Demo", "Teacher", "teacher@hillside.edu", "Assigned classes", "Active"]]],
-    roles: ["Roles & Permissions", "System Administration / Roles", "Role Permissions", [["ROLE-01", "Super Admin", "All modules", "Create / update / delete", "System owner", "Active"], ["ROLE-02", "Director", "Reports + approvals", "Read + approve", "Leadership", "Active"], ["ROLE-03", "Finance Officer", "Fees modules", "Payments + receipts", "Accounts", "Active"], ["ROLE-04", "Teacher", "Assigned students", "Read only", "Classroom", "Active"]]],
-    "audit-logs": ["Audit Logs", "System Administration / Audit Logs", "Recent Audit Logs", [["AUD-9001", "Payment edit requested", "Finance Officer", "Receipt RCPT-7819", "Director approval required", "Review"], ["AUD-9000", "Student record updated", "Admissions Officer", "ADM-2026-004", "Documents added", "Completed"], ["AUD-8999", "Exam export generated", "Exams Officer", "EXP-901", "PDF + Excel", "Completed"], ["AUD-8998", "Role viewed", "Director", "Finance Officer", "No change", "Completed"]]]
+    users: ["Users", "System Administration / Users", "System Users", [["USR-001", "System Admin", "Super Admin", "admin@hillside.edu", "MFA enabled, break-glass only", "Active"], ["USR-002", "School Director", "Director", "director@hillside.edu", "Leadership workspace", "Active"], ["USR-003", "Accounts Desk", "Finance Officer", "finance@hillside.edu", "Fees and receipts", "Active"], ["USR-004", "Admissions Desk", "Admissions Officer", "admissions@hillside.edu", "Admissions and guardians", "Active"], ["USR-005", "Exams Office", "Exams Officer", "exams@hillside.edu", "Candidate lists", "Active"], ["USR-006", "Teacher Demo", "Teacher", "teacher@hillside.edu", "Assigned classes", "Active"]]],
+    roles: ["Roles & Permissions", "System Administration / Roles", "Role Permissions", [["ROLE-01", "Super Admin", "Technical administration", "Users, roles, settings, maintenance", "Restricted", "Active"], ["ROLE-02", "Director", "School leadership", "Operations, reports, approvals, read-only audit", "Approve + review", "Active"], ["ROLE-03", "Finance Officer", "Cash office", "Payments, receipts, balances", "Create + export", "Active"], ["ROLE-04", "Admissions Officer", "Admissions desk", "Students, guardians, enrollment reports", "Create + update", "Active"], ["ROLE-05", "Exams Officer", "Exams desk", "Candidate lists, eligibility, exports", "Create + submit", "Active"], ["ROLE-06", "Teacher", "Classroom", "Assigned learners and teaching records", "Read + update own", "Active"]]],
+    "audit-logs": ["Audit Logs", "Governance / Audit Logs", "Recent Audit Logs", [["AUD-9001", "Payment edit requested", "Finance Officer", "Receipt RCPT-7819", "Director approval required", "Review"], ["AUD-9000", "Student record updated", "Admissions Officer", "ADM-2026-004", "Documents added", "Completed"], ["AUD-8999", "Exam export generated", "Exams Officer", "EXP-901", "PDF + Excel", "Completed"], ["AUD-8998", "Role viewed", "Director", "Finance Officer", "No change", "Completed"], ["AUD-8997", "Backup completed", "Super Admin", "database.sqlite", "Encrypted copy stored", "Ready"]]],
+    "system-settings": ["System Settings", "System Administration / System Settings", "System Settings", [["SET-SCH", "School Profile", "Hillside Secondary School", "Logo, address, motto", "Configured", "Active"], ["SET-SEC", "Security Policy", "Super Admin", "Password, session, MFA rules", "Strict", "Active"], ["SET-AYR", "Academic Year", academicYearLabel(), "Current calendar and terms", "Open", "Active"], ["SET-NOT", "Notifications", "Email/SMS", "Parent and staff alerts", "Queue healthy", "Ready"], ["SET-INT", "Integrations", "Payments/SMS", "API keys stored securely", "Review", "Review"]]],
+    "admin-maintenance": ["Database / Admin Maintenance", "System Administration / Maintenance", "Maintenance Console", [["MAINT-01", "Database Backup", "database.sqlite", "Create encrypted backup before upgrades", "Ready", "Ready"], ["MAINT-02", "Clear Laravel Cache", "config/routes/views", "Refresh deployment cache", "Manual", "Ready"], ["MAINT-03", "Storage Link", "public storage", "Verify document access", "Healthy", "Active"], ["MAINT-04", "Composer Packages", "vendor", "Review updates in staging first", "Locked", "Review"], ["MAINT-05", "Audit Retention", "12 months", "Export compliance logs", "Scheduled", "Active"]]]
   };
   const [title, crumbs, heading, rows] = map[kind];
   return inventoryTablePage(title, crumbs, heading, ["ID", "Record", "Owner", "Scope", "Notes", "Status"], rows);
+}
+
+function approvalsPage() {
+  const rows = [["APP-1001", "Payment edit request", "Finance Officer", "Receipt RCPT-7819", "Confirm reason and approve/reject", "Review"], ["APP-1002", "Exam eligibility exception", "Exams Officer", "Form 4 candidate hold", "Director decision required", "Pending"], ["APP-1003", "Admission scholarship request", "Admissions Officer", "Fee waiver request", "Boarding learner", "Review"], ["APP-1004", "Leave escalation", "HR Desk", "Science department cover", "Needs timetable check", "Pending"], ["APP-1005", "Arrears payment plan", "Finance Officer", "3 guardians requested terms", "Approve follow-up plan", "Review"]];
+  return inventoryTablePage("Approvals", "Governance / Approvals", "Director Approval Queue", ["ID", "Request", "Submitted By", "Record", "Decision Note", "Status"], rows);
+}
+
+function notificationsPage() {
+  const rows = (backendData.notifications?.length ? backendData.notifications : [
+    { title: "Fee payment confirmed", target_role: "Finance Officer", body: "Receipt is ready for finance review.", type: "success", read_at: null },
+    { title: "Admission follow-up", target_role: "Admissions Officer", body: "Transfer letter still pending.", type: "warning", read_at: null },
+    { title: "Director approval", target_role: "Director", body: "Payment edit request needs review.", type: "warning", read_at: null }
+  ]).map((item, index) => [`NOT-${String(index + 1).padStart(4, "0")}`, item.title, item.target_role || "All Staff", item.body, item.type || "info", item.read_at ? "Completed" : "Pending"]);
+  return inventoryTablePage("Notifications", "Communication / Notifications", "Notification Center", ["ID", "Title", "Audience", "Message", "Type", "Status"], rows);
 }
 
 function suppliesPage() {
@@ -1680,8 +1683,12 @@ function circleMetric(value, title, subtitle, color) {
 
 function actionIcons() {
   const role = currentRole();
+  const current = route();
+  if (role === "Director" && current === "audit-logs") {
+    return `<span class="row-tools"><button class="icon-mini" onclick="openDetailsModal('Audit Log','Read-only governance review')" title="view">${icon("eye", 16)}</button><button class="icon-mini" onclick="notifyAction('Audit export prepared','Read-only audit report is ready for download.')" title="download">${icon("download", 16)}</button></span>`;
+  }
   const actionsByRole = {
-    "Super Admin": ["eye", "edit", "trash", "download"],
+    "Super Admin": ["eye", "settings", "database", "download"],
     "Director": ["eye", "shield-check", "download"],
     "Admissions Officer": ["eye", "edit", "download"],
     "Finance Officer": ["eye", "receipt", "download"],
@@ -1690,7 +1697,7 @@ function actionIcons() {
   };
   const actions = actionsByRole[role] || ["eye"];
   return `<span class="row-tools">${actions.map((name) => {
-    const handler = name === "receipt" ? "openPaymentModal()" : name === "download" ? "notifyAction('Export prepared','The selected record is ready for download.')" : name === "trash" ? "notifyAction('Delete requires approval','The delete request has been logged.')" : `openDetailsModal('${labelForRoute(route())} Details','Selected school record')`;
+    const handler = name === "receipt" ? "openPaymentModal()" : name === "download" ? "notifyAction('Export prepared','The selected record is ready for download.')" : name === "database" ? "notifyAction('Maintenance task queued','The selected maintenance task is ready for Super Admin confirmation.')" : name === "settings" ? "openDetailsModal('System Configuration','Review role, security, and school-level settings')" : `openDetailsModal('${labelForRoute(route())} Details','Selected school record')`;
     return `<button class="icon-mini" onclick="${handler}" title="${name}">${icon(name, 16)}</button>`;
   }).join("")}</span>`;
 }
@@ -1703,6 +1710,7 @@ function tableActions() {
   if (role === "Admissions Officer") return `${common}<button class="btn ghost" onclick="notifyAction('Export prepared','Admissions register is ready for download.')">${icon("download")} Export</button><button class="btn primary" onclick="openAdmissionModal()">${icon("user-plus")} Register Student</button>`;
   if (role === "Exams Officer") return `${common}<button class="btn ghost" onclick="notifyAction('Export prepared','Candidate lists are ready for download.')">${icon("download")} Export</button><button class="btn primary" onclick="notifyAction('Exam list generated','A candidate list was generated for the selected class.')">${icon("file-chart")} Generate List</button>`;
   if (role === "Director") return `${common}<button class="icon-btn" title="Print" onclick="window.print()">${icon("printer")}</button><button class="btn ghost" onclick="notifyAction('Export prepared','Leadership report is ready for download.')">${icon("download")} Export</button><button class="btn primary" onclick="openDetailsModal('Director Review','Approval queue and audit items')">${icon("shield-check")} Review</button>`;
+  if (role === "Super Admin") return `${common}<button class="btn ghost" onclick="notifyAction('Backup prepared','Database backup task is ready for confirmation.')">${icon("database")} Backup</button><button class="btn primary" onclick="openDetailsModal('System Configuration','Manage users, roles, security, and maintenance settings')">${icon("settings")} Configure</button>`;
   return `${common}<button class="icon-btn" title="Print" onclick="window.print()">${icon("printer")}</button><button class="btn ghost" onclick="notifyAction('Export prepared','The current report is ready for download.')">${icon("download")} Export</button>`;
 }
 
@@ -1739,7 +1747,9 @@ function page(current) {
   if (["receipts", "student-balances", "arrears", "daily-collections", "term-collections"].includes(current)) return balancesPage(current);
   if (["exam-lists", "eligible-students", "exam-export", "exam-settings", "exam-types"].includes(current)) return examPage(current);
   if (["classes", "subjects", "academic-years", "terms"].includes(current)) return setupPage(current);
-  if (["users", "roles", "audit-logs"].includes(current)) return adminPage(current);
+  if (["users", "roles", "audit-logs", "system-settings", "admin-maintenance"].includes(current)) return adminPage(current);
+  if (current === "approvals") return approvalsPage();
+  if (current === "notifications") return notificationsPage();
   if (current === "fees") return feesPage();
   if (current === "timetable") return timetablePage();
   if (["curriculum", "lesson-planning", "assessment", "learning-materials"].includes(current)) return curriculumPage(current);
