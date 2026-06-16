@@ -606,6 +606,10 @@ button {
   font-size: 12px;
 }
 
+.record-form .wide-field {
+  grid-column: span 2;
+}
+
 .record-form input,
 .record-form select {
   width: 100%;
@@ -1474,6 +1478,94 @@ button {
   justify-content: space-between;
   font-weight: 700;
   margin-bottom: 26px;
+}
+
+.assessment-board {
+  display: grid;
+  gap: 24px;
+}
+
+.assessment-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(190px, 1fr));
+  gap: 18px;
+}
+
+.assessment-toolbar {
+  align-items: end;
+}
+
+.assessment-filter {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.assessment-filter .select {
+  min-width: 160px;
+}
+
+.assessment-tabs {
+  display: flex;
+  gap: 8px;
+  padding: 16px 20px 0;
+  border-top: 1px solid var(--line);
+}
+
+.assessment-tabs .tab {
+  border: 0;
+  background: transparent;
+}
+
+.assessment-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding: 14px 20px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.assessment-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+}
+
+.legend-dot.green {
+  background: var(--green);
+}
+
+.legend-dot.blue {
+  background: var(--blue);
+}
+
+.legend-dot.amber {
+  background: var(--amber);
+}
+
+.legend-dot.red {
+  background: var(--red);
+}
+
+.assessment-score {
+  display: inline-grid;
+  grid-template-columns: 46px 220px;
+  align-items: center;
+  gap: 10px;
+}
+
+.assessment-progress {
+  width: 220px;
+  display: inline-block;
+  vertical-align: middle;
 }
 
 .track {

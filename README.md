@@ -1,58 +1,156 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Hillside Secondary School ERP
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Hillside Secondary School ERP is a Laravel-based school management prototype for admissions, student records, fee collection, receipts, fee balances, role dashboards, messaging, notifications, curriculum, assessment, staff, and reporting workflows.
 
-## About Laravel
+## Technology Stack
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- **Backend:** PHP 8.3+ with Laravel 13
+- **Database:** SQLite by default, with Laravel-compatible support for MySQL/PostgreSQL if configured in `.env`
+- **Frontend:** Blade view served by Laravel, vanilla JavaScript ERP UI, CSS, Vite
+- **Frontend tooling:** Node.js, NPM, Vite 8, Tailwind CSS 4
+- **Dependency managers:** Composer for PHP packages, NPM for frontend packages
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Required Installs
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+Install these before cloning/running the project:
 
-## Learning Laravel
+- PHP 8.3 or newer
+- Composer 2.x
+- Node.js 22.x or newer
+- NPM
+- Git
+- SQLite extension for PHP, or another database driver if you switch from SQLite
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+On macOS with Homebrew:
 
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+brew install php composer node
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+Check your versions:
 
-## Contributing
+```bash
+php -v
+composer --version
+node -v
+npm -v
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## Clone And Setup
 
-## Code of Conduct
+```bash
+git clone git@github.com:Nzeh101/HILLSIDE-SECONDARY-SCHOOL-ERP.git
+cd HILLSIDE-SECONDARY-SCHOOL-ERP
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+composer install
+npm install
 
-## Security Vulnerabilities
+cp .env.example .env
+php artisan key:generate
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+The project is already configured to work well with SQLite. Create the database file if it does not exist:
 
-## License
+```bash
+touch database/database.sqlite
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+In `.env`, use SQLite:
+
+```env
+DB_CONNECTION=sqlite
+```
+
+Then migrate and seed demo data:
+
+```bash
+php artisan migrate --seed
+```
+
+## Run Locally
+
+Start Laravel:
+
+```bash
+php artisan serve
+```
+
+Open:
+
+```text
+http://127.0.0.1:8000
+```
+
+For frontend build tooling:
+
+```bash
+npm run dev
+```
+
+For a production asset build:
+
+```bash
+npm run build
+```
+
+## Demo Accounts
+
+All demo accounts use:
+
+```text
+password
+```
+
+Available roles:
+
+- Super Admin: `admin@hillside.edu`
+- Director: `director@hillside.edu`
+- Admissions Officer: `admissions@hillside.edu`
+- Finance Officer: `finance@hillside.edu`
+- Exams Officer: `exams@hillside.edu`
+- Teacher: `teacher@hillside.edu`
+
+The login screen also includes quick role/account selectors for demo use.
+
+## Important Project Files
+
+- `routes/web.php` - Laravel routes and lightweight ERP API endpoints
+- `database/migrations/` - database schema for users, students, guardians, payments, fee balances, notifications, and messages
+- `database/seeders/DatabaseSeeder.php` - demo users, students, guardians, payments, notifications, and messages
+- `resources/views/erp.blade.php` - main ERP Blade shell
+- `public/erp/app.js` - browser-served ERP interface and interactions
+- `public/erp/styles.css` - browser-served ERP styling
+- `app.js` and `styles.css` - source/reference copies kept aligned with the served ERP assets
+
+## Development Notes
+
+- The ERP UI is currently mostly vanilla JavaScript and CSS under `public/erp/`.
+- Role dashboards and sidebars are controlled in `roleNavGroups` inside `public/erp/app.js`.
+- The served Blade shell cache-busts `public/erp/app.js` and `public/erp/styles.css`, so a browser refresh should load new UI changes.
+- If browser changes still do not appear, hard refresh once.
+- Do not commit `.env`, `vendor/`, `node_modules/`, or local database backups.
+
+## Useful Commands
+
+```bash
+php artisan migrate:fresh --seed
+php artisan route:list --path=erp-api
+php artisan test
+npm run build
+```
+
+Syntax checks:
+
+```bash
+php -l routes/web.php
+node --check public/erp/app.js
+```
+
+## Pushing Changes
+
+```bash
+git status
+git add README.md public/erp/app.js public/erp/styles.css resources/views/erp.blade.php app.js styles.css
+git commit -m "Update ERP onboarding and role UI"
+git push origin main
+```

@@ -1039,7 +1039,7 @@ function feesPage() {
     <section class="section-panel compact-form">
       <div class="section-toolbar"><h2>Record Payment</h2><span class="muted">Saved to the finance register</span></div>
       <form class="record-form" onsubmit="event.preventDefault(); createPayment(this);">
-        <label><span>Student</span><select name="student_id">${(backendData.students || []).map((student) => `<option value="${student.id}">${student.first_name} ${student.last_name} - ${student.class_name}${student.section || ""}</option>`).join("")}<option value="">General payment</option></select></label>
+        ${paymentStudentSearchHtml()}
         <label><span>Fee Type</span><select name="fee_type"><option>Tuition Fee</option><option>Examination Fee</option><option>Trip Fee</option><option>Other Fee</option></select></label>
         <label><span>Academic Year</span><select name="academic_year"><option>${activeAcademicYear()}</option><option>2024 / 2025</option><option>2026 / 2027</option></select></label>
         <label><span>Term</span><select name="term"><option>Term 1</option><option>Term 2</option><option>Term 3</option></select></label>
@@ -1133,14 +1133,110 @@ function lessonPlanning() {
   return `<section class="section-panel"><div class="section-toolbar"><h2>Syllabus / Lesson Plan</h2><div class="filters"><button class="pill">▣ 15 Apr 2025 - 24 May 2025</button><button class="pill">▽ Filter</button><button class="pill">↕ Sort By A-Z</button></div></div><div class="section-body"><div class="curriculum-cards">${all.map(([klass, subject, date, title, color, pct]) => `<article class="card lesson-plan"><div class="class-tag" style="background:var(--${color}-soft);color:var(--${color})">${klass}</div><p><span>${subject}</span><span style="float:right">${date}</span></p><h3>${title}</h3><div class="track"><span class="fill" style="width:${pct}%;background:var(--${color})"></span></div><div class="lesson-actions"><span>♢ Reschedule</span><span>♧ Share</span></div></article>`).join("")}</div></div></section>`;
 }
 
+function assessmentState() {
+  return {
+    className: localStorage.getItem("erpAssessmentClass") || "All Classes",
+    subject: localStorage.getItem("erpAssessmentSubject") || "All Subjects",
+    term: localStorage.getItem("erpAssessmentTerm") || "Term 2",
+    view: localStorage.getItem("erpAssessmentView") || "Average"
+  };
+}
+
+function setAssessmentFilter(key, value) {
+  localStorage.setItem(`erpAssessment${key}`, value);
+  app();
+}
+
+function assessmentTone(score) {
+  if (score >= 75) return "green";
+  if (score >= 50) return "blue";
+  if (score >= 35) return "amber";
+  return "red";
+}
+
+function assessmentStatus(score) {
+  if (score >= 85) return "Excellent";
+  if (score >= 65) return "Good";
+  if (score >= 40) return "Average";
+  return "Needs Support";
+}
+
+function assessmentRows(state) {
+  const classes = ["Form 1", "Form 1", "Form 2", "Form 2", "Form 2", "Form 3", "Form 3", "Form 4", "Form 4", "Form 4"];
+  const sections = ["A", "B", "A", "B", "C", "A", "B", "A", "B", "A"];
+  const subjects = ["Mathematics", "English", "Biology", "Physics", "Computer Studies"];
+  const subjectOffset = Math.max(0, subjects.indexOf(state.subject)) * 3;
+  return students.slice(0, 10).map((student, index) => {
+    const test1 = Math.max(18, Math.min(98, [92, 88, 74, 68, 61, 56, 52, 42, 34, 24][index] - subjectOffset + (index % 3)));
+    const test2 = Math.max(18, Math.min(98, test1 + [4, 2, -3, 5, 1, 6, -2, -5, 8, 3][index]));
+    const mid = Math.max(18, Math.min(98, Math.round((test1 + test2) / 2) + [3, 5, 2, -1, 0, 4, 2, -3, -1, 2][index]));
+    const final = Math.max(18, Math.min(98, mid + [1, 3, 4, 2, -2, 5, 6, 1, 2, -1][index]));
+    const average = Math.round((test1 + test2 + mid + final) / 4);
+    return {
+      id: `C13803${8 - index}`,
+      name: student[1],
+      className: classes[index],
+      section: sections[index],
+      subject: state.subject === "All Subjects" ? subjects[index % subjects.length] : state.subject,
+      test1,
+      test2,
+      mid,
+      final,
+      average
+    };
+  }).filter((row) => state.className === "All Classes" || row.className === state.className);
+}
+
+function assessmentScoreCell(score) {
+  const tone = assessmentTone(score);
+  return `<span class="assessment-score"><strong>${score}%</strong><span class="track table-progress assessment-progress ${tone}"><span class="fill" style="width:${score}%;background:var(--${tone})"></span></span></span>`;
+}
+
+function assessmentSelect(label, key, value, options) {
+  return `<label class="assessment-filter"><span>${label}</span><select class="select" onchange="setAssessmentFilter('${key}', this.value)">${options.map((option) => `<option ${option === value ? "selected" : ""}>${option}</option>`).join("")}</select></label>`;
+}
+
+function assessmentTab(label, value, active) {
+  return `<button class="tab ${active === value ? "active" : ""}" onclick="setAssessmentFilter('View', '${value}')">${label}</button>`;
+}
+
 function assessment() {
-  const names = students.slice(0, 10);
-  const progress = [96,96,76,70,60,60,58,38,34,22];
-  return `<section class="section-panel"><div class="section-toolbar"><h2>Manage Curriculum</h2><div class="filters"><button class="pill">▣ 15 Apr 2025 - 24 May 2025</button><button class="pill">▽ All Subject⌄</button><button class="pill">↕ Sort By A-Z</button></div></div><div class="section-toolbar"><span>Row Per Page <select class="select"><option>10</option></select> Entries</span><div class="search"><input placeholder="Search"></div></div><div class="table-wrap"><table><thead><tr><th>□</th><th>ID</th><th>Student Name</th><th>Class</th><th>Section</th><th>Overall Progress</th><th>Status</th></tr></thead><tbody>${names.map((s, i) => {
-    const pct = progress[i];
-    const color = pct > 50 ? "var(--green)" : pct > 30 ? "var(--amber)" : "var(--red)";
-    return `<tr><td>□</td><td><a>C13803${8 - i}</a></td><td>${s[1]}</td><td>${["I","I","II","II","II","III","III","IV","IV","V"][i]}</td><td>${["A","B","A","B","C","A","B","A","B","A"][i]}</td><td><span style="display:inline-block;width:45px">${pct}%</span><span class="track" style="display:inline-block;width:70%;vertical-align:middle"><span class="fill" style="width:${pct}%;background:${color}"></span></span></td><td>${pct > 70 ? "Excellent" : pct > 50 ? "Good" : pct > 30 ? "Average" : "Poor"}</td></tr>`;
-  }).join("")}</tbody></table></div></section>`;
+  const state = assessmentState();
+  const rows = assessmentRows(state);
+  const scoreKey = state.view === "Test 1" ? "test1" : state.view === "Test 2" ? "test2" : state.view === "Mid Term" ? "mid" : state.view === "Final Term" ? "final" : "average";
+  const average = rows.length ? Math.round(rows.reduce((sum, row) => sum + row[scoreKey], 0) / rows.length) : 0;
+  const passRate = rows.length ? Math.round((rows.filter((row) => row[scoreKey] >= 50).length / rows.length) * 100) : 0;
+  const support = rows.filter((row) => row[scoreKey] < 40).length;
+  return `<section class="assessment-board">
+    <div class="assessment-kpis">
+      ${metricCard(["clipboard-check", `${average}%`, "Average Score", state.view, `${rows.length} learners`, assessmentTone(average)])}
+      ${metricCard(["trending-up", `${passRate}%`, "Pass Rate", state.className, state.term, assessmentTone(passRate)])}
+      ${metricCard(["book-open", state.subject === "All Subjects" ? "All" : state.subject, "Subject Filter", state.term, state.view, "blue"])}
+      ${metricCard(["triangle-alert", support, "Needs Support", "Below 40%", "Follow up", support ? "red" : "green"])}
+    </div>
+    <section class="section-panel">
+      <div class="section-toolbar assessment-toolbar">
+        <h2>Manage Assessment</h2>
+        <div class="filters">
+          ${assessmentSelect("Class", "Class", state.className, ["All Classes", "Form 1", "Form 2", "Form 3", "Form 4"])}
+          ${assessmentSelect("Subject", "Subject", state.subject, ["All Subjects", "Mathematics", "English", "Biology", "Physics", "Computer Studies"])}
+          ${assessmentSelect("Term", "Term", state.term, ["Term 1", "Term 2", "Term 3"])}
+        </div>
+      </div>
+      <div class="assessment-tabs">${["Test 1", "Test 2", "Mid Term", "Final Term", "Average"].map((tab) => assessmentTab(tab, tab, state.view)).join("")}</div>
+      <div class="assessment-legend">
+        <span><i class="legend-dot green"></i>75-100 Excellent</span>
+        <span><i class="legend-dot blue"></i>50-74 Good</span>
+        <span><i class="legend-dot amber"></i>35-49 Average</span>
+        <span><i class="legend-dot red"></i>0-34 Support</span>
+      </div>
+      <div class="section-toolbar"><span>Row Per Page <select class="select"><option>10</option></select> Entries</span><div class="search"><input placeholder="Search"></div></div>
+      <div class="table-wrap"><table><thead><tr><th>□</th><th>ID</th><th>Student Name</th><th>Class</th><th>Section</th><th>Subject</th><th>Test 1</th><th>Test 2</th><th>Mid Term</th><th>Final Term</th><th>${state.view}</th><th>Status</th></tr></thead><tbody>${rows.map((row) => {
+        const activeScore = row[scoreKey];
+        return `<tr><td>□</td><td><a>${row.id}</a></td><td>${row.name}</td><td>${row.className}</td><td>${row.section}</td><td>${row.subject}</td><td>${row.test1}%</td><td>${row.test2}%</td><td>${row.mid}%</td><td>${row.final}%</td><td>${assessmentScoreCell(activeScore)}</td><td><span class="badge ${assessmentTone(activeScore)}">• ${assessmentStatus(activeScore)}</span></td></tr>`;
+      }).join("")}</tbody></table></div>
+    </section>
+  </section>`;
 }
 
 function inventory() {
