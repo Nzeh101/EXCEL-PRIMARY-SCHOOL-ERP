@@ -13,41 +13,52 @@ const navGroups = [
 
 const roleNavGroups = {
   "Super Admin": [
-    ...navGroups,
-    ["Admissions", [["admissions", "Admissions Register", "user-plus"], ["classes", "Classes & Sections", "network"], ["academic-years", "Academic Years", "calendar-days"]]],
+    ["Main", [["dashboard", "Dashboard", "layout-dashboard"]]],
+    ["People & Records", [["students", "Students", "graduation-cap"], ["parents", "Parents", "users"], ["teachers", "Teachers", "presentation"]]],
+    ["Admissions", [["admissions", "Admissions Register", "user-plus"], ["classes", "Classes & Sections", "network"], ["academic-years", "Academic Years", "calendar-days"], ["terms", "Terms", "calendar-days"]]],
+    ["Fees & Accounts", [["fees", "Fees Management", "wallet"], ["receipts", "Receipts", "receipt"], ["student-balances", "Student Balances", "banknote"], ["arrears", "Arrears", "triangle-alert"], ["daily-collections", "Daily Collections", "bar-chart"], ["term-collections", "Term Collections", "file-chart"]]],
+    ["Academic", [["timetable", "Time Table", "calendar-days"], ["subjects", "Subjects", "book-open"], ["curriculum", "Curriculum Design", "network"], ["lesson-planning", "Lesson Planning", "book-open"], ["assessment", "Assessment", "clipboard-check"], ["learning-materials", "Learning Materials", "archive"]]],
+    ["Teacher & Staff Management", [["staff", "Staff Profiles", "id-card"], ["payroll", "Payroll", "receipt"], ["leave", "Leave Management", "calendar-minus"], ["performance", "Performance Reviews", "chart-line"]]],
+    ["Communication", [["parent-communication", "Parent Communication", "megaphone"], ["messaging", "Messaging", "messages"], ["student-report", "Students Report", "file-chart"]]],
+    ["Inventory", [["supplies", "Supplies", "package"], ["purchase", "Purchase", "shopping-cart"], ["stock-alerts", "Stock Alerts", "bell"]]],
+    ["Health & Safety", [["health-records", "Health Records", "heart-pulse"], ["incident-reports", "Incident Reports", "triangle-alert"], ["safety-protocols", "Safety Protocols", "shield-check"]]],
+    ["Reporting & Analytics", [["analytics", "Analytics Dashboard", "bar-chart"], ["financial-reports", "Financial Reports", "banknote"], ["enrollment-reports", "Enrollment Reports", "user-plus"], ["academic-progress", "Academic Progress", "trending-up"], ["compliance-reports", "Compliance Reports", "shield"]]],
     ["Exams Management", [["exam-lists", "Candidate Lists", "file-chart"], ["eligible-students", "Eligible Students", "clipboard-check"], ["exam-export", "Excel / PDF Export", "download"], ["exam-settings", "Exam Settings", "shield-check"]]],
     ["System Administration", [["users", "Users", "users"], ["roles", "Roles & Permissions", "shield-check"], ["audit-logs", "Audit Logs", "file-chart"]]]
   ],
   "Director": [
     ["Main", [["dashboard", "Dashboard", "layout-dashboard"]]],
-    ["School Records", [["students", "All Students", "graduation-cap"], ["parents", "Parents", "users"], ["teachers", "Teachers", "presentation"]]],
-    ["Finance Oversight", [["fees", "Fees Overview", "wallet"], ["student-balances", "Student Balances", "receipt"], ["arrears", "Arrears", "triangle-alert"], ["financial-reports", "Financial Reports", "banknote"]]],
-    ["Admissions & Exams", [["admissions", "Admissions", "user-plus"], ["enrollment-reports", "Enrollment Reports", "bar-chart"], ["exam-lists", "Candidate Lists", "file-chart"], ["eligible-students", "Eligible Students", "clipboard-check"]]],
-    ["Leadership Reports", [["analytics", "Analytics Dashboard", "bar-chart"], ["academic-progress", "Academic Progress", "trending-up"], ["compliance-reports", "Compliance Reports", "shield"], ["audit-logs", "Audit Logs", "file-chart"]]],
-    ["Administration", [["users", "Users", "users"], ["roles", "Roles & Permissions", "shield-check"], ["messaging", "Messaging", "messages"]]]
+    ["Executive Records", [["students", "Student Overview", "graduation-cap"], ["teachers", "Teacher Overview", "presentation"], ["classes", "Class Overview", "network"]]],
+    ["Approvals & Audit", [["arrears", "Arrears Review", "triangle-alert"], ["eligible-students", "Exam Eligibility Review", "clipboard-check"], ["audit-logs", "Audit Logs", "file-chart"], ["compliance-reports", "Compliance Reports", "shield"]]],
+    ["Leadership Reports", [["analytics", "Analytics Dashboard", "bar-chart"], ["financial-reports", "Financial Reports", "banknote"], ["enrollment-reports", "Enrollment Reports", "user-plus"], ["academic-progress", "Academic Progress", "trending-up"]]],
+    ["Communication", [["messaging", "Leadership Messaging", "messages"], ["parent-communication", "Announcements", "megaphone"]]]
   ],
   "Admissions Officer": [
     ["Main", [["dashboard", "Dashboard", "layout-dashboard"]]],
-    ["Admissions Desk", [["admissions", "Admissions Register", "user-plus"], ["students", "Student Records", "graduation-cap"], ["parents", "Parent Records", "users"], ["enrollment-reports", "Enrollment Reports", "bar-chart"]]],
-    ["Academic Setup", [["classes", "Classes & Sections", "network"], ["academic-years", "Academic Years", "calendar-days"], ["student-report", "Students Report", "file-chart"]]],
-    ["Communication", [["messaging", "Messaging", "messages"], ["parent-communication", "Parent Communication", "megaphone"]]]
+    ["Admissions Desk", [["admissions", "New Admissions", "user-plus"], ["students", "Student Records", "graduation-cap"], ["parents", "Guardian Records", "users"]]],
+    ["Placement & Setup", [["classes", "Classes & Sections", "network"], ["academic-years", "Academic Years", "calendar-days"], ["terms", "Terms", "calendar-days"]]],
+    ["Admissions Reports", [["enrollment-reports", "Enrollment Reports", "bar-chart"], ["student-report", "Student Files Report", "file-chart"]]],
+    ["Communication", [["parent-communication", "Parent Follow-up", "megaphone"], ["messaging", "Admissions Messaging", "messages"]]]
   ],
   "Finance Officer": [
     ["Main", [["dashboard", "Dashboard", "layout-dashboard"]]],
-    ["Fees & Accounts", [["fees", "Fees Collection", "wallet"], ["receipts", "Receipts", "receipt"], ["student-balances", "Student Balances", "banknote"], ["arrears", "Arrears", "triangle-alert"], ["daily-collections", "Daily Collections", "bar-chart"], ["term-collections", "Term Collections", "file-chart"]]],
+    ["Cash Office", [["fees", "Record Payments", "wallet"], ["receipts", "Receipts", "receipt"], ["daily-collections", "Daily Collections", "bar-chart"]]],
+    ["Balances", [["student-balances", "Student Balances", "banknote"], ["arrears", "Arrears Follow-up", "triangle-alert"], ["term-collections", "Term Collections", "file-chart"]]],
     ["Finance Reports", [["financial-reports", "Financial Reports", "banknote"], ["analytics", "Collections Analytics", "bar-chart"]]],
-    ["Communication", [["messaging", "Messaging", "messages"], ["parent-communication", "Payment Notices", "megaphone"]]]
+    ["Communication", [["parent-communication", "Payment Notices", "megaphone"], ["messaging", "Accounts Messaging", "messages"]]]
   ],
   "Exams Officer": [
     ["Main", [["dashboard", "Dashboard", "layout-dashboard"]]],
-    ["Exams Management", [["exam-lists", "Candidate Lists", "file-chart"], ["eligible-students", "Eligible Students", "clipboard-check"], ["exam-export", "Excel / PDF Export", "download"], ["exam-settings", "Exam Settings", "shield-check"]]],
-    ["Academic Records", [["students", "Student Records", "graduation-cap"], ["classes", "Classes & Sections", "network"], ["subjects", "Subjects", "book-open"], ["exam-types", "Exam Types", "clipboard-check"]]],
-    ["Reports", [["academic-progress", "Academic Progress", "trending-up"], ["student-report", "Students Report", "file-chart"], ["messaging", "Messaging", "messages"]]]
+    ["Exams Desk", [["exam-lists", "Candidate Lists", "file-chart"], ["eligible-students", "Eligible Students", "clipboard-check"], ["exam-export", "Excel / PDF Export", "download"]]],
+    ["Exam Setup", [["exam-settings", "Exam Settings", "shield-check"], ["exam-types", "Exam Types", "clipboard-check"], ["subjects", "Subjects", "book-open"], ["classes", "Classes & Sections", "network"]]],
+    ["Exam Reports", [["academic-progress", "Academic Progress", "trending-up"], ["student-report", "Student Exam Reports", "file-chart"]]],
+    ["Communication", [["messaging", "Exam Messaging", "messages"]]]
   ],
   "Teacher": [
     ["Main", [["dashboard", "Dashboard", "layout-dashboard"]]],
-    ["My Classes", [["students", "Assigned Students", "graduation-cap"], ["timetable", "My Time Table", "calendar-days"], ["lesson-planning", "Lesson Planning", "book-open"], ["assessment", "Assessment", "clipboard-check"]]],
-    ["Communication", [["messaging", "Messaging", "messages"], ["student-report", "Student Reports", "file-chart"]]]
+    ["My Teaching", [["students", "Assigned Students", "graduation-cap"], ["timetable", "My Time Table", "calendar-days"], ["lesson-planning", "Lesson Planning", "book-open"], ["assessment", "Assessment", "clipboard-check"], ["learning-materials", "Learning Materials", "archive"]]],
+    ["My Staff Record", [["staff", "My Profile", "id-card"], ["leave", "My Leave", "calendar-minus"], ["performance", "My Performance", "chart-line"], ["payroll", "My Payslip", "receipt"]]],
+    ["Communication", [["student-report", "Student Reports", "file-chart"], ["parent-communication", "Parent Communication", "megaphone"], ["messaging", "Messaging", "messages"]]]
   ]
 };
 
@@ -87,7 +98,9 @@ const iconPaths = {
   "calendar-days": '<rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4M16 2v4M3 10h18"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/>',
   "calendar-minus": '<rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4M16 2v4M3 10h18M8 15h8"/>',
   "chart-line": '<path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 5-7"/>',
+  "chevron-right": '<path d="m9 18 6-6-6-6"/>',
   "clipboard-check": '<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4a3 3 0 0 1 6 0"/><path d="m9 14 2 2 4-5"/>',
+  "clock": '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
   "download": '<path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/>',
   "edit": '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
   "eye": '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>',
@@ -394,6 +407,63 @@ function studentOptions() {
   return rows.map((student) => `<option value="${student.id}">${student.first_name} ${student.last_name} - ${student.class_name}${student.section || ""}</option>`).join("");
 }
 
+function escapeHtml(value = "") {
+  return String(value).replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
+}
+
+function studentSearchRows() {
+  if (backendData.students?.length) {
+    return backendData.students.map((student) => ({
+      id: student.id,
+      name: `${student.first_name} ${student.last_name}`,
+      meta: `${student.admission_no || "No admission no"} - ${student.class_name}${student.section || ""}`,
+      searchable: `${student.first_name} ${student.last_name} ${student.admission_no || ""} ${student.class_name || ""} ${student.section || ""}`.toLowerCase()
+    }));
+  }
+  return students.map((student) => ({
+    id: "",
+    name: student[1],
+    meta: `${student[0]} - ${student[2]}`,
+    searchable: student.join(" ").toLowerCase()
+  }));
+}
+
+function studentSearchButton(row) {
+  return `<button type="button" data-student-id="${escapeHtml(row.id)}" data-student-name="${escapeHtml(row.name)}" data-student-meta="${escapeHtml(row.meta)}" onclick="choosePaymentStudent(this)">
+    <strong>${escapeHtml(row.name)}</strong><span>${escapeHtml(row.meta)}</span>
+  </button>`;
+}
+
+function paymentStudentSearchHtml() {
+  const rows = studentSearchRows().slice(0, 8);
+  return `<label class="wide-field student-search-field">
+    <span>Student</span>
+    <input type="hidden" name="student_id">
+    <input data-student-search type="search" placeholder="Start typing student name, admission no, or class" autocomplete="off" oninput="filterPaymentStudents(this)" onfocus="filterPaymentStudents(this)" required>
+    <div class="student-search-results">${rows.map(studentSearchButton).join("")}</div>
+    <small class="student-search-hint">Choose the matching student from the filtered results before recording fees.</small>
+  </label>`;
+}
+
+function filterPaymentStudents(input) {
+  const field = input.closest(".student-search-field");
+  const list = field.querySelector(".student-search-results");
+  const hidden = field.querySelector("[name='student_id']");
+  const query = input.value.trim().toLowerCase();
+  hidden.value = "";
+  const matches = studentSearchRows().filter((row) => !query || row.searchable.includes(query)).slice(0, 8);
+  list.innerHTML = matches.length ? matches.map(studentSearchButton).join("") : `<p>No matching student found</p>`;
+  list.classList.add("open");
+}
+
+function choosePaymentStudent(button) {
+  const field = button.closest(".student-search-field");
+  field.querySelector("[name='student_id']").value = button.dataset.studentId || "";
+  field.querySelector("[data-student-search]").value = button.dataset.studentName || "";
+  field.querySelector(".student-search-hint").textContent = button.dataset.studentMeta || "Student selected";
+  field.querySelector(".student-search-results").classList.remove("open");
+}
+
 function admissionFormHtml() {
   return `<form class="record-form modal-form" onsubmit="event.preventDefault(); createAdmission(this);">
     <label><span>First Name</span><input name="first_name" required placeholder="Student first name"></label>
@@ -437,7 +507,7 @@ function openTeacherModal() {
 
 function paymentFormHtml() {
   return `<form class="record-form modal-form" onsubmit="event.preventDefault(); createPayment(this);">
-    <label><span>Student</span><select name="student_id">${studentOptions()}</select></label>
+    ${paymentStudentSearchHtml()}
     <label><span>Fee Type</span><select name="fee_type"><option>Tuition Fee</option><option>Examination Fee</option><option>Trip Fee</option><option>Other Fee</option></select></label>
     <label><span>Academic Year</span><select name="academic_year"><option>${activeAcademicYear()}</option><option>2024 / 2025</option><option>2026 / 2027</option></select></label>
     <label><span>Term</span><select name="term"><option>Term 1</option><option>Term 2</option><option>Term 3</option></select></label>
@@ -534,6 +604,12 @@ async function createAdmission(form) {
 }
 
 async function createPayment(form) {
+  const studentInput = form.querySelector("[data-student-search]");
+  const studentId = form.querySelector("[name='student_id']")?.value;
+  if (studentInput?.value.trim() && !studentId && backendData.students?.length) {
+    showToast("Select a student", "Choose a student from the search results before saving the fee payment.", "error");
+    return;
+  }
   const payload = Object.fromEntries(new FormData(form).entries());
   payload.amount = Number(payload.amount || 0);
   try {
@@ -854,9 +930,33 @@ function cardHead(title, right) {
   return `<div class="card-head"><h2>${title}</h2><div>${right}</div></div>`;
 }
 
-function bars() {
-  const heights = [62, 82, 78, 85, 76, 58, 47, 66, 80, 80, 80, 80];
-  return `<div class="chart"><div class="bars">${heights.map((h) => `<span class="bar" style="height:${h}%"></span>`).join("")}</div><div class="months">${["Jan: 2025","Feb: 2025","Mar: 2025","Apr: 2025","May: 2025","Jun: 2025","Jul: 2025","Aug: 2025","Sep: 2025","Oct: 2025","Nov: 2025","Dec: 2025"].map((m) => `<span>${m}</span>`).join("")}</div></div>`;
+function chartLegend(items) {
+  return `<div class="chart-legend">${items.map(([label, tone]) => `<span><i class="legend-marker ${tone}"></i>${label}</span>`).join("")}</div>`;
+}
+
+function bars(options = {}) {
+  const months = ["Jan: 2025","Feb: 2025","Mar: 2025","Apr: 2025","May: 2025","Jun: 2025","Jul: 2025","Aug: 2025","Sep: 2025","Oct: 2025","Nov: 2025","Dec: 2025"];
+  const total = options.total || [72, 84, 80, 86, 78, 68, 60, 74, 82, 82, 82, 82];
+  const collected = options.collected || [62, 75, 71, 78, 69, 58, 47, 66, 77, 77, 77, 77];
+  const legendItems = options.legend || [["Total Fee", "soft"], ["Collected Fee", "blue"]];
+  const chartClass = options.compact ? "chart compact" : "chart";
+  return `<div class="${chartClass}">
+    ${chartLegend(legendItems)}
+    <div class="bars paired">${months.map((m, index) => `<span class="bar-group" title="${m}"><span class="bar total" style="height:${total[index]}%"></span><span class="bar collected" style="height:${collected[index]}%"></span></span>`).join("")}</div>
+    <div class="months">${months.map((m) => `<span>${m}</span>`).join("")}</div>
+  </div>`;
+}
+
+function lineAreaChart(tone = "blue", compact = false) {
+  const fill = tone === "red" ? "rgba(239, 42, 80, .12)" : "rgba(66, 99, 230, .12)";
+  const stroke = tone === "red" ? "#ef2a50" : "#4263e6";
+  return `<div class="line-chart ${compact ? "compact" : ""}">
+    <svg viewBox="0 0 600 220" preserveAspectRatio="none">
+      <path d="M0 140 C70 128, 120 116, 170 136 S245 170, 300 128 S390 92, 450 116 S540 150, 600 92 L600 220 L0 220 Z" fill="${fill}"/>
+      <path d="M0 140 C70 128, 120 116, 170 136 S245 170, 300 128 S390 92, 450 116 S540 150, 600 92" fill="none" stroke="${stroke}" stroke-width="3"/>
+    </svg>
+    <span class="chart-tooltip ${tone}">${tone === "red" ? "MWK 500,000" : "MWK 600,000"}<small>July 2025</small></span>
+  </div>`;
 }
 
 function leaveRequests() {
@@ -926,13 +1026,13 @@ function teacherCard(row, index) {
 
 function feesPage() {
   return `${pageHead("Fees Management", "Dashboard / Management / Fees Group", tableActions())}
-    <div class="stats-strip">
+    <div class="stats-strip fees-summary-strip">
       <div class="money-stack">
         ${moneyCard("banknote", money(backendData.stats?.payments_total || 5050050), "Fees Collected", "green")}
         ${moneyCard("wallet", "MWK 3,050,050", "Pending Fees", "amber")}
         ${moneyCard("triangle-alert", "MWK 2,050,050", "Overdue Payments", "red")}
       </div>
-      <section class="card">${cardHead("Fees Collection Trend", `<span class="muted">▣ This Month⌄</span>`)}<div class="line-chart"><svg viewBox="0 0 600 220" preserveAspectRatio="none"><path d="M0 140 C80 142, 140 120, 210 92 S330 65, 390 95 S500 150, 600 70" fill="none" stroke="#4263e6" stroke-width="3"/></svg></div></section>
+      <section class="card trend-card">${cardHead("Fees Collection Trend", `<span class="muted">${icon("calendar-days", 14)} This Month</span>`)}${lineAreaChart("blue", true)}</section>
       <div class="grid" style="gap:24px">${progressCard("Tuition Fee", 80, "MWK 3,000,000/2,600,000 Collected", "var(--cyan)")}${progressCard("Activities", 20, "MWK 1,500,000/500,000 Collected", "var(--amber)")}</div>
       <div class="grid" style="gap:24px">${progressCard("Books & Supplies", 63, "MWK 2,500,000/1,000,000 Collected", "var(--blue)")}${progressCard("Miscellaneous", 98, "MWK 500,000/430,000 Collected", "var(--green)")}</div>
     </div>
@@ -1372,7 +1472,66 @@ function safetyProtocolsPage() {
 }
 
 function analyticsPage() {
-  return reportDashboard("Analytics Dashboard", "Reporting & Analytics / Analytics Dashboard", [["Admissions", "1,248", "green"], ["Fee Collection", "82%", "blue"], ["Attendance", "95%", "amber"], ["Open Risks", "12", "red"]], "Operational Analytics");
+  const kpis = [
+    ["Financial Report", "MWK 6,452,224", "banknote", "red", "View Details"],
+    ["Enrollment Reports", "85", "user-plus", "blue", "View Details"],
+    ["Academic Progress", "76%", "trending-up", "green", "View Details"],
+    ["Compliance Reports", "9.2/10", "file-chart", "cyan", "View Details"]
+  ];
+  const transactions = [
+    ["16 Jun 2026", "Tuition fee received", "Tuition Fees", "Income", "MWK 550,000", "Completed"],
+    ["15 Jun 2026", "Classroom repair payment", "Maintenance", "Expense", "MWK 80,000", "Pending"],
+    ["14 Jun 2026", "Books and materials sale", "Books Sale", "Income", "MWK 125,000", "Completed"],
+    ["13 Jun 2026", "Stationery purchase", "Stationery Buy", "Expense", "MWK 32,000", "Pending"],
+    ["12 Jun 2026", "Transport fees for Form 3", "Transport Fees", "Income", "MWK 180,000", "Completed"]
+  ];
+  const notices = [
+    ["New syllabus instructions", "Added on 11 Jun 2026", "20 Days", "blue"],
+    ["Environment club programme", "Added on 21 Apr 2026", "15 Days", "green"],
+    ["Exam preparation notice", "Added on 13 Mar 2026", "12 Days", "red"],
+    ["Online class preparation", "Added on 24 May 2026", "02 Days", "cyan"]
+  ];
+
+  return `${pageHead("Analytics Dashboard", "Dashboard / Reporting & Analytics / Analytics Dashboard", tableActions())}
+    <div class="analytics-kpi-grid">${kpis.map(([title, value, iconName, color, action]) => `
+      <section class="card analytics-kpi">
+        <span class="metric-icon" style="background:var(--${color}-soft);color:var(--${color})">${icon(iconName, 28)}</span>
+        <div><h2>${value}</h2><p>${title}</p></div>
+        <button class="btn primary" onclick="openDetailsModal('${title}', '${value}')">${action}</button>
+      </section>`).join("")}</div>
+    <div class="analytics-premium-grid">
+      <div class="money-stack analytics-money">
+        <section class="card money-line-card">
+          <span class="soft-icon blue">${icon("user-plus")}</span>
+          <p>Total Earnings</p><h2>MWK 5,050,050</h2>
+          ${lineAreaChart("blue", true)}
+        </section>
+        <section class="card money-line-card">
+          <span class="soft-icon red">${icon("wallet")}</span>
+          <p>Total Expenses</p><h2>MWK 4,545,024</h2>
+          ${lineAreaChart("red", true)}
+        </section>
+      </div>
+      <section class="card analytics-enrollment">
+        ${cardHead("Enrollment Trends", `<span class="muted">${icon("calendar-days", 14)} This Year - ${activeAcademicYear()}</span>`)}
+        ${bars({ compact: true, total: [32, 46, 52, 38, 68, 42, 60, 56, 36, 72, 20, 12], collected: [10, 16, 14, 6, 20, 11, 17, 16, 8, 11, 6, 4], legend: [["New Admissions", "blue"], ["Dropouts", "soft"]] })}
+      </section>
+    </div>
+    <div class="analytics-lower-grid">
+      <section class="section-panel">
+        <div class="section-toolbar"><h2>Recent Transactions</h2><div class="filters"><select class="select"><option>All Categories</option></select><select class="select"><option>This Term</option></select><div class="search"><input placeholder="Search"></div></div></div>
+        <div class="table-wrap"><table><thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Type</th><th>Amount</th><th>Status</th></tr></thead><tbody>
+          ${transactions.map((row) => `<tr>${row.map((cell, index) => index === 5 ? `<td><span class="badge ${statusClass(cell)}">• ${cell}</span></td>` : `<td>${cell}</td>`).join("")}</tr>`).join("")}
+        </tbody></table></div>
+      </section>
+      <section class="card">
+        ${cardHead("Notice Board", `<a class="muted">View All</a>`)}
+        <div class="notice-list">${notices.map(([title, date, due, color]) => `<article><span class="soft-icon ${color}">${icon(color === "red" ? "bell" : "file-chart", 16)}</span><div><strong>${title}</strong><small>${date}</small></div><span class="pill">${icon("clock", 13)} ${due}</span></article>`).join("")}</div>
+      </section>
+    </div>
+    <div class="analytics-shortcuts">
+      ${[["View Attendance", "calendar-days", "amber"], ["New Events", "megaphone", "green"], ["Finance & Accounts", "wallet", "cyan"], ["Compliance Review", "shield-check", "blue"]].map(([label, iconName, color]) => `<button class="shortcut-tile ${color}"><span>${icon(iconName)}</span><strong>${label}</strong><i>${icon("chevron-right", 15)}</i></button>`).join("")}
+    </div>`;
 }
 
 function financialReportsPage() {
