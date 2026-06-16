@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Guardian;
+use App\Models\FeeBalance;
 use App\Models\Message;
 use App\Models\Payment;
 use App\Models\SchoolNotification;
@@ -9,6 +10,39 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 
+function erpAcademicYear(): string
+{
+    $year = (int) now()->format('Y');
+    $start = (int) now()->format('n') >= 9 ? $year : $year - 1;
+
+    return $start . ' / ' . ($start + 1);
+}
+
+function erpTuitionForType(string $studentType): int
+{
+    return strcasecmp($studentType, 'Boarding') === 0 ? 550000 : 120000;
+}
+
+function erpEnsureFeeBalance(Student $student, string $feeType, string $term, string $academicYear, ?int $amountDue = null): FeeBalance
+{
+    $due = $amountDue ?? ($feeType === 'Tuition Fee' ? (int) $student->tuition_fee : 0);
+
+    return FeeBalance::firstOrCreate(
+        [
+            'student_id' => $student->id,
+            'academic_year' => $academicYear,
+            'term' => $term,
+            'fee_type' => $feeType,
+        ],
+        [
+            'amount_due' => $due,
+            'amount_paid' => 0,
+            'balance' => $due,
+            'status' => $due > 0 ? 'Unpaid' : 'Open',
+        ]
+    );
+}
+
 Route::get('/', function () {
     return view('erp');
 });
@@ -16,7 +50,7 @@ Route::get('/', function () {
 Route::prefix('erp-api')->group(function () {
     Route::get('/bootstrap', function () {
         $students = Student::query()
-            ->with('guardian')
+            ->with(['guardian', 'feeBalances'])
             ->latest()
             ->limit(50)
             ->get();
@@ -33,6 +67,13 @@ Route::prefix('erp-api')->group(function () {
             ->limit(50)
             ->get();
 
+        $balances = FeeBalance::query()
+            ->with('student')
+            ->orderBy('academic_year')
+            ->orderBy('term')
+            ->limit(200)
+            ->get();
+
         $notifications = SchoolNotification::query()
             ->latest()
             ->limit(8)
@@ -47,6 +88,7 @@ Route::prefix('erp-api')->group(function () {
             'students' => $students,
             'guardians' => $guardians,
             'payments' => $payments,
+            'balances' => $balances,
             'notifications' => $notifications,
             'messages' => $messages,
             'stats' => [
@@ -54,6 +96,8 @@ Route::prefix('erp-api')->group(function () {
                 'guardians' => Guardian::count(),
                 'payments_total' => Payment::sum('amount'),
                 'payments_today' => Payment::query()->whereDate('paid_at', now()->toDateString())->sum('amount'),
+                'balances_due' => FeeBalance::sum('amount_due'),
+                'balances_outstanding' => FeeBalance::sum('balance'),
                 'pending_notifications' => SchoolNotification::query()->whereNull('read_at')->count(),
             ],
             'server_date' => now()->toDateString(),
@@ -66,6 +110,7 @@ Route::prefix('erp-api')->group(function () {
             'last_name' => ['required', 'string', 'max:100'],
             'class_name' => ['required', 'string', 'max:40'],
             'section' => ['nullable', 'string', 'max:20'],
+            'student_type' => ['nullable', 'in:Day Scholar,Boarding'],
             'gender' => ['nullable', 'string', 'max:30'],
             'joined_on' => ['nullable', 'date'],
             'guardian_name' => ['required', 'string', 'max:160'],
@@ -75,12 +120,16 @@ Route::prefix('erp-api')->group(function () {
         ]);
 
         $student = DB::transaction(function () use ($data) {
+            $studentType = $data['student_type'] ?? 'Day Scholar';
+            $tuitionFee = erpTuitionForType($studentType);
             $student = Student::create([
                 'admission_no' => 'ADM-' . now()->format('Y') . '-' . str_pad((string) (Student::count() + 1), 4, '0', STR_PAD_LEFT),
                 'first_name' => $data['first_name'],
                 'last_name' => $data['last_name'],
                 'class_name' => $data['class_name'],
                 'section' => $data['section'] ?? null,
+                'student_type' => $studentType,
+                'tuition_fee' => $tuitionFee,
                 'gender' => $data['gender'] ?? null,
                 'joined_on' => $data['joined_on'] ?? now()->toDateString(),
                 'status' => 'Submitted',
@@ -93,6 +142,10 @@ Route::prefix('erp-api')->group(function () {
                 'email' => $data['guardian_email'] ?? null,
                 'phone' => $data['guardian_phone'] ?? null,
             ]);
+
+            foreach (['Term 1', 'Term 2', 'Term 3'] as $term) {
+                erpEnsureFeeBalance($student, 'Tuition Fee', $term, erpAcademicYear(), $tuitionFee);
+            }
 
             SchoolNotification::create([
                 'title' => 'New admission received',
@@ -111,22 +164,45 @@ Route::prefix('erp-api')->group(function () {
         $data = $request->validate([
             'student_id' => ['nullable', 'exists:students,id'],
             'fee_type' => ['required', 'string', 'max:100'],
+            'academic_year' => ['nullable', 'string', 'max:30'],
+            'term' => ['nullable', 'string', 'max:30'],
             'amount' => ['required', 'integer', 'min:1'],
             'method' => ['required', 'string', 'max:80'],
             'status' => ['nullable', 'string', 'max:40'],
             'notes' => ['nullable', 'string', 'max:500'],
         ]);
 
-        $payment = Payment::create([
-            'student_id' => $data['student_id'] ?? Student::query()->value('id'),
-            'receipt_no' => 'RCPT-' . now()->format('ymd') . '-' . str_pad((string) (Payment::count() + 1), 4, '0', STR_PAD_LEFT),
-            'fee_type' => $data['fee_type'],
-            'amount' => $data['amount'],
-            'method' => $data['method'],
-            'status' => $data['status'] ?? 'Paid',
-            'paid_at' => now(),
-            'notes' => $data['notes'] ?? null,
-        ])->load('student');
+        $payment = DB::transaction(function () use ($data) {
+            $student = Student::find($data['student_id'] ?? Student::query()->value('id'));
+            $academicYear = $data['academic_year'] ?? erpAcademicYear();
+            $term = $data['term'] ?? 'Term 1';
+            $feeType = $data['fee_type'];
+            $balance = $student ? erpEnsureFeeBalance($student, $feeType, $term, $academicYear, $feeType === 'Tuition Fee' ? (int) $student->tuition_fee : (int) $data['amount']) : null;
+
+            if ($balance) {
+                $paid = (int) $balance->amount_paid + (int) $data['amount'];
+                $remaining = max(0, (int) $balance->amount_due - $paid);
+                $balance->update([
+                    'amount_paid' => $paid,
+                    'balance' => $remaining,
+                    'status' => $remaining === 0 ? 'Cleared' : 'Partial',
+                ]);
+            }
+
+            return Payment::create([
+                'student_id' => $student?->id,
+                'receipt_no' => 'RCPT-' . now()->format('ymd') . '-' . str_pad((string) (Payment::count() + 1), 4, '0', STR_PAD_LEFT),
+                'fee_type' => $feeType,
+                'academic_year' => $academicYear,
+                'term' => $term,
+                'amount' => $data['amount'],
+                'balance_after' => $balance?->balance ?? 0,
+                'method' => $data['method'],
+                'status' => $data['status'] ?? 'Paid',
+                'paid_at' => now(),
+                'notes' => $data['notes'] ?? null,
+            ])->load('student');
+        });
 
         SchoolNotification::create([
             'title' => 'Payment recorded',

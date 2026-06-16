@@ -8,24 +8,22 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 #[Fillable([
     'student_id',
-    'receipt_no',
-    'fee_type',
     'academic_year',
     'term',
-    'amount',
-    'balance_after',
-    'method',
+    'fee_type',
+    'amount_due',
+    'amount_paid',
+    'balance',
     'status',
-    'paid_at',
-    'notes',
 ])]
-class Payment extends Model
+class FeeBalance extends Model
 {
     protected function casts(): array
     {
         return [
-            'paid_at' => 'datetime',
-            'amount' => 'integer',
+            'amount_due' => 'integer',
+            'amount_paid' => 'integer',
+            'balance' => 'integer',
         ];
     }
 

@@ -13,6 +13,8 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
     'last_name',
     'class_name',
     'section',
+    'student_type',
+    'tuition_fee',
     'roll_no',
     'gender',
     'joined_on',
@@ -36,5 +38,10 @@ class Student extends Model
     public function payments(): HasMany
     {
         return $this->hasMany(Payment::class);
+    }
+
+    public function feeBalances(): HasMany
+    {
+        return $this->hasMany(FeeBalance::class);
     }
 }

@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Guardian;
+use App\Models\FeeBalance;
 use App\Models\Message;
 use App\Models\Payment;
 use App\Models\SchoolNotification;
@@ -47,6 +48,9 @@ class DatabaseSeeder extends Seeder
         ];
 
         foreach ($students as $index => [$admission, $first, $last, $class, $section, $gender, $guardian, $email, $phone]) {
+            $studentType = $index % 3 === 1 ? 'Boarding' : 'Day Scholar';
+            $tuitionFee = $studentType === 'Boarding' ? 550000 : 120000;
+
             $student = Student::updateOrCreate(
                 ['admission_no' => $admission],
                 [
@@ -54,6 +58,8 @@ class DatabaseSeeder extends Seeder
                     'last_name' => $last,
                     'class_name' => $class,
                     'section' => $section,
+                    'student_type' => $studentType,
+                    'tuition_fee' => $tuitionFee,
                     'roll_no' => str_pad((string) ($index + 1), 4, '0', STR_PAD_LEFT),
                     'gender' => $gender,
                     'joined_on' => now()->subMonths($index + 1)->toDateString(),
@@ -72,24 +78,71 @@ class DatabaseSeeder extends Seeder
                     'status' => 'Active',
                 ]
             );
+
+            foreach (['Term 1', 'Term 2', 'Term 3'] as $term) {
+                FeeBalance::updateOrCreate(
+                    [
+                        'student_id' => $student->id,
+                        'academic_year' => '2025 / 2026',
+                        'term' => $term,
+                        'fee_type' => 'Tuition Fee',
+                    ],
+                    [
+                        'amount_due' => $tuitionFee,
+                        'amount_paid' => 0,
+                        'balance' => $tuitionFee,
+                        'status' => 'Unpaid',
+                    ]
+                );
+            }
         }
 
         $paymentSeed = [
-            ['ADM-2026-0001', 'Tuition Fee', 555000, 'Mobile Money', 'Paid'],
-            ['ADM-2026-0002', 'Tuition Fee', 595000, 'Bank Transfer', 'Paid'],
-            ['ADM-2026-0003', 'Activities Fee', 380000, 'Cash', 'Pending'],
-            ['ADM-2026-0004', 'Monthly Fee', 363000, 'Mobile Money', 'Paid'],
-            ['ADM-2026-0005', 'Books & Supplies', 420000, 'Cash', 'Paid'],
+            ['ADM-2026-0001', 'Tuition Fee', 'Term 1', 60000, 'Mobile Money', 'Paid'],
+            ['ADM-2026-0002', 'Tuition Fee', 'Term 1', 200000, 'Bank Transfer', 'Paid'],
+            ['ADM-2026-0003', 'Examination Fee', 'Term 1', 38000, 'Cash', 'Paid'],
+            ['ADM-2026-0004', 'Trip Fee', 'Term 2', 45000, 'Mobile Money', 'Paid'],
+            ['ADM-2026-0005', 'Tuition Fee', 'Term 1', 120000, 'Cash', 'Paid'],
         ];
 
-        foreach ($paymentSeed as $index => [$admission, $type, $amount, $method, $status]) {
+        foreach ($paymentSeed as $index => [$admission, $type, $term, $amount, $method, $status]) {
             $student = Student::where('admission_no', $admission)->first();
+            $balance = null;
+
+            if ($student) {
+                $balance = FeeBalance::firstOrCreate(
+                    [
+                        'student_id' => $student->id,
+                        'academic_year' => '2025 / 2026',
+                        'term' => $term,
+                        'fee_type' => $type,
+                    ],
+                    [
+                        'amount_due' => $type === 'Tuition Fee' ? $student->tuition_fee : $amount,
+                        'amount_paid' => 0,
+                        'balance' => $type === 'Tuition Fee' ? $student->tuition_fee : $amount,
+                        'status' => 'Unpaid',
+                    ]
+                );
+
+                $paid = min((int) $balance->amount_due, (int) $balance->amount_paid + $amount);
+                $remaining = max(0, (int) $balance->amount_due - $paid);
+                $balance->update([
+                    'amount_paid' => $paid,
+                    'balance' => $remaining,
+                    'status' => $remaining === 0 ? 'Cleared' : 'Partial',
+                ]);
+            }
+
             Payment::updateOrCreate(
                 ['receipt_no' => 'RCPT-260615-' . str_pad((string) ($index + 1), 4, '0', STR_PAD_LEFT)],
                 [
                     'student_id' => $student?->id,
                     'fee_type' => $type,
+                    'academic_year' => '2025 / 2026',
+                    'term' => $term,
                     'amount' => $amount,
+                    'balance_after' => $balance?->balance ?? 0,
                     'method' => $method,
                     'status' => $status,
                     'paid_at' => now()->subDays($index),

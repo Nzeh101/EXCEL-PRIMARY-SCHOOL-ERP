@@ -92,6 +92,7 @@ const iconPaths = {
   "edit": '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
   "eye": '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>',
   "file-chart": '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 18v-4M12 18v-7M16 18v-2"/>',
+  "filter": '<path d="M3 5h18"/><path d="M6 12h12"/><path d="M10 19h4"/>',
   "graduation-cap": '<path d="m22 10-10-5-10 5 10 5z"/><path d="M6 12v5c3 2 9 2 12 0v-5"/><path d="M22 10v6"/>',
   "heart-pulse": '<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8Z"/><path d="M3 12h4l2-3 3 6 2-3h7"/>',
   "id-card": '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M15 9h3M15 13h3M7 16h4"/>',
@@ -235,6 +236,7 @@ let backendData = {
   students: [],
   guardians: [],
   payments: [],
+  balances: [],
   notifications: [],
   messages: [],
   stats: {}
@@ -323,6 +325,158 @@ function showLatestNotifications() {
   });
 }
 
+function modalRoot() {
+  let root = document.getElementById("modal-root");
+  if (!root) {
+    root = document.createElement("div");
+    root.id = "modal-root";
+    document.body.appendChild(root);
+  }
+  return root;
+}
+
+function closeModal() {
+  modalRoot().innerHTML = "";
+}
+
+function openModal(title, body, size = "") {
+  modalRoot().innerHTML = `<div class="modal-backdrop" onclick="if(event.target === this) closeModal();">
+    <section class="modal-card ${size}">
+      <div class="modal-head"><h2>${title}</h2><button class="icon-btn" onclick="closeModal()">${icon("log-out", 16)}</button></div>
+      <div class="modal-body">${body}</div>
+    </section>
+  </div>`;
+}
+
+function actionable(label, iconName, handler = "") {
+  return `<button class="btn ${label.includes("Record") || label.includes("Register") || label.includes("New") ? "primary" : "ghost"}" ${handler}>${icon(iconName)} ${label}</button>`;
+}
+
+function notifyAction(title, body = "This control is now connected to the interface flow.") {
+  showToast(title, body, "success");
+}
+
+function openAcademicYearModal() {
+  openModal("Academic Year", `<div class="modal-grid">
+    ${["2025 / 2026", "2026 / 2027", "2024 / 2025"].map((year) => `<button class="choice-card" onclick="localStorage.setItem('erpAcademicYear','${year}'); closeModal(); showToast('Academic year selected','${year} is now active for filters.','success'); app();"><strong>${year}</strong><span>3 terms configured</span></button>`).join("")}
+  </div>`);
+}
+
+function activeAcademicYear() {
+  return localStorage.getItem("erpAcademicYear") || academicYearLabel();
+}
+
+function openNotificationPanel() {
+  const notices = backendData.notifications?.length ? backendData.notifications : [
+    { title: "No new notifications", body: "New admissions, payments, and approvals will appear here.", type: "info" }
+  ];
+  openModal("Notifications", `<div class="notice-list">${notices.map((notice) => `<article class="notice-row ${notice.type || "info"}"><strong>${notice.title}</strong><p>${notice.body}</p></article>`).join("")}</div>`);
+}
+
+function openFilterModal(label = "Filters") {
+  openModal(label, `<div class="modal-grid">
+    <label><span>Academic Year</span><select><option>${activeAcademicYear()}</option><option>2024 / 2025</option><option>2026 / 2027</option></select></label>
+    <label><span>Term</span><select><option>Term 1</option><option>Term 2</option><option>Term 3</option></select></label>
+    <label><span>Class</span><select><option>All Forms</option><option>Form 1</option><option>Form 2</option><option>Form 3</option><option>Form 4</option></select></label>
+    <button class="btn primary" onclick="closeModal(); notifyAction('Filters applied','The current view has been filtered for your selection.');">${icon("filter")} Apply Filters</button>
+  </div>`);
+}
+
+function openSortModal() {
+  openModal("Sort Records", `<div class="modal-grid">
+    ${["A-Z", "Newest First", "Oldest First", "Highest Balance"].map((sort) => `<button class="choice-card" onclick="closeModal(); notifyAction('Sort applied','${sort} is now selected.');"><strong>${sort}</strong><span>Applies to the current list</span></button>`).join("")}
+  </div>`);
+}
+
+function studentOptions() {
+  const rows = backendData.students || [];
+  if (!rows.length) return `<option value="">Load students first</option>`;
+  return rows.map((student) => `<option value="${student.id}">${student.first_name} ${student.last_name} - ${student.class_name}${student.section || ""}</option>`).join("");
+}
+
+function admissionFormHtml() {
+  return `<form class="record-form modal-form" onsubmit="event.preventDefault(); createAdmission(this);">
+    <label><span>First Name</span><input name="first_name" required placeholder="Student first name"></label>
+    <label><span>Last Name</span><input name="last_name" required placeholder="Student last name"></label>
+    <label><span>Student Type</span><select name="student_type"><option>Day Scholar</option><option>Boarding</option></select></label>
+    <label><span>Class</span><select name="class_name"><option>Form 1</option><option>Form 2</option><option>Form 3</option><option>Form 4</option></select></label>
+    <label><span>Section</span><select name="section"><option>A</option><option>B</option><option>C</option></select></label>
+    <label><span>Gender</span><select name="gender"><option>Female</option><option>Male</option></select></label>
+    <label><span>Joined On</span><input name="joined_on" type="date"></label>
+    <label><span>Parent / Guardian</span><input name="guardian_name" required placeholder="Full name"></label>
+    <label><span>Parent Email</span><input name="guardian_email" type="email" placeholder="name@example.com"></label>
+    <label><span>Parent Phone</span><input name="guardian_phone" placeholder="+265 ..."></label>
+    <p class="form-note">Tuition balances are created automatically for Term 1, Term 2, and Term 3: MWK 120,000 for Day Scholars and MWK 550,000 for Boarding students.</p>
+    <button class="btn primary" type="submit">${icon("user-plus")} Save Admission</button>
+  </form>`;
+}
+
+function openAdmissionModal() {
+  openModal("Register Student", admissionFormHtml(), "wide");
+}
+
+function openParentModal() {
+  openModal("Add Parent", `<form class="record-form modal-form" onsubmit="event.preventDefault(); closeModal(); showToast('Parent saved','Parent details are ready to attach to a student record.','success');">
+    <label><span>Parent Name</span><input required placeholder="Full name"></label>
+    <label><span>Email</span><input type="email" placeholder="parent@example.com"></label>
+    <label><span>Phone</span><input placeholder="+265 ..."></label>
+    <label><span>Student</span><select>${studentOptions()}</select></label>
+    <button class="btn primary" type="submit">${icon("users")} Save Parent</button>
+  </form>`);
+}
+
+function openTeacherModal() {
+  openModal("Add Teacher", `<form class="record-form modal-form" onsubmit="event.preventDefault(); closeModal(); showToast('Teacher saved','Teacher profile is ready for timetable assignment.','success');">
+    <label><span>Name</span><input required placeholder="Teacher full name"></label>
+    <label><span>Subject</span><input required placeholder="Subject"></label>
+    <label><span>Email</span><input type="email" placeholder="teacher@hillside.edu"></label>
+    <label><span>Phone</span><input placeholder="+265 ..."></label>
+    <button class="btn primary" type="submit">${icon("presentation")} Save Teacher</button>
+  </form>`);
+}
+
+function paymentFormHtml() {
+  return `<form class="record-form modal-form" onsubmit="event.preventDefault(); createPayment(this);">
+    <label><span>Student</span><select name="student_id">${studentOptions()}</select></label>
+    <label><span>Fee Type</span><select name="fee_type"><option>Tuition Fee</option><option>Examination Fee</option><option>Trip Fee</option><option>Other Fee</option></select></label>
+    <label><span>Academic Year</span><select name="academic_year"><option>${activeAcademicYear()}</option><option>2024 / 2025</option><option>2026 / 2027</option></select></label>
+    <label><span>Term</span><select name="term"><option>Term 1</option><option>Term 2</option><option>Term 3</option></select></label>
+    <label><span>Amount (MWK)</span><input name="amount" type="number" min="1" value="120000" required></label>
+    <label><span>Method</span><select name="method"><option>Mobile Money</option><option>Cash</option><option>Bank Transfer</option></select></label>
+    <label class="wide-field"><span>Notes</span><input name="notes" placeholder="Optional receipt note"></label>
+    <p class="form-note">When saved, the matching fee balance is deducted and a printable receipt number is generated automatically.</p>
+    <button class="btn primary" type="submit">${icon("receipt")} Record Payment</button>
+  </form>`;
+}
+
+function openPaymentModal() {
+  openModal("Record Payment", paymentFormHtml(), "wide");
+}
+
+function openDetailsModal(title = "Record Details", detail = "School record") {
+  openModal(title, `<div class="detail-card"><span class="soft-icon blue">${icon("eye", 30)}</span><div><h3>${detail}</h3><p class="muted">This preview card is ready for backend detail views, edits, and export history.</p></div></div>`);
+}
+
+function openReceiptModal(receiptNo) {
+  const payment = backendData.payments?.find((item) => item.receipt_no === receiptNo);
+  if (!payment) return openDetailsModal("Receipt", receiptNo);
+  const studentName = payment.student ? `${payment.student.first_name} ${payment.student.last_name}` : "Student";
+  openModal("Payment Receipt", `<div class="receipt-card">
+    ${schoolLogo(false)}
+    <h2>Receipt ${payment.receipt_no}</h2>
+    <dl>
+      <div><dt>Student</dt><dd>${studentName}</dd></div>
+      <div><dt>Fee Type</dt><dd>${payment.fee_type}</dd></div>
+      <div><dt>Academic Year</dt><dd>${payment.academic_year || activeAcademicYear()}</dd></div>
+      <div><dt>Term</dt><dd>${payment.term || "Term 1"}</dd></div>
+      <div><dt>Amount Paid</dt><dd>${money(payment.amount)}</dd></div>
+      <div><dt>Balance After</dt><dd>${money(payment.balance_after || 0)}</dd></div>
+      <div><dt>Method</dt><dd>${payment.method}</dd></div>
+    </dl>
+    <button class="btn primary" onclick="window.print()">${icon("printer")} Print Receipt</button>
+  </div>`, "receipt-modal");
+}
+
 function backendStudentRows() {
   if (!backendData.students?.length) return students;
   return backendData.students.map((student) => [
@@ -354,8 +508,11 @@ function backendPaymentRows() {
     payment.receipt_no,
     payment.student ? `${payment.student.first_name} ${payment.student.last_name}` : "Student",
     payment.fee_type,
+    payment.term || "Term 1",
+    payment.academic_year || activeAcademicYear(),
     payment.student ? `${payment.student.class_name} ${payment.student.section || ""}` : "N/A",
     payment.amount,
+    payment.balance_after || 0,
     payment.method,
     payment.status,
     payment.paid_at ? new Date(payment.paid_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : todayLabel()
@@ -368,6 +525,7 @@ async function createAdmission(form) {
   try {
     await apiRequest("/students", { method: "POST", body: JSON.stringify(payload) });
     form.reset();
+    closeModal();
     showToast("Admission saved", "The student and parent record were added to the school register.", "success");
     await loadBackendData(true);
   } catch (error) {
@@ -381,6 +539,7 @@ async function createPayment(form) {
   try {
     await apiRequest("/payments", { method: "POST", body: JSON.stringify(payload) });
     form.reset();
+    closeModal();
     showToast("Payment recorded", "The receipt has been added to the finance register.", "success");
     await loadBackendData(true);
   } catch (error) {
@@ -465,11 +624,11 @@ function topbar() {
   return `<header class="topbar">
     <div class="search"><input placeholder="Search" /><span class="shortcut">${icon("search", 15)}</span></div>
     <div class="top-actions">
-      <button class="pill">${icon("shield-check", 15)} ${role}</button>
-      <button class="pill">${icon("calendar-days", 15)} Academic Year : ${academicYearLabel()}</button>
+      <button class="pill" onclick="openDetailsModal('Signed in role','${role}')">${icon("shield-check", 15)} ${role}</button>
+      <button class="pill" onclick="openAcademicYearModal()">${icon("calendar-days", 15)} Academic Year : ${activeAcademicYear()}</button>
       <button class="icon-btn" title="${themeLabel}" onclick="toggleTheme()">${icon(themeIcon)}</button>
       <button class="icon-btn" title="Language">MW</button>
-      <button class="icon-btn" title="Notifications">${icon("bell")}</button>
+      <button class="icon-btn" title="Notifications" onclick="openNotificationPanel()">${icon("bell")}</button>
       <a class="icon-btn" href="#/messaging" title="Messages">${icon("messages")}</a>
       <a class="icon-btn logout-btn" href="#/login" title="Logout">${icon("log-out")}</a>
       <span class="avatar small">AD</span>
@@ -541,10 +700,10 @@ function pageHead(title, crumbs = "Dashboard / Admin Dashboard", actions = "") {
 function filters(extra = "") {
   return `<div class="filters">
     ${extra}
-    <button class="pill">${icon("calendar-days", 14)} Batch : 24 May 2025</button>
-    <select class="select"><option>Class</option></select>
-    <select class="select"><option>Section</option></select>
-    <button class="pill">${icon("sort", 14)} Sort By A-Z</button>
+    <button class="pill" onclick="openFilterModal('Batch and Date Filters')">${icon("calendar-days", 14)} Batch : 24 May 2025</button>
+    <select class="select" onchange="notifyAction('Class filter applied', this.value || 'All classes')"><option>Class</option><option>Form 1</option><option>Form 2</option><option>Form 3</option><option>Form 4</option></select>
+    <select class="select" onchange="notifyAction('Section filter applied', this.value || 'All sections')"><option>Section</option><option>A</option><option>B</option><option>C</option></select>
+    <button class="pill" onclick="openSortModal()">${icon("sort", 14)} Sort By A-Z</button>
   </div>`;
 }
 
@@ -557,7 +716,7 @@ function dashboard() {
     ["users", "162", "Total Staff", "Present : 161", "Absent : 02", "amber"],
     ["book-open", "82", "Total Subjects", "Inactive : 81", "Active : 01", "green"]
   ];
-  return `${pageHead("Admin Dashboard", "Dashboard / Admin Dashboard", `<a class="btn primary" href="#/students">${icon("user-plus")} Add New Student</a><a class="btn ghost" href="#/fees">${icon("wallet")} Fees Details</a>`)}
+  return `${pageHead("Admin Dashboard", "Dashboard / Admin Dashboard", `<button class="btn primary" onclick="openAdmissionModal()">${icon("user-plus")} Add New Student</button><a class="btn ghost" href="#/fees">${icon("wallet")} Fees Details</a>`)}
     <section class="school-hero"><div><p class="eyebrow">Hillside Secondary School</p><h2>School operations at a glance</h2><p>Admissions, classes, fees, communication, and reports are ready for today’s work.</p></div><span>${icon("calendar-days", 16)} ${todayLabel()}</span></section>
     <div class="grid metrics">${metrics.map(metricCard).join("")}</div>
     <div class="grid two">
@@ -618,11 +777,12 @@ function financeDashboard() {
     ["receipt", "1,208", "Receipts Issued", "This Term", "Voids : 03", "blue"],
     ["triangle-alert", "214", "Students With Arrears", "Director Review", "Critical : 36", "red"]
   ];
-  return `${pageHead("Finance Dashboard", "Dashboard / Finance", `<a class="btn ghost" href="#/login">${icon("log-out")} Switch Role</a><a class="btn primary" href="#/fees">${icon("receipt")} Record Payment</a>`)}
+  const outstanding = backendData.stats?.balances_outstanding ? money(backendData.stats.balances_outstanding) : "MWK 2,050,050";
+  return `${pageHead("Finance Dashboard", "Dashboard / Finance", `<a class="btn ghost" href="#/login">${icon("log-out")} Switch Role</a><button class="btn primary" onclick="openPaymentModal()">${icon("receipt")} Record Payment</button>`)}
     <section class="finance-overview"><div><p class="eyebrow">Finance Office</p><h2>Fees, receipts, and balances</h2><p>Track Kwacha collections, parent balances, and receipt activity for the current academic year.</p></div><strong>${money(backendData.stats?.payments_total || 2450000)}</strong></section>
     <div class="grid metrics">${metrics.map(metricCard).join("")}</div>
     <div class="stats-strip finance-strip">
-      <div class="money-stack">${moneyCard("banknote", money(backendData.stats?.payments_total || 5050050), "Fees Collected", "green")}${moneyCard("wallet", "MWK 3,050,050", "Pending Fees", "amber")}${moneyCard("triangle-alert", "MWK 2,050,050", "Overdue Payments", "red")}</div>
+      <div class="money-stack">${moneyCard("banknote", money(backendData.stats?.payments_total || 5050050), "Fees Collected", "green")}${moneyCard("wallet", outstanding, "Pending Fees", "amber")}${moneyCard("triangle-alert", outstanding, "Overdue Payments", "red")}</div>
       <section class="card">${cardHead("Collection Trend", `<span class="muted">${icon("calendar-days", 14)} This Month</span>`)}<div class="line-chart"><svg viewBox="0 0 600 220" preserveAspectRatio="none"><path d="M0 140 C80 142, 140 120, 210 92 S330 65, 390 95 S500 150, 600 70" fill="none" stroke="#4263e6" stroke-width="3"/></svg></div></section>
       <div class="grid" style="gap:24px">${progressCard("Tuition Fee", 80, "MWK 3,000,000/2,600,000 Collected", "var(--cyan)")}${progressCard("Activities", 20, "MWK 1,500,000/500,000 Collected", "var(--amber)")}</div>
       <div class="grid" style="gap:24px">${progressCard("Books & Supplies", 63, "MWK 2,500,000/1,000,000 Collected", "var(--blue)")}${progressCard("Miscellaneous", 98, "MWK 500,000/430,000 Collected", "var(--green)")}</div>
@@ -637,8 +797,8 @@ function admissionsDashboard() {
     ["users", "3,420", "Parent Contacts", "Verified : 3,101", "Missing : 67", "amber"],
     ["file-chart", "38", "Pending Documents", "Birth Cert / Transfer", "Urgent : 9", "red"]
   ];
-  return `${pageHead("Admissions Dashboard", "Dashboard / Admissions Officer", `<a class="btn ghost" href="#/login">${icon("log-out")} Switch Role</a><a class="btn primary" href="#/admissions">${icon("user-plus")} New Admission</a>`)}
-    <section class="hero"><div><h2>Admissions Desk</h2><p>Register students, maintain parent details, and keep enrollment records ready for management review.</p></div><p>${icon("refresh")} Enrollment data synced</p></section>
+  return `${pageHead("Admissions Dashboard", "Dashboard / Admissions Officer", `<a class="btn ghost" href="#/login">${icon("log-out")} Switch Role</a><button class="btn primary" onclick="openAdmissionModal()">${icon("user-plus")} New Admission</button>`)}
+    <section class="role-overview admissions-overview"><div><p class="eyebrow">Admissions Desk</p><h2>Register learners without losing the paper trail</h2><p>Student records, parent contacts, transfer documents, and class placement stay together for review.</p></div><strong>${icon("refresh", 16)} Synced</strong></section>
     <div class="grid metrics">${metrics.map(metricCard).join("")}</div>
     <div class="grid two">
       <section class="card">${cardHead("Admissions by Class", `<span class="muted">${icon("calendar-days", 14)} This Year</span>`)}${bars()}</section>
@@ -657,7 +817,7 @@ function examsDashboard() {
     ["triangle-alert", "18", "Eligibility Holds", "Fees / Records", "Critical : 6", "red"]
   ];
   return `${pageHead("Exams Dashboard", "Dashboard / Exams Officer", `<a class="btn ghost" href="#/login">${icon("log-out")} Switch Role</a><a class="btn primary" href="#/exam-export">${icon("download")} Export Lists</a>`)}
-    <section class="hero"><div><h2>Examinations Office</h2><p>Prepare candidate lists, confirm eligibility, and export exam records for each class.</p></div><p>${icon("clipboard-check")} Eligibility rules active</p></section>
+    <section class="role-overview exams-overview"><div><p class="eyebrow">Examinations Office</p><h2>Eligibility, candidate lists, and exports</h2><p>Track Form 1 to Form 4 exam readiness, fee clearance, holds, and generated lists by term.</p></div><strong>${icon("clipboard-check", 16)} Rules active</strong></section>
     <div class="grid metrics">${metrics.map(metricCard).join("")}</div>
     <div class="grid two">
       <section class="card">${cardHead("Candidate Trend", `<span class="muted">${academicYearLabel()}</span>`)}${bars()}</section>
@@ -724,7 +884,8 @@ function quickLinks() {
 function directoryPage(type) {
   const title = type[0].toUpperCase() + type.slice(1);
   const rows = type === "students" ? backendStudentRows() : type === "parents" ? backendParentRows() : teachers;
-  return `${pageHead(title, `Dashboard / Peoples / ${title}`, `${tableActions()}<button class="btn primary">${icon("user-plus")} Add ${title.slice(0, -1)}</button>`)}
+  const addHandler = type === "students" ? "openAdmissionModal()" : type === "parents" ? "openParentModal()" : "openTeacherModal()";
+  return `${pageHead(title, `Dashboard / Peoples / ${title}`, `${tableActions()}<button class="btn primary" onclick="${addHandler}">${icon("user-plus")} Add ${title.slice(0, -1)}</button>`)}
     <section class="section-panel">
       <div class="section-toolbar"><h2>${title} Grid</h2>${filters("")}</div>
       <div class="section-body">
@@ -741,7 +902,7 @@ function studentCard(row, index) {
     <div class="profile-id"><span>${row[0]}</span><strong>⋮</strong></div>
     <div class="profile-main"><span class="avatar">${initials(row[1])}</span><div><strong>${row[1]}</strong><br><span>${row[2]}</span></div></div>
     <div class="profile-fields"><div><div class="field-label">Roll No</div>${row[3]}</div><div><div class="field-label">Gender</div>${row[4]}</div><div><div class="field-label">Joined On</div>${row[5]}</div></div>
-    <div class="card-foot"><button class="tiny-btn">${icon("messages")}</button><button class="tiny-btn">${icon("phone")}</button><button class="tiny-btn">${icon("messages")}</button></div>
+    <div class="card-foot"><button class="tiny-btn" onclick="openDetailsModal('Student Details','${row[1]} - ${row[2]}')">${icon("eye")}</button><button class="tiny-btn" onclick="openDetailsModal('Call Parent','${row[1]}')">${icon("phone")}</button><button class="tiny-btn" onclick="location.hash='#/messaging'">${icon("messages")}</button></div>
   </article>`;
 }
 
@@ -750,7 +911,7 @@ function parentCard(row, index) {
     <div class="profile-id"><span>${row[0]}</span><strong>⋮</strong></div>
     <div class="profile-main"><span class="avatar">${initials(row[1])}</span><div><strong>${row[1]}</strong><br><span>${row[2]}</span></div></div>
     <div class="profile-fields"><div><div class="field-label">Email</div>${row[3]}</div><div><div class="field-label">Phone</div>${row[4]}</div></div>
-    <div class="card-foot"><span class="avatar small">${initials(row[5])}</span><span>${row[5]} ${row[6]}</span><button class="btn ghost" style="margin-left:auto">View Details</button></div>
+    <div class="card-foot"><span class="avatar small">${initials(row[5])}</span><span>${row[5]} ${row[6]}</span><button class="btn ghost" style="margin-left:auto" onclick="openDetailsModal('Parent Details','${row[1]} - ${row[3]}')">View Details</button></div>
   </article>`;
 }
 
@@ -759,7 +920,7 @@ function teacherCard(row, index) {
     <div class="profile-id"><span>${row[0]}</span><span class="badge ${row[6] === "Present" ? "green" : "red"}">• ${row[6]}</span><strong>⋮</strong></div>
     <div class="profile-main"><span class="avatar">${initials(row[1])}</span><div><strong>${row[1]}</strong><br><span>${row[2]}</span></div></div>
     <div class="profile-fields"><div><div class="field-label">Email</div>${row[3]}</div><div><div class="field-label">Phone</div>${row[4]}</div></div>
-    <div class="card-foot"><span class="badge red">${row[5]}</span><button class="btn ghost" style="margin-left:auto">View Details</button></div>
+    <div class="card-foot"><span class="badge red">${row[5]}</span><button class="btn ghost" style="margin-left:auto" onclick="openDetailsModal('Teacher Details','${row[1]} - ${row[5]}')">View Details</button></div>
   </article>`;
 }
 
@@ -779,7 +940,9 @@ function feesPage() {
       <div class="section-toolbar"><h2>Record Payment</h2><span class="muted">Saved to the finance register</span></div>
       <form class="record-form" onsubmit="event.preventDefault(); createPayment(this);">
         <label><span>Student</span><select name="student_id">${(backendData.students || []).map((student) => `<option value="${student.id}">${student.first_name} ${student.last_name} - ${student.class_name}${student.section || ""}</option>`).join("")}<option value="">General payment</option></select></label>
-        <label><span>Fee Type</span><select name="fee_type"><option>Tuition Fee</option><option>Activities Fee</option><option>Books & Supplies</option><option>Transport Fee</option></select></label>
+        <label><span>Fee Type</span><select name="fee_type"><option>Tuition Fee</option><option>Examination Fee</option><option>Trip Fee</option><option>Other Fee</option></select></label>
+        <label><span>Academic Year</span><select name="academic_year"><option>${activeAcademicYear()}</option><option>2024 / 2025</option><option>2026 / 2027</option></select></label>
+        <label><span>Term</span><select name="term"><option>Term 1</option><option>Term 2</option><option>Term 3</option></select></label>
         <label><span>Amount (MWK)</span><input name="amount" type="number" min="1" value="250000" required></label>
         <label><span>Method</span><select name="method"><option>Mobile Money</option><option>Cash</option><option>Bank Transfer</option></select></label>
         <button class="btn primary" type="submit">${icon("receipt")} Save Payment</button>
@@ -803,8 +966,8 @@ function progressCard(title, value, detail, color) {
 function feesTable() {
   const liveRows = backendPaymentRows();
   if (liveRows) {
-    return `<table><thead><tr><th>□</th><th>Receipt</th><th>Student</th><th>Fee Type</th><th>Class</th><th>Amount</th><th>Payment Mode</th><th>Paid On</th><th>Status</th><th>Action</th></tr></thead><tbody>
-      ${liveRows.map((row) => `<tr><td>□</td><td><a>${row[0]}</a></td><td>${row[1]}</td><td>${row[2]}</td><td>${row[3]}</td><td>${money(row[4])}</td><td>${row[5]}</td><td>${row[7]}</td><td><span class="badge ${statusClass(row[6])}">• ${row[6]}</span></td><td>${actionIcons()}</td></tr>`).join("")}
+    return `<table><thead><tr><th>□</th><th>Receipt</th><th>Student</th><th>Fee Type</th><th>Term</th><th>Class</th><th>Amount</th><th>Balance After</th><th>Payment Mode</th><th>Paid On</th><th>Status</th><th>Action</th></tr></thead><tbody>
+      ${liveRows.map((row) => `<tr><td>□</td><td><a onclick="openReceiptModal('${row[0]}')">${row[0]}</a></td><td>${row[1]}</td><td>${row[2]}</td><td>${row[3]}</td><td>${row[5]}</td><td>${money(row[6])}</td><td>${money(row[7])}</td><td>${row[8]}</td><td>${row[10]}</td><td><span class="badge ${statusClass(row[9])}">• ${row[9]}</span></td><td><span class="row-tools"><button class="icon-mini" onclick="openReceiptModal('${row[0]}')" title="Receipt">${icon("receipt", 16)}</button><button class="icon-mini" onclick="window.print()" title="Print">${icon("printer", 16)}</button></span></td></tr>`).join("")}
     </tbody></table>`;
   }
   return `<table><thead><tr><th>□</th><th>ID</th><th>Student Name</th><th>Fees Type</th><th>Class</th><th>Tuition Fee</th><th>Activities Fee</th><th>Miscellaneous</th><th>Discount / Scholarship</th><th>Adjustment / Refund</th><th>Total Amount</th><th>Total Amount</th><th>Payment Mode</th><th>Status</th><th>Action</th></tr></thead><tbody>
@@ -1082,7 +1245,7 @@ function examCandidatesTable() {
 }
 
 function admissionsPage() {
-  return `${pageHead("Admissions Register", "Dashboard / Admissions / Admissions Register", `<button class="btn primary">${icon("user-plus")} New Admission</button>`)}
+  return `${pageHead("Admissions Register", "Dashboard / Admissions / Admissions Register", `<button class="btn primary" onclick="openAdmissionModal()">${icon("user-plus")} New Admission</button>`)}
     <div class="report-metrics">
       ${circleMetric(String(backendData.stats?.students || 284), "New Applications", academicYearLabel(), "blue")}
       ${circleMetric("238", "Approved", "Ready to enroll", "green")}
@@ -1094,6 +1257,7 @@ function admissionsPage() {
       <form class="record-form" onsubmit="event.preventDefault(); createAdmission(this);">
         <label><span>First Name</span><input name="first_name" required placeholder="Student first name"></label>
         <label><span>Last Name</span><input name="last_name" required placeholder="Student last name"></label>
+        <label><span>Student Type</span><select name="student_type"><option>Day Scholar</option><option>Boarding</option></select></label>
         <label><span>Class</span><select name="class_name"><option>Form 1</option><option>Form 2</option><option>Form 3</option><option>Form 4</option></select></label>
         <label><span>Section</span><select name="section"><option>A</option><option>B</option><option>C</option></select></label>
         <label><span>Gender</span><select name="gender"><option>Female</option><option>Male</option></select></label>
@@ -1108,6 +1272,29 @@ function admissionsPage() {
 }
 
 function balancesPage(kind) {
+  if (["student-balances", "arrears"].includes(kind) && backendData.balances?.length) {
+    const allRows = backendData.balances
+      .filter((balance) => kind === "student-balances" || Number(balance.balance) > 0)
+      .map((balance) => [
+        `BAL-${String(balance.id).padStart(4, "0")}`,
+        balance.student ? `${balance.student.first_name} ${balance.student.last_name}` : "Student",
+        balance.student ? `${balance.student.class_name} ${balance.student.section || ""}` : "N/A",
+        `${balance.fee_type} / ${balance.term}`,
+        money(balance.amount_due),
+        money(balance.amount_paid),
+        money(balance.balance),
+        balance.status,
+      ]);
+    const title = kind === "arrears" ? "Arrears" : "Student Balances";
+    return `${pageHead(title, `Dashboard / Fees & Accounts / ${title}`, tableActions())}
+      <section class="section-panel">
+        <div class="section-toolbar"><h2>${kind === "arrears" ? "Outstanding Balances" : "Balance Summary"}</h2><div class="filters"><button class="pill" onclick="openAcademicYearModal()">${icon("calendar-days", 14)} ${activeAcademicYear()}</button><button class="pill" onclick="openFilterModal('Balance Filters')">${icon("filter", 14)} Filter</button><button class="pill" onclick="openSortModal()">${icon("sort", 14)} Sort By A-Z</button></div></div>
+        ${tableSearch()}
+        <div class="table-wrap"><table><thead><tr><th>ID</th><th>Student</th><th>Class</th><th>Fee / Term</th><th>Due</th><th>Paid</th><th>Balance</th><th>Status</th><th>Action</th></tr></thead><tbody>
+          ${allRows.map((row) => `<tr><td><a>${row[0]}</a></td><td>${row[1]}</td><td>${row[2]}</td><td>${row[3]}</td><td>${row[4]}</td><td>${row[5]}</td><td><strong>${row[6]}</strong></td><td><span class="badge ${statusClass(row[7])}">• ${row[7]}</span></td><td>${actionIcons()}</td></tr>`).join("")}
+        </tbody></table></div>${pagination()}
+      </section>`;
+  }
   const map = {
     receipts: ["Receipts", "Fees & Accounts / Receipts", "Receipt Register", [["RCPT-7821", "Roshni Negi", "Tuition Fee", "MWK 5,550", "Online", "Approved"], ["RCPT-7820", "Akash Rawat", "Tuition Fee", "MWK 5,950", "Mobile Money", "Approved"], ["RCPT-7819", "Vivaan Mehta", "Activities", "MWK 3,800", "Cash", "Pending"], ["RCPT-7818", "Riya Verma", "Monthly Fee", "MWK 3,630", "Mobile Money", "Approved"]]],
     "student-balances": ["Student Balances", "Fees & Accounts / Student Balances", "Balance Summary", [["BAL-1001", "Roshni Negi", "III A", "MWK 0", "Cleared", "Ready"], ["BAL-1002", "Akash Rawat", "IV B", "MWK 1,250", "Partial", "Pending"], ["BAL-1003", "Aarav Sharma", "III A", "MWK 0", "Cleared", "Ready"], ["BAL-1004", "Vivaan Mehta", "I B", "MWK 4,300", "Arrears", "Review"]]],
@@ -1247,17 +1434,21 @@ function actionIcons() {
     "Teacher": ["eye"]
   };
   const actions = actionsByRole[role] || ["eye"];
-  return `<span class="row-tools">${actions.map((name) => icon(name)).join(" ")}</span>`;
+  return `<span class="row-tools">${actions.map((name) => {
+    const handler = name === "receipt" ? "openPaymentModal()" : name === "download" ? "notifyAction('Export prepared','The selected record is ready for download.')" : name === "trash" ? "notifyAction('Delete requires approval','The delete request has been logged.')" : `openDetailsModal('${labelForRoute(route())} Details','Selected school record')`;
+    return `<button class="icon-mini" onclick="${handler}" title="${name}">${icon(name, 16)}</button>`;
+  }).join("")}</span>`;
 }
 
 function tableActions() {
   const role = currentRole();
-  if (role === "Teacher") return `<button class="icon-btn" title="Refresh">${icon("refresh")}</button><button class="btn ghost">${icon("eye")} View Only</button>`;
-  if (role === "Finance Officer") return `<button class="icon-btn" title="Refresh">${icon("refresh")}</button><button class="icon-btn" title="Print">${icon("printer")}</button><button class="btn ghost">${icon("download")} Export</button><button class="btn primary">${icon("receipt")} Record Payment</button>`;
-  if (role === "Admissions Officer") return `<button class="icon-btn" title="Refresh">${icon("refresh")}</button><button class="btn ghost">${icon("download")} Export</button><button class="btn primary">${icon("user-plus")} Register Student</button>`;
-  if (role === "Exams Officer") return `<button class="icon-btn" title="Refresh">${icon("refresh")}</button><button class="btn ghost">${icon("download")} Export</button><button class="btn primary">${icon("file-chart")} Generate List</button>`;
-  if (role === "Director") return `<button class="icon-btn" title="Refresh">${icon("refresh")}</button><button class="icon-btn" title="Print">${icon("printer")}</button><button class="btn ghost">${icon("download")} Export</button><button class="btn primary">${icon("shield-check")} Review</button>`;
-  return `<button class="icon-btn" title="Refresh">${icon("refresh")}</button><button class="icon-btn" title="Print">${icon("printer")}</button><button class="btn ghost">${icon("download")} Export</button>`;
+  const common = `<button class="icon-btn" title="Refresh" onclick="loadBackendData(true); showToast('Refreshed','Latest school records loaded.','success')">${icon("refresh")}</button>`;
+  if (role === "Teacher") return `${common}<button class="btn ghost" onclick="openDetailsModal('Teacher Workspace','View only access for assigned classes')">${icon("eye")} View Only</button>`;
+  if (role === "Finance Officer") return `${common}<button class="icon-btn" title="Print" onclick="window.print()">${icon("printer")}</button><button class="btn ghost" onclick="notifyAction('Export prepared','Finance records are ready for download.')">${icon("download")} Export</button><button class="btn primary" onclick="openPaymentModal()">${icon("receipt")} Record Payment</button>`;
+  if (role === "Admissions Officer") return `${common}<button class="btn ghost" onclick="notifyAction('Export prepared','Admissions register is ready for download.')">${icon("download")} Export</button><button class="btn primary" onclick="openAdmissionModal()">${icon("user-plus")} Register Student</button>`;
+  if (role === "Exams Officer") return `${common}<button class="btn ghost" onclick="notifyAction('Export prepared','Candidate lists are ready for download.')">${icon("download")} Export</button><button class="btn primary" onclick="notifyAction('Exam list generated','A candidate list was generated for the selected class.')">${icon("file-chart")} Generate List</button>`;
+  if (role === "Director") return `${common}<button class="icon-btn" title="Print" onclick="window.print()">${icon("printer")}</button><button class="btn ghost" onclick="notifyAction('Export prepared','Leadership report is ready for download.')">${icon("download")} Export</button><button class="btn primary" onclick="openDetailsModal('Director Review','Approval queue and audit items')">${icon("shield-check")} Review</button>`;
+  return `${common}<button class="icon-btn" title="Print" onclick="window.print()">${icon("printer")}</button><button class="btn ghost" onclick="notifyAction('Export prepared','The current report is ready for download.')">${icon("download")} Export</button>`;
 }
 
 function tableSearch() {

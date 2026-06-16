@@ -516,7 +516,8 @@ button {
 }
 
 .school-hero,
-.finance-overview {
+.finance-overview,
+.role-overview {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -532,27 +533,31 @@ button {
 }
 
 :root[data-theme="dark"] .school-hero,
-:root[data-theme="dark"] .finance-overview {
+:root[data-theme="dark"] .finance-overview,
+:root[data-theme="dark"] .role-overview {
   background:
     linear-gradient(135deg, rgba(21, 28, 45, 0.94), rgba(29, 38, 56, 0.9)),
     url("/erp/assets/hillside-cover.png") center / cover;
 }
 
 .school-hero h2,
-.finance-overview h2 {
+.finance-overview h2,
+.role-overview h2 {
   margin: 0 0 8px;
   font-size: 30px;
 }
 
 .school-hero p,
-.finance-overview p {
+.finance-overview p,
+.role-overview p {
   max-width: 680px;
   margin: 0;
   color: var(--muted);
 }
 
 .school-hero > span,
-.finance-overview > strong {
+.finance-overview > strong,
+.role-overview > strong {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -562,6 +567,25 @@ button {
   border-radius: var(--radius);
   background: var(--panel);
   color: var(--text);
+}
+
+.admissions-overview {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(232, 250, 234, 0.88)),
+    url("/erp/assets/hillside-student-hero.png") right bottom / auto 150% no-repeat;
+}
+
+.exams-overview {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(237, 242, 255, 0.9)),
+    url("/erp/assets/hillside-cover.png") center / cover;
+}
+
+:root[data-theme="dark"] .admissions-overview,
+:root[data-theme="dark"] .exams-overview {
+  background:
+    linear-gradient(135deg, rgba(21, 28, 45, 0.96), rgba(29, 38, 56, 0.9)),
+    url("/erp/assets/hillside-student-hero.png") right bottom / auto 150% no-repeat;
 }
 
 .compact-form {
@@ -1294,6 +1318,22 @@ th {
   color: var(--text);
 }
 
+.icon-mini {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: var(--panel);
+  color: var(--text);
+}
+
+.icon-mini:hover {
+  border-color: var(--blue);
+  color: var(--blue);
+}
+
 .timetable-page {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 420px;
@@ -1441,8 +1481,8 @@ th {
 
 .messaging-layout {
   display: grid;
-  grid-template-columns: 360px minmax(0, 1fr);
-  min-height: calc(100vh - 245px);
+  grid-template-columns: 330px minmax(0, 1fr);
+  min-height: calc(100vh - 285px);
 }
 
 .chat-list {
@@ -1481,7 +1521,7 @@ th {
   display: grid;
   grid-template-columns: 42px minmax(0, 1fr);
   gap: 14px;
-  padding: 18px 26px;
+  padding: 15px 22px;
   border-bottom: 1px solid var(--line);
   background: var(--panel);
 }
@@ -1499,7 +1539,7 @@ th {
 
 .chat-window {
   display: grid;
-  grid-template-rows: 64px minmax(360px, 65vh) 60px;
+  grid-template-rows: 64px minmax(320px, 58vh) 60px;
   border-left: 0;
   border-radius: 0 var(--radius) var(--radius) 0;
   box-shadow: none;
@@ -1521,7 +1561,7 @@ th {
 .bubble-row {
   display: flex;
   flex-direction: column;
-  max-width: 340px;
+  max-width: 320px;
   margin-bottom: 18px;
 }
 
@@ -1688,12 +1728,30 @@ th {
   padding: 48px;
   color: #fff;
   background:
-    linear-gradient(105deg, rgba(8, 14, 31, 0.9), rgba(13, 25, 55, 0.76) 58%, rgba(13, 25, 55, 0.52)),
-    url("/erp/assets/hillside-cover.png") center / cover;
+    radial-gradient(circle at 82% 24%, rgba(92, 199, 209, 0.24), transparent 0 18%, transparent 34%),
+    linear-gradient(105deg, rgba(8, 14, 31, 0.96), rgba(13, 25, 55, 0.86) 52%, rgba(13, 25, 55, 0.62)),
+    #101a37;
+}
+
+.login-brand-panel::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  right: -4%;
+  bottom: 0;
+  width: min(54vw, 760px);
+  height: 78%;
+  background: url("/erp/assets/hillside-student-hero.png") right bottom / contain no-repeat;
+  opacity: 0.82;
 }
 
 .login-brand-panel::after {
-  content: none;
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: linear-gradient(90deg, rgba(8, 14, 31, 0.1), rgba(8, 14, 31, 0.58) 58%, rgba(8, 14, 31, 0.2));
+  pointer-events: none;
 }
 
 .login-brand,
@@ -1948,6 +2006,168 @@ th {
   color: var(--muted);
 }
 
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 400;
+  display: grid;
+  place-items: center;
+  padding: 22px;
+  background: rgba(6, 10, 22, 0.52);
+  backdrop-filter: blur(8px);
+}
+
+.modal-card {
+  width: min(720px, 100%);
+  max-height: min(88vh, 900px);
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel);
+  color: var(--text);
+  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.28);
+}
+
+.modal-card.wide {
+  width: min(960px, 100%);
+}
+
+.modal-card.receipt-modal {
+  width: min(560px, 100%);
+}
+
+.modal-head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--line);
+  background: var(--panel);
+}
+
+.modal-head h2 {
+  margin: 0;
+  font-size: 22px;
+}
+
+.modal-body {
+  padding: 22px;
+}
+
+.modal-form {
+  grid-template-columns: repeat(3, minmax(160px, 1fr));
+  padding: 0;
+}
+
+.modal-form .wide-field,
+.modal-form .form-note {
+  grid-column: 1 / -1;
+}
+
+.form-note {
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--blue-soft);
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.modal-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.modal-grid label {
+  display: grid;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.modal-grid select {
+  height: 42px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+  color: var(--text);
+  padding: 0 12px;
+}
+
+.choice-card,
+.notice-row,
+.detail-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 72px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--text);
+  text-align: left;
+}
+
+.choice-card {
+  display: grid;
+}
+
+.choice-card span,
+.notice-row p {
+  color: var(--muted);
+  margin: 0;
+}
+
+.notice-list {
+  display: grid;
+  gap: 12px;
+}
+
+.receipt-card {
+  display: grid;
+  gap: 18px;
+}
+
+.receipt-card .school-logo {
+  width: 220px;
+  margin: 0 auto;
+}
+
+.receipt-card h2 {
+  text-align: center;
+  margin: 0;
+}
+
+.receipt-card dl {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+}
+
+.receipt-card dl div {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.receipt-card dt {
+  color: var(--muted);
+}
+
+.receipt-card dd {
+  margin: 0;
+  font-weight: 800;
+}
+
 @media (max-width: 1380px) {
   .grid.metrics,
   .directory,
@@ -1989,6 +2209,11 @@ th {
   .login-brand-panel {
     min-height: 520px;
     padding: 28px;
+  }
+
+  .login-brand-panel::before {
+    width: 80vw;
+    opacity: 0.5;
   }
 
   .login-form-panel {
@@ -2087,9 +2312,15 @@ th {
   }
 
   .school-hero,
-  .finance-overview {
+  .finance-overview,
+  .role-overview {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .modal-grid,
+  .modal-form {
+    grid-template-columns: 1fr;
   }
 
   .toast-stack {
