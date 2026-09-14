@@ -9,99 +9,35 @@ use App\Models\Student;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Validation\ValidationException;
 
-function erpAcademicYear(): string
-{
-    $year = (int) now()->format('Y');
-    $start = (int) now()->format('n') >= 9 ? $year : $year - 1;
-
-    return $start . ' / ' . ($start + 1);
-}
-
-function erpTuitionForType(string $studentType): int
-{
-    return strcasecmp($studentType, 'Boarding') === 0 ? 550000 : 120000;
-}
-
-function erpEnsureFeeBalance(Student $student, string $feeType, string $term, string $academicYear, ?int $amountDue = null): FeeBalance
-{
-    $due = $amountDue ?? ($feeType === 'Tuition Fee' ? (int) $student->tuition_fee : 0);
-
-    return FeeBalance::firstOrCreate(
-        [
-            'student_id' => $student->id,
-            'academic_year' => $academicYear,
-            'term' => $term,
-            'fee_type' => $feeType,
-        ],
-        [
-            'amount_due' => $due,
-            'amount_paid' => 0,
-            'balance' => $due,
-            'status' => $due > 0 ? 'Unpaid' : 'Open',
-        ]
-    );
-}
+require_once app_path('Services/erp_helpers.php');
 
 Route::get('/', function () {
-    return view('erp');
+    return response()
+        ->view('erp')
+        ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+        ->header('Pragma', 'no-cache');
 });
 
-Route::prefix('erp-api')->group(function () {
-    Route::get('/bootstrap', function () {
-        $students = Student::query()
-            ->with(['guardian', 'feeBalances'])
-            ->latest()
-            ->limit(50)
-            ->get();
+Route::prefix('erp-api')->middleware(\App\Http\Middleware\RequireErpLogin::class)->group(function () {
+    Route::get('/inbox', fn (Request $request) => \App\Services\ApprovalInbox::data($request->user()));
 
-        $guardians = Guardian::query()
-            ->with('student')
-            ->latest()
-            ->limit(50)
-            ->get();
+    Route::post('/notifications/mark-read', function (Request $request) {
+        $ids = $request->validate(['ids' => ['required', 'array'], 'ids.*' => ['integer']])['ids'];
+        \App\Services\ApprovalInbox::notices($request->user())->whereIn('id', $ids)->whereNull('read_at')->update(['read_at' => now()]);
 
-        $payments = Payment::query()
-            ->with('student')
-            ->latest('paid_at')
-            ->limit(50)
-            ->get();
+        return response()->json(['ok' => true, 'unread' => \App\Services\ApprovalInbox::notices($request->user())->whereNull('read_at')->count()]);
+    });
 
-        $balances = FeeBalance::query()
-            ->with('student')
-            ->orderBy('academic_year')
-            ->orderBy('term')
-            ->limit(200)
-            ->get();
+    Route::get('/bootstrap', function (Request $request, \App\Services\PeriodData $data) {
+        $period = erpSelectedPeriod($request);
+        return $data->bootstrap($period['academic_year'], $period['term']);
+    });
 
-        $notifications = SchoolNotification::query()
-            ->latest()
-            ->limit(8)
-            ->get();
-
-        $messages = Message::query()
-            ->orderBy('sent_at')
-            ->limit(80)
-            ->get();
-
-        return response()->json([
-            'students' => $students,
-            'guardians' => $guardians,
-            'payments' => $payments,
-            'balances' => $balances,
-            'notifications' => $notifications,
-            'messages' => $messages,
-            'stats' => [
-                'students' => Student::count(),
-                'guardians' => Guardian::count(),
-                'payments_total' => Payment::sum('amount'),
-                'payments_today' => Payment::query()->whereDate('paid_at', now()->toDateString())->sum('amount'),
-                'balances_due' => FeeBalance::sum('amount_due'),
-                'balances_outstanding' => FeeBalance::sum('balance'),
-                'pending_notifications' => SchoolNotification::query()->whereNull('read_at')->count(),
-            ],
-            'server_date' => now()->toDateString(),
-        ]);
+    Route::get('/dashboards/finance', function (Request $request, \App\Services\PeriodData $data) {
+        $period = erpSelectedPeriod($request);
+        return $data->bootstrap($period['academic_year'], $period['term'])['finance_dashboard'];
     });
 
     Route::post('/students', function (Request $request) {
@@ -109,109 +45,224 @@ Route::prefix('erp-api')->group(function () {
             'first_name' => ['required', 'string', 'max:100'],
             'last_name' => ['required', 'string', 'max:100'],
             'class_name' => ['required', 'string', 'max:40'],
-            'section' => ['nullable', 'string', 'max:20'],
-            'student_type' => ['nullable', 'in:Day Scholar,Boarding'],
+            'student_type' => ['required', 'in:Preschool,Primary'],
             'gender' => ['nullable', 'string', 'max:30'],
             'joined_on' => ['nullable', 'date'],
-            'guardian_name' => ['required', 'string', 'max:160'],
+            'guardian_name' => ['nullable', 'string', 'max:160'],
             'guardian_email' => ['nullable', 'email', 'max:160'],
             'guardian_phone' => ['nullable', 'string', 'max:60'],
             'created_by_role' => ['nullable', 'string', 'max:80'],
         ]);
 
         $student = DB::transaction(function () use ($data) {
-            $studentType = $data['student_type'] ?? 'Day Scholar';
+            DB::table('academic_state')->where('id', 1)->lockForUpdate()->first();
+            if (DB::table('class_promotions')->where('from_year', erpAcademicYear())->exists()) throw ValidationException::withMessages(['class_name' => 'Complete the remaining class promotions before admitting students to the new year.']);
+            $studentType = $data['student_type'];
+            $allowedClasses = $studentType === 'Preschool'
+                ? ['Nursery', 'Reception']
+                : array_map(fn (int $standard) => "Standard {$standard}", range(1, 8));
+
+            if (! in_array($data['class_name'], $allowedClasses, true)) {
+                throw ValidationException::withMessages([
+                    'class_name' => "The selected class is not available for {$studentType} students.",
+                ]);
+            }
             $tuitionFee = erpTuitionForType($studentType);
             $student = Student::create([
-                'admission_no' => 'ADM-' . now()->format('Y') . '-' . str_pad((string) (Student::count() + 1), 4, '0', STR_PAD_LEFT),
+                'admission_no' => \App\Services\AdmissionNumber::next((int) substr($data['joined_on'] ?? now()->toDateString(), 0, 4)),
+                'admission_year' => (int) substr($data['joined_on'] ?? now()->toDateString(), 0, 4),
+                'academic_year' => erpAcademicYear(),
                 'first_name' => $data['first_name'],
                 'last_name' => $data['last_name'],
                 'class_name' => $data['class_name'],
-                'section' => $data['section'] ?? null,
+                'section' => null,
                 'student_type' => $studentType,
                 'tuition_fee' => $tuitionFee,
                 'gender' => $data['gender'] ?? null,
                 'joined_on' => $data['joined_on'] ?? now()->toDateString(),
-                'status' => 'Submitted',
+                'status' => ($data['created_by_role'] ?? null) === 'Director' ? 'Approved' : 'Pending Approval',
                 'created_by_role' => $data['created_by_role'] ?? null,
             ]);
 
-            Guardian::create([
-                'student_id' => $student->id,
-                'name' => $data['guardian_name'],
-                'email' => $data['guardian_email'] ?? null,
-                'phone' => $data['guardian_phone'] ?? null,
-            ]);
-
-            foreach (['Term 1', 'Term 2', 'Term 3'] as $term) {
-                erpEnsureFeeBalance($student, 'Tuition Fee', $term, erpAcademicYear(), $tuitionFee);
-            }
-
-            SchoolNotification::create([
-                'title' => 'New admission received',
-                'body' => $student->first_name . ' ' . $student->last_name . ' has been registered for ' . $student->class_name . '.',
-                'type' => 'success',
-                'target_role' => 'Admissions Officer',
-            ]);
-
-            return $student->load('guardian');
-        });
-
-        return response()->json(['student' => $student], 201);
-    });
-
-    Route::post('/payments', function (Request $request) {
-        $data = $request->validate([
-            'student_id' => ['nullable', 'exists:students,id'],
-            'fee_type' => ['required', 'string', 'max:100'],
-            'academic_year' => ['nullable', 'string', 'max:30'],
-            'term' => ['nullable', 'string', 'max:30'],
-            'amount' => ['required', 'integer', 'min:1'],
-            'method' => ['required', 'string', 'max:80'],
-            'status' => ['nullable', 'string', 'max:40'],
-            'notes' => ['nullable', 'string', 'max:500'],
-        ]);
-
-        $payment = DB::transaction(function () use ($data) {
-            $student = Student::find($data['student_id'] ?? Student::query()->value('id'));
-            $academicYear = $data['academic_year'] ?? erpAcademicYear();
-            $term = $data['term'] ?? 'Term 1';
-            $feeType = $data['fee_type'];
-            $balance = $student ? erpEnsureFeeBalance($student, $feeType, $term, $academicYear, $feeType === 'Tuition Fee' ? (int) $student->tuition_fee : (int) $data['amount']) : null;
-
-            if ($balance) {
-                $paid = (int) $balance->amount_paid + (int) $data['amount'];
-                $remaining = max(0, (int) $balance->amount_due - $paid);
-                $balance->update([
-                    'amount_paid' => $paid,
-                    'balance' => $remaining,
-                    'status' => $remaining === 0 ? 'Cleared' : 'Partial',
+            if (filled($data['guardian_name'] ?? null) || filled($data['guardian_email'] ?? null) || filled($data['guardian_phone'] ?? null)) {
+                Guardian::create([
+                    'student_id' => $student->id,
+                    'name' => $data['guardian_name'] ?: 'Guardian details pending',
+                    'email' => $data['guardian_email'] ?? null,
+                    'phone' => $data['guardian_phone'] ?? null,
                 ]);
             }
 
-            return Payment::create([
-                'student_id' => $student?->id,
-                'receipt_no' => 'RCPT-' . now()->format('ymd') . '-' . str_pad((string) (Payment::count() + 1), 4, '0', STR_PAD_LEFT),
-                'fee_type' => $feeType,
-                'academic_year' => $academicYear,
-                'term' => $term,
-                'amount' => $data['amount'],
-                'balance_after' => $balance?->balance ?? 0,
-                'method' => $data['method'],
-                'status' => $data['status'] ?? 'Paid',
-                'paid_at' => now(),
-                'notes' => $data['notes'] ?? null,
-            ])->load('student');
+            \App\Services\AcademicPeriod::enroll($student, erpAcademicYear(), \App\Services\AcademicPeriod::current()->current_term);
+
+            $needsApproval = $student->status === 'Pending Approval';
+            SchoolNotification::create([
+                'title' => $needsApproval ? 'Admission approval required' : 'New admission received',
+                'body' => $student->first_name . ' ' . $student->last_name . ' was registered by ' . ($student->created_by_role ?: 'school staff') . ' for ' . $student->class_name . ($needsApproval ? ' and is waiting for Director approval.' : '.'),
+                'type' => $needsApproval ? 'warning' : 'success',
+                'target_role' => $needsApproval ? 'Director' : null,
+            ]);
+
+            if ($needsApproval) {
+                SchoolNotification::create(['title' => 'Admission recorded — waiting for Director approval', 'body' => $student->first_name.' '.$student->last_name.' ('.$student->admission_no.') has been admitted and is waiting for Director approval. Track it in New Admissions.', 'type' => 'info', 'target_role' => $student->created_by_role]);
+            }
+            return $student->load('guardian');
         });
 
-        SchoolNotification::create([
-            'title' => 'Payment recorded',
-            'body' => ($payment->student?->first_name ?? 'A student') . ' paid MWK ' . number_format($payment->amount) . ' for ' . $payment->fee_type . '.',
-            'type' => 'success',
-            'target_role' => 'Finance Officer',
+        return response()->json(['student' => $student, 'academic_year' => $student->academic_year, 'term' => DB::table('student_enrollments')->where('student_id', $student->id)->value('term')], 201);
+    });
+
+    Route::patch('/guardians/{guardian}', function (Request $request, Guardian $guardian) {
+        $data = $request->validate([
+            'role' => ['required', 'in:Director,Super Admin,Admissions Officer,School Manager'],
+            'name' => ['required', 'string', 'max:160'],
+            'email' => ['nullable', 'email', 'max:160'],
+            'phone' => ['nullable', 'string', 'max:60'],
         ]);
 
+        return DB::transaction(fn () => \App\Services\ApprovalInbox::requestGuardian($guardian->student()->lockForUpdate()->firstOrFail(), $data, $request->user()));
+
+    });
+
+    Route::put('/students/{student}/guardian', function (Request $request, Student $student) {
+        $data = $request->validate([
+            'role' => ['required', 'in:Director,Super Admin,Admissions Officer,School Manager'],
+            'name' => ['required', 'string', 'max:160'],
+            'email' => ['nullable', 'email', 'max:160'],
+            'phone' => ['nullable', 'string', 'max:60'],
+        ]);
+
+        return DB::transaction(fn () => \App\Services\ApprovalInbox::requestGuardian(Student::whereKey($student->id)->lockForUpdate()->firstOrFail(), $data, $request->user()));
+
+    });
+
+    Route::get('/students/{student}/review', function (Request $request, Student $student) {
+        abort_unless(in_array($request->user()->role, ['Director', 'Super Admin']), 403);
+        abort_unless(in_array($student->status, ['Pending Approval', 'Pending Edit Approval']), 409, 'This request has already been resolved.');
+        return ['student' => $student->load('guardian'), 'review_token' => \App\Services\ApprovalInbox::reviewToken($student)];
+    });
+
+    Route::patch('/students/{student}/approve', function (Request $request, Student $student) {
+        $request->validate(['role' => ['required', 'in:Director,Super Admin']]);
+        return DB::transaction(function () use ($student, $request) {
+        $student = Student::whereKey($student->id)->lockForUpdate()->firstOrFail();
+        abort_unless(in_array($student->status, ['Pending Approval', 'Pending Edit Approval']), 409, 'This request has already been resolved.');
+        abort_unless(hash_equals(\App\Services\ApprovalInbox::reviewToken($student), (string) $request->input('review_token', '')), 409, 'Open the change preview before approving. Refresh the page if using an older screen.');
+        $pendingChanges = $student->pending_changes ?: [];
+        erpSaveStudentGuardian($student, $pendingChanges);
+        $requestedBy = $student->pending_change_requested_by ?: $student->created_by_role;
+        $student->update([
+            ...$pendingChanges,
+            'status' => 'Approved',
+            'pending_changes' => null,
+            'pending_change_requested_by' => null,
+        ]);
+        \App\Services\AcademicPeriod::syncCurrent($student);
+        if (array_key_exists('tuition_fee', $pendingChanges)) {
+            $student->feeBalances()->where('fee_type', 'Tuition Fee')->where('academic_year', erpAcademicYear())->whereNotIn('academic_year', DB::table('register_imports')->select('academic_year'))->get()->each(function (FeeBalance $balance) use ($student) {
+                $remaining = max(0, (int) $student->tuition_fee - (int) $balance->amount_paid);
+                $balance->update(['amount_due' => $student->tuition_fee, 'balance' => $remaining, 'status' => $remaining === 0 ? 'Cleared' : ((int) $balance->amount_paid > 0 ? 'Partial' : 'Unpaid')]);
+            });
+        }
+
+        SchoolNotification::create([
+            'title' => 'Student / guardian request approved',
+            'body' => $student->first_name . ' ' . $student->last_name . ($pendingChanges ? ' had their requested changes approved by the Director.' : ' was approved by the Director.'),
+            'type' => 'success',
+            'target_role' => $requestedBy,
+        ]);
+
+        return response()->json(['student' => $student->fresh(['guardian', 'feeBalances'])]);
+        });
+    });
+
+    Route::patch('/students/{student}', function (Request $request, Student $student) {
+        $data = $request->validate([
+            'role' => ['required', 'in:Director,Super Admin,Admissions Officer,School Manager'],
+            'first_name' => ['required', 'string', 'max:100'],
+            'last_name' => ['required', 'string', 'max:100'],
+            'class_name' => ['required', 'string', 'max:40'],
+            'student_type' => ['required', 'in:Preschool,Primary'],
+            'gender' => ['nullable', 'string', 'max:30'],
+            'guardian_name' => ['nullable', 'string', 'max:160'],
+            'guardian_phone' => ['nullable', 'string', 'max:160'],
+            'guardian_email' => ['nullable', 'email', 'max:160'],
+            'guardian_relationship' => ['nullable', 'string', 'max:160'],
+            'guardian_address' => ['nullable', 'string', 'max:500'],
+
+        ]);
+
+        $allowedClasses = $data['student_type'] === 'Preschool'
+            ? ['Nursery', 'Reception']
+            : array_map(fn (int $standard) => "Standard {$standard}", range(1, 8));
+
+        if (! in_array($data['class_name'], $allowedClasses, true)) {
+            throw ValidationException::withMessages([
+                'class_name' => "The selected class is not available for {$data['student_type']} students.",
+            ]);
+        }
+
+        if ($data['class_name'] !== $student->class_name && DB::table('class_promotion_approvals')->join('class_promotions', 'class_promotions.id', '=', 'class_promotion_approvals.promotion_id')->where('class_promotions.from_year', $student->academic_year)->where('class_promotion_approvals.class_name', $data['class_name'])->exists()) {
+            throw ValidationException::withMessages(['class_name' => 'That class has already been promoted. Complete this pupil’s class promotion first.']);
+        }
+        $tuitionFee = (int) $student->tuition_fee;
+        $changes = [...collect($data)->except('role')->all(), 'section' => null, 'tuition_fee' => $tuitionFee];
+
+        if (! in_array($data['role'], ['Director', 'Super Admin'])) {
+            $changes = \App\Services\ApprovalInbox::changedFields($student, $changes);
+            if (! $changes) throw ValidationException::withMessages(['first_name' => 'No student or guardian details have changed.']);
+            $student->update([
+                'pending_changes' => [...($student->pending_changes ?: []), ...$changes],
+                'pending_change_requested_by' => $data['role'],
+                'status' => $student->status === 'Pending Approval' ? 'Pending Approval' : 'Pending Edit Approval',
+            ]);
+
+            SchoolNotification::create([
+                'title' => 'Student edit approval required',
+                'body' => $data['role'] . ' requested changes to ' . $student->first_name . ' ' . $student->last_name . '. Open Change Approvals to review.',
+                'type' => 'warning',
+                'target_role' => 'Director',
+            ]);
+
+            \App\Services\ApprovalInbox::waitingNotification($student, $data['role']);
+            return response()->json(['student' => $student->fresh(['guardian', 'feeBalances']), 'pending_approval' => true]);
+        }
+
+        erpSaveStudentGuardian($student, $changes);
+        $student->update([...$changes, 'pending_changes' => null, 'pending_change_requested_by' => null]);
+        \App\Services\AcademicPeriod::syncCurrent($student);
+        $student->feeBalances()->where('fee_type', 'Tuition Fee')->where('academic_year', erpAcademicYear())->whereNotIn('academic_year', DB::table('register_imports')->select('academic_year'))->get()->each(function (FeeBalance $balance) use ($tuitionFee) {
+            $remaining = max(0, $tuitionFee - (int) $balance->amount_paid);
+            $balance->update(['amount_due' => $tuitionFee, 'balance' => $remaining, 'status' => $remaining === 0 ? 'Cleared' : ((int) $balance->amount_paid > 0 ? 'Partial' : 'Unpaid')]);
+        });
+
+        return response()->json(['student' => $student->fresh(['guardian', 'feeBalances'])]);
+    });
+
+    Route::delete('/students/{student}', function (Request $request, Student $student) {
+        $request->validate(['role' => ['required', 'in:Director']]);
+        if (DB::table('register_entries')->where('student_id', $student->id)->exists() || DB::table('class_promotion_students')->where('student_id', $student->id)->exists()) {
+            throw ValidationException::withMessages(['student' => 'This student has an archived register or promotion history and cannot be deleted.']);
+        }
+        $student->delete();
+
+        return response()->json(['ok' => true]);
+    });
+
+    Route::post('/payments', function (Request $request, \App\Services\FeeCollection $service) {
+        $data = $request->validate([
+            'student_id' => ['required', 'integer', 'exists:students,id'],
+            'fee_type' => ['required', \Illuminate\Validation\Rule::in(\App\Services\FeeCollection::TYPES)],
+            'academic_year' => ['required', 'regex:/^\d{4} \/ \d{4}$/'], 'term' => ['required', 'in:Term 1,Term 2,Term 3'],
+            'amount' => ['required', 'integer', 'min:1', 'max:100000000'], 'method' => ['required', 'string', 'max:80'], 'notes' => ['nullable', 'string', 'max:500'],
+        ]);
+        $payment = $service->collect($request->user(), $data);
+        SchoolNotification::create(['title' => $payment->status === 'Paid' ? 'Payment recorded' : 'Payment approval required', 'body' => $payment->fee_type.' payment of MWK '.number_format($payment->amount).' recorded.', 'type' => $payment->status === 'Paid' ? 'success' : 'warning', 'target_role' => 'Director']);
         return response()->json(['payment' => $payment], 201);
+    });
+
+    Route::patch('/payments/{payment}/approve', function (Request $request, Payment $payment, \App\Services\FeeCollection $service) {
+        return ['payment' => $service->approve($request->user(), $payment)];
     });
 
     Route::post('/messages', function (Request $request) {
@@ -232,12 +283,15 @@ Route::prefix('erp-api')->group(function () {
         return response()->json(['message' => $message], 201);
     });
 
-    Route::patch('/notifications/{schoolNotification}/read', function (SchoolNotification $schoolNotification) {
+    Route::patch('/notifications/{schoolNotification}/read', function (Request $request, SchoolNotification $schoolNotification) {
+        abort_unless(\App\Services\ApprovalInbox::notices($request->user())->whereKey($schoolNotification->id)->exists(), 403);
         $schoolNotification->update(['read_at' => now()]);
 
         return response()->json(['notification' => $schoolNotification]);
     });
 });
+
+require __DIR__.'/academic.php';
 
 Route::get('/{any}', function () {
     return view('erp');

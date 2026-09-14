@@ -23,33 +23,33 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $accounts = [
-            ['Super Admin', 'admin@hillside.edu'],
-            ['Director', 'director@hillside.edu'],
-            ['Admissions Officer', 'admissions@hillside.edu'],
-            ['Finance Officer', 'finance@hillside.edu'],
-            ['Exams Officer', 'exams@hillside.edu'],
-            ['Teacher', 'teacher@hillside.edu'],
+            ['Super Admin', 'admin@excelprimaryschool.org'],
+            ['Director', 'director@excelprimaryschool.org'],
+            ['Admissions Officer', 'admissions@excelprimaryschool.org'],
+            ['School Manager', 'finance@excelprimaryschool.org'],
+            ['Exams Officer', 'exams@excelprimaryschool.org'],
+            ['Teacher', 'teacher@excelprimaryschool.org'],
         ];
 
         foreach ($accounts as [$name, $email]) {
             User::updateOrCreate(
                 ['email' => $email],
-                ['name' => $name, 'password' => Hash::make('password')]
+                ['name' => $name, 'role' => $name, 'password' => Hash::make('password')]
             );
         }
 
         $students = [
-            ['ADM-2026-0001', 'Roshni', 'Negi', 'Form 3', 'A', 'Female', 'Mercy Negi', 'mercy.negi@example.com', '+265 991 445 201'],
-            ['ADM-2026-0002', 'Akash', 'Rawat', 'Form 4', 'B', 'Male', 'Neil Das', 'neil.das@example.com', '+265 992 448 112'],
-            ['ADM-2026-0003', 'Aarav', 'Sharma', 'Form 3', 'A', 'Female', 'Ritika Dutta', 'ritika.dutta@example.com', '+265 993 114 822'],
-            ['ADM-2026-0004', 'Vivaan', 'Mehta', 'Form 1', 'B', 'Male', 'Pratham Roy', 'pratham.roy@example.com', '+265 884 502 707'],
-            ['ADM-2026-0005', 'Riya', 'Verma', 'Form 2', 'B', 'Female', 'Priya Sethi', 'priya.sethi@example.com', '+265 999 230 615'],
-            ['ADM-2026-0006', 'Ananya', 'Singh', 'Form 1', 'A', 'Female', 'Arvind Reddy', 'arvind.reddy@example.com', '+265 888 210 114'],
+            ['EPS-2026-0001', 'Roshni', 'Negi', 'Standard 3', 'A', 'Female', 'Mercy Negi', 'mercy.negi@example.com', '+265 991 445 201'],
+            ['EPS-2026-0002', 'Akash', 'Rawat', 'Standard 8', 'B', 'Male', 'Neil Das', 'neil.das@example.com', '+265 992 448 112'],
+            ['EPS-2026-0003', 'Aarav', 'Sharma', 'Reception', 'A', 'Female', 'Ritika Dutta', 'ritika.dutta@example.com', '+265 993 114 822'],
+            ['EPS-2026-0004', 'Vivaan', 'Mehta', 'Nursery', 'B', 'Male', 'Pratham Roy', 'pratham.roy@example.com', '+265 884 502 707'],
+            ['EPS-2026-0005', 'Riya', 'Verma', 'Standard 6', 'B', 'Female', 'Priya Sethi', 'priya.sethi@example.com', '+265 999 230 615'],
+            ['EPS-2026-0006', 'Ananya', 'Singh', 'Standard 1', 'A', 'Female', 'Arvind Reddy', 'arvind.reddy@example.com', '+265 888 210 114'],
         ];
 
         foreach ($students as $index => [$admission, $first, $last, $class, $section, $gender, $guardian, $email, $phone]) {
-            $studentType = $index % 3 === 1 ? 'Boarding' : 'Day Scholar';
-            $tuitionFee = $studentType === 'Boarding' ? 550000 : 120000;
+            $studentType = in_array($class, ['Nursery', 'Reception'], true) ? 'Preschool' : 'Primary';
+            $tuitionFee = $studentType === 'Preschool' ? 70000 : 75000;
 
             $student = Student::updateOrCreate(
                 ['admission_no' => $admission],
@@ -57,7 +57,7 @@ class DatabaseSeeder extends Seeder
                     'first_name' => $first,
                     'last_name' => $last,
                     'class_name' => $class,
-                    'section' => $section,
+                    'section' => null,
                     'student_type' => $studentType,
                     'tuition_fee' => $tuitionFee,
                     'roll_no' => str_pad((string) ($index + 1), 4, '0', STR_PAD_LEFT),
@@ -102,7 +102,7 @@ class DatabaseSeeder extends Seeder
             ['ADM-2026-0002', 'Tuition Fee', 'Term 1', 200000, 'Bank Transfer', 'Paid'],
             ['ADM-2026-0003', 'Examination Fee', 'Term 1', 38000, 'Cash', 'Paid'],
             ['ADM-2026-0004', 'Trip Fee', 'Term 2', 45000, 'Mobile Money', 'Paid'],
-            ['ADM-2026-0005', 'Tuition Fee', 'Term 1', 120000, 'Cash', 'Paid'],
+            ['ADM-2026-0005', 'Tuition Fee', 'Term 1', 75000, 'Cash', 'Paid'],
         ];
 
         foreach ($paymentSeed as $index => [$admission, $type, $term, $amount, $method, $status]) {
@@ -156,7 +156,7 @@ class DatabaseSeeder extends Seeder
             [
                 'body' => 'Roshni Negi paid Term 1 fees. Receipt is ready for finance review.',
                 'type' => 'success',
-                'target_role' => 'Finance Officer',
+                'target_role' => 'School Manager',
             ]
         );
 
@@ -170,8 +170,8 @@ class DatabaseSeeder extends Seeder
         );
 
         foreach ([
-            ['Ritika', 'in', 'Good afternoon. Please confirm whether the fee reminder should be sent to all Form 3 parents.'],
-            ['Ritika', 'out', 'Confirmed. Send it to Form 3 A and B first, then share the delivery report.'],
+            ['Ritika', 'in', 'Good afternoon. Please confirm whether the fee reminder should be sent to all Standard 3 parents.'],
+            ['Ritika', 'out', 'Confirmed. Send it to Standard 3 A and B first, then share the delivery report.'],
             ['Ritika', 'in', 'Noted. I will prepare the notice and attach the outstanding balance list.'],
         ] as $index => [$contact, $direction, $body]) {
             Message::updateOrCreate(

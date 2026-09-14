@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 144 144" role="img" aria-labelledby="title">
+  <title id="title">Excel Primary School</title>
+  <rect width="144" height="144" rx="28" fill="#fff"/>
+  <path d="M72 10 130 32v42c0 33-22 53-58 67C36 127 14 107 14 74V32Z" fill="#f4cf45"/>
+  <path d="M72 20 119 38v35c0 25-16 41-47 55-31-14-47-30-47-55V38Z" fill="#176b3a"/>
+  <path d="m41 61 31-14 31 14-31 14Z" fill="#fff"/>
+  <path d="M51 69v18c13 8 29 8 42 0V69L72 78Z" fill="#f4cf45"/>
+  <path d="M102 62v24" stroke="#fff" stroke-width="5" stroke-linecap="round"/>
+</svg>

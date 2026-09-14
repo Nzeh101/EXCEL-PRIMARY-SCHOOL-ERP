@@ -19,7 +19,7 @@ const roleNavGroups = {
   ],
   "Director": [
     ["Main", [["dashboard", "Dashboard", "layout-dashboard"]]],
-    ["Students & Admissions", [["students", "Students", "graduation-cap"], ["parents", "Guardians", "users"], ["admissions", "Admissions", "user-plus"], ["classes", "Classes & Sections", "network"]]],
+    ["Students & Admissions", [["admissions", "Admissions", "user-plus"], ["students", "Students", "graduation-cap"], ["parents", "Guardians", "users"], ["classes", "Classes", "network"]]],
     ["Finance Oversight", [["fees", "Fees", "wallet"], ["receipts", "Receipts", "receipt"], ["student-balances", "Student Balances", "banknote"], ["arrears", "Arrears", "triangle-alert"], ["daily-collections", "Daily Collections", "bar-chart"], ["term-collections", "Term Collections", "file-chart"]]],
     ["Reports", [["analytics", "Analytics Dashboard", "bar-chart"], ["financial-reports", "Financial Reports", "banknote"], ["enrollment-reports", "Enrollment Reports", "user-plus"], ["academic-progress", "Academic Progress", "trending-up"], ["compliance-reports", "Compliance Reports", "shield"]]],
     ["Exams", [["exam-lists", "Candidate Lists", "file-chart"], ["eligible-students", "Eligible Students", "clipboard-check"], ["exam-export", "Excel / PDF Export", "download"], ["exam-settings", "Exam Settings", "shield-check"]]],
@@ -30,21 +30,24 @@ const roleNavGroups = {
   "Admissions Officer": [
     ["Main", [["dashboard", "Dashboard", "layout-dashboard"]]],
     ["Admissions Desk", [["admissions", "New Admissions", "user-plus"], ["students", "Student Records", "graduation-cap"], ["parents", "Guardian Records", "users"]]],
-    ["Placement & Setup", [["classes", "Classes & Sections", "network"], ["academic-years", "Academic Years", "calendar-days"], ["terms", "Terms", "calendar-days"]]],
+    ["Placement & Setup", [["classes", "Classes", "network"], ["academic-years", "Academic Years", "calendar-days"], ["terms", "Terms", "calendar-days"]]],
     ["Admissions Reports", [["enrollment-reports", "Enrollment Reports", "bar-chart"], ["student-report", "Student Files Report", "file-chart"]]],
-    ["Communication", [["parent-communication", "Parent Follow-up", "megaphone"], ["messaging", "Admissions Messaging", "messages"]]]
+    ["Communication", [["notifications", "Notifications", "bell"], ["parent-communication", "Parent Follow-up", "megaphone"], ["messaging", "Admissions Messaging", "messages"]]]
   ],
-  "Finance Officer": [
+  "School Manager": [
     ["Main", [["dashboard", "Dashboard", "layout-dashboard"]]],
     ["Cash Office", [["fees", "Record Payments", "wallet"], ["receipts", "Receipts", "receipt"], ["daily-collections", "Daily Collections", "bar-chart"]]],
     ["Balances", [["student-balances", "Student Balances", "banknote"], ["arrears", "Arrears Follow-up", "triangle-alert"], ["term-collections", "Term Collections", "file-chart"]]],
+    ["Admissions Desk", [["admissions", "New Admissions", "user-plus"], ["students", "Student Records", "graduation-cap"], ["parents", "Guardian Records", "users"]]],
+    ["Admissions Setup", [["classes", "Classes", "network"], ["academic-years", "Academic Years", "calendar-days"], ["terms", "Terms", "calendar-days"]]],
+    ["Admissions Reports", [["enrollment-reports", "Enrollment Reports", "bar-chart"], ["student-report", "Student Files Report", "file-chart"]]],
     ["Finance Reports", [["financial-reports", "Financial Reports", "banknote"], ["analytics", "Collections Analytics", "bar-chart"]]],
-    ["Communication", [["parent-communication", "Payment Notices", "megaphone"], ["messaging", "Accounts Messaging", "messages"]]]
+    ["Communication", [["notifications", "Notifications", "bell"], ["parent-communication", "Payment Notices", "megaphone"], ["messaging", "Accounts Messaging", "messages"]]]
   ],
   "Exams Officer": [
     ["Main", [["dashboard", "Dashboard", "layout-dashboard"]]],
     ["Exams Desk", [["exam-lists", "Candidate Lists", "file-chart"], ["eligible-students", "Eligible Students", "clipboard-check"], ["exam-export", "Excel / PDF Export", "download"]]],
-    ["Exam Setup", [["exam-settings", "Exam Settings", "shield-check"], ["exam-types", "Exam Types", "clipboard-check"], ["subjects", "Subjects", "book-open"], ["classes", "Classes & Sections", "network"]]],
+    ["Exam Setup", [["exam-settings", "Exam Settings", "shield-check"], ["exam-types", "Exam Types", "clipboard-check"], ["subjects", "Subjects", "book-open"], ["classes", "Classes", "network"]]],
     ["Exam Reports", [["academic-progress", "Academic Progress", "trending-up"], ["student-report", "Student Exam Reports", "file-chart"]]],
     ["Communication", [["messaging", "Exam Messaging", "messages"]]]
   ],
@@ -57,7 +60,8 @@ const roleNavGroups = {
 };
 
 const roleAliases = {
-  Finance: "Finance Officer"
+  Finance: "School Manager",
+  "Finance Officer": "School Manager"
 };
 
 function currentRole() {
@@ -68,7 +72,7 @@ function currentRole() {
 }
 
 function navForRole(role = currentRole()) {
-  return roleNavGroups[role] || roleNavGroups["Super Admin"];
+  return (roleNavGroups[role] || roleNavGroups["Super Admin"]).map(([title,links])=>[title,links.filter(([id])=>id!=="approvals"||Number(backendData.pending_record_approvals||0)>0)]).filter(([,links])=>links.length);
 }
 
 function flatNav(groups = navGroups) {
@@ -80,10 +84,14 @@ function labelForRoute(id) {
 }
 
 function routeAllowed(id, role = currentRole()) {
+  if(id==="approvals")return ["Director","Super Admin","Admissions Officer","School Manager"].includes(role);
+  if (id === "notifications" && ["School Manager", "Admissions Officer"].includes(role)) return true;
   return id === "dashboard" || flatNav(navForRole(role)).some((item) => item[0] === id);
 }
 
 const iconPaths = {
+  "shirt": '<path d="m8 3-6 4 3 5 3-2v11h8V10l3 2 3-5-6-4a4 4 0 0 1-8 0Z"/>',
+  "bus": '<rect x="4" y="3" width="16" height="16" rx="3"/><path d="M4 11h16M12 3v8M7 19v2M17 19v2M7 15h1M16 15h1"/>',
   "archive": '<path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/>',
   "banknote": '<rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M6 9h.01M18 15h.01"/>',
   "bar-chart": '<path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="5"/><rect x="12" y="8" width="3" height="9"/><rect x="17" y="5" width="3" height="12"/>',
@@ -138,19 +146,30 @@ function icon(name, size = 18) {
 }
 
 const demoAccounts = [
-  ["Director", "director@hillside.edu", "password"],
-  ["Super Admin", "admin@hillside.edu", "password"],
-  ["Admissions Officer", "admissions@hillside.edu", "password"],
-  ["Finance Officer", "finance@hillside.edu", "password"],
-  ["Exams Officer", "exams@hillside.edu", "password"],
-  ["Teacher", "teacher@hillside.edu", "password"]
+  ["Director", "director@excelprimaryschool.org", "password"],
+  ["Super Admin", "admin@excelprimaryschool.org", "password"],
+  ["Admissions Officer", "admissions@excelprimaryschool.org", "password"],
+  ["School Manager", "finance@excelprimaryschool.org", "password"],
+  ["Exams Officer", "exams@excelprimaryschool.org", "password"],
+  ["Teacher", "teacher@excelprimaryschool.org", "password"]
 ];
 
-function schoolLogo(compact = false) {
-  const src = compact ? "/erp/assets/hillside-icon-192.png" : "/erp/assets/hillside-logo.png";
-  return `<div class="school-logo ${compact ? "compact" : ""}" aria-label="Hillside Secondary School">
-    <img src="${src}" alt="Hillside Secondary School" />
+function schoolLogo(compact = false, variant = "round") {
+  const src = variant === "shield" ? "/erp/assets/excel-shield-generated.png" : "/erp/assets/excel-round-generated.png";
+  return `<div class="school-logo ${compact ? "compact" : ""}" aria-label="Excel Primary School">
+    <img src="${src}" alt="Excel Primary School" />
   </div>`;
+}
+
+const excelClasses = ["Nursery", "Reception", ...Array.from({ length: 8 }, (_, index) => `Standard ${index + 1}`)];
+function classOptions(selected = "", studentType = "") {
+  const classes = studentType === "Preschool" ? excelClasses.slice(0, 2) : studentType === "Primary" ? excelClasses.slice(2) : excelClasses;
+  return classes.map((className) => `<option ${className === selected ? "selected" : ""}>${className}</option>`).join("");
+}
+
+function updateAdmissionClasses(typeSelect) {
+  const classSelect = typeSelect.closest("form").querySelector("[name='class_name']");
+  classSelect.innerHTML = classOptions("", typeSelect.value);
 }
 
 function currentTheme() {
@@ -174,17 +193,17 @@ function toggleSidebar() {
   app();
 }
 
-function demoLogin(form) {
-  const email = form.querySelector("[name='email']").value.trim().toLowerCase();
-  const password = form.querySelector("[name='password']").value;
-  const account = demoAccounts.find(([, accountEmail, accountPassword]) => accountEmail === email && accountPassword === password);
-  if (account) {
-    localStorage.setItem("erpRole", account[0]);
-    location.hash = "#/dashboard";
-    return;
-  }
-  const chosenRole = localStorage.getItem("erpRole") || "Director";
-  form.querySelector(".login-error").textContent = `Sign in failed. Select the ${chosenRole} account below, or use the matching email and password.`;
+async function demoLogin(form) {
+  const button = form.querySelector('button[type="submit"]');
+  button.disabled = true;
+  try {
+    const result = await apiRequest('/login', { method: 'POST', body: JSON.stringify(Object.fromEntries(new FormData(form))) });
+    document.querySelector('meta[name="csrf-token"]').content = result.csrf_token;
+    localStorage.setItem('erpRole', result.role);
+    await loadBackendData(true);
+    location.hash = '#/dashboard';
+  } catch (error) { form.querySelector('.login-error').textContent = error.message; }
+  finally { button.disabled = false; }
 }
 
 const students = [
@@ -243,15 +262,18 @@ const feeRows = students.slice(0, 9).map((student, index) => ({
 
 let backendData = {
   students: [],
+  admission_follow_ups: [],
   guardians: [],
   payments: [],
   balances: [],
   notifications: [],
   messages: [],
+  finance_dashboard: null,
   stats: {}
 };
 let backendLoaded = false;
 let backendLoading = false;
+let backendError = null;
 
 function route() {
   return location.hash.replace("#/", "") || "login";
@@ -269,7 +291,17 @@ function todayLabel(options = { day: "2-digit", month: "short", year: "numeric" 
   return new Intl.DateTimeFormat("en-GB", options).format(new Date());
 }
 
+function dateTimeParts(value) {
+  if (!value) return {date: "Not recorded", time: ""};
+  const date = value ? new Date(value) : new Date();
+  return {
+    date: new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", year: "numeric" }).format(date),
+    time: new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit" }).format(date)
+  };
+}
+
 function academicYearLabel() {
+  if (backendData.academic_year) return backendData.academic_year;
   const now = new Date();
   const start = now.getMonth() >= 8 ? now.getFullYear() : now.getFullYear() - 1;
   return `${start} / ${start + 1}`;
@@ -290,21 +322,29 @@ async function apiRequest(path, options = {}) {
     ...options
   });
   const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data.message || "The school server could not complete that action.");
+  if (!response.ok) { const error = new Error(data.message || "The school server could not complete that action."); error.status = response.status; throw error; }
   return data;
 }
 
 async function loadBackendData(force = false) {
-  if (backendLoading || (backendLoaded && !force)) return;
-  backendLoading = true;
+  if (backendLoaded && !force) return;
+  const requestId = ++backendLoadId;
+  backendLoading = true; backendError = null;
+  const params = new URLSearchParams();
+  if (localStorage.getItem('erpAcademicYear')) params.set('academic_year', localStorage.getItem('erpAcademicYear'));
+  if (localStorage.getItem('erpTerm')) params.set('term', localStorage.getItem('erpTerm'));
   try {
-    backendData = await apiRequest("/bootstrap");
+    const [bootstrap, register] = await Promise.all([apiRequest(`/bootstrap?${params}`), apiRequest(`/class-register?${params}`)]);
+    if (requestId !== backendLoadId) return;
+    backendData = {payments:[],balances:[],finance_dashboard:{},...bootstrap}; classRegisterData = {...register,entries:(register.entries||[]).map(e=>({cells:{},issues:[],...e}))};
+    if (bootstrap.user_role) localStorage.setItem('erpRole', bootstrap.user_role);
     backendLoaded = true;
   } catch (error) {
-    console.warn(error);
+    if (requestId !== backendLoadId) return;
+    backendError = error.message;
+    if (error.status === 401) location.hash = '#/login';
   } finally {
-    backendLoading = false;
-    if (route() !== "login") app();
+    if (requestId === backendLoadId) { backendLoading = false; if (route() !== 'login') app(); }
   }
 }
 
@@ -325,7 +365,7 @@ function showToast(title, body = "", type = "info") {
 
 function showLatestNotifications() {
   if (!backendData.notifications?.length) return;
-  const unread = backendData.notifications.filter((notice) => !notice.read_at).slice(0, 2);
+  const unread = backendData.notifications.filter((notice) => (!notice.target_role || notice.target_role === currentRole()) && !notice.read_at).slice(0, 2);
   const key = unread.map((notice) => notice.id).join("-");
   if (!key || sessionStorage.getItem("erpNotificationKey") === key) return;
   sessionStorage.setItem("erpNotificationKey", key);
@@ -351,10 +391,19 @@ function closeModal() {
 function openModal(title, body, size = "") {
   modalRoot().innerHTML = `<div class="modal-backdrop" onclick="if(event.target === this) closeModal();">
     <section class="modal-card ${size}">
-      <div class="modal-head"><h2>${title}</h2><button class="icon-btn" onclick="closeModal()">${icon("log-out", 16)}</button></div>
+      <div class="modal-head"><h2>${title}</h2><button class="modal-close" aria-label="Close" title="Close" onclick="closeModal()">×</button></div>
       <div class="modal-body">${body}</div>
     </section>
   </div>`;
+  removeStatusDots(modalRoot());
+}
+
+function removeStatusDots(root = document) {
+  root.querySelectorAll?.(".badge").forEach((badge) => {
+    badge.childNodes.forEach((node) => {
+      if (node.nodeType === Node.TEXT_NODE) node.textContent = node.textContent.replace(/•\s*/g, "");
+    });
+  });
 }
 
 function actionable(label, iconName, handler = "") {
@@ -366,27 +415,70 @@ function notifyAction(title, body = "This control is now connected to the interf
 }
 
 function openAcademicYearModal() {
-  openModal("Academic Year", `<div class="modal-grid">
-    ${["2025 / 2026", "2026 / 2027", "2024 / 2025"].map((year) => `<button class="choice-card" onclick="localStorage.setItem('erpAcademicYear','${year}'); closeModal(); showToast('Academic year selected','${year} is now active for filters.','success'); app();"><strong>${year}</strong><span>3 terms configured</span></button>`).join("")}
-  </div>`);
+  openModal('Select Academic Period', `<div class="modal-grid">${availableYears().map(year => `<button class="choice-card" onclick="selectAcademicPeriod('${year}', '${year === classRegisterData.current_year ? classRegisterData.current_term : 'Term 1'}')"><strong>${escapeHtml(year)}</strong><span>View this year's students and fees</span></button>`).join('')}</div>`);
 }
 
 function activeAcademicYear() {
-  return localStorage.getItem("erpAcademicYear") || academicYearLabel();
+  return backendData.academic_year || localStorage.getItem('erpAcademicYear') || academicYearLabel();
 }
 
 function openNotificationPanel() {
-  const notices = backendData.notifications?.length ? backendData.notifications : [
-    { title: "No new notifications", body: "New admissions, payments, and approvals will appear here.", type: "info" }
+  toggleNotificationDropdown();
+}
+
+function notificationRows() {
+  const roleNotices = (backendData.notifications || []).filter((notice) => !notice.target_role || notice.target_role === currentRole());
+  const notices = roleNotices.length ? roleNotices.slice(0, 5) : [
+    { title: "No new notifications", body: "New admissions, payments, and approvals will appear here.", type: "info", created_at: new Date().toISOString() }
   ];
-  openModal("Notifications", `<div class="notice-list">${notices.map((notice) => `<article class="notice-row ${notice.type || "info"}"><strong>${notice.title}</strong><p>${notice.body}</p></article>`).join("")}</div>`);
+  return notices.map((notice) => {
+    const parts = dateTimeParts(notice.created_at);
+    return `<article class="notification-row ${notice.type || "info"}">
+      <span class="notification-dot"></span>
+      <div><strong>${notice.title}</strong><p>${notice.body}</p><small>${parts.date} · ${parts.time}</small></div>
+    </article>`;
+  }).join("");
+}
+
+function notificationDropdown() {
+  const locallyRead = new Set(JSON.parse(localStorage.getItem("erpReadNotifications") || "[]"));
+  const unread = Number(backendData.unread_notifications||0);
+  return `<div class="notification-wrap">
+    <button class="icon-btn notification-trigger" title="Notifications" onclick="toggleNotificationDropdown(event)">${icon("bell")}${unread ? `<span>${unread}</span>` : ""}</button>
+    <section id="notification-dropdown" class="notification-dropdown" onclick="event.stopPropagation()">
+      <div class="notification-head"><strong>Notifications</strong><a href="#/notifications">View all</a></div>
+      <div class="notification-list">${notificationRows()}</div>
+    </section>
+  </div>`;
+}
+
+function toggleNotificationDropdown(event) {
+  event?.stopPropagation();
+  const dropdown = document.getElementById("notification-dropdown");
+  dropdown?.classList.toggle("open");
+  if (dropdown?.classList.contains("open")) {
+    const ids = backendData.notifications?.filter((notice) => (!notice.target_role || notice.target_role === currentRole()) && !notice.read_at).map((notice) => notice.id) || [];
+    const locallyRead = new Set(JSON.parse(localStorage.getItem("erpReadNotifications") || "[]"));
+    ids.forEach((id) => locallyRead.add(id));
+    localStorage.setItem("erpReadNotifications", JSON.stringify([...locallyRead]));
+    backendData.notifications?.forEach((notice) => { if (!notice.target_role || notice.target_role === currentRole()) notice.read_at = notice.read_at || new Date().toISOString(); });
+    backendData.unread_notifications=0;
+    document.querySelector(".notification-trigger span")?.remove();
+    apiRequest("/notifications/mark-read", { method: "POST", body: JSON.stringify({ ids }) })
+      .then(() => localStorage.removeItem("erpReadNotifications"))
+      .catch((error) => console.warn("Notification read state will retry on this browser.", error));
+  }
+}
+
+function closeNotificationDropdown() {
+  document.getElementById("notification-dropdown")?.classList.remove("open");
 }
 
 function openFilterModal(label = "Filters") {
   openModal(label, `<div class="modal-grid">
     <label><span>Academic Year</span><select><option>${activeAcademicYear()}</option><option>2024 / 2025</option><option>2026 / 2027</option></select></label>
     <label><span>Term</span><select><option>Term 1</option><option>Term 2</option><option>Term 3</option></select></label>
-    <label><span>Class</span><select><option>All Forms</option><option>Form 1</option><option>Form 2</option><option>Form 3</option><option>Form 4</option></select></label>
+    <label><span>Class</span><select><option>All Forms</option><option>Standard 1</option><option>Standard 2</option><option>Standard 3</option><option>Standard 4</option></select></label>
     <button class="btn primary" onclick="closeModal(); notifyAction('Filters applied','The current view has been filtered for your selection.');">${icon("filter")} Apply Filters</button>
   </div>`);
 }
@@ -458,27 +550,85 @@ function choosePaymentStudent(button) {
   field.querySelector("[data-student-search]").value = button.dataset.studentName || "";
   field.querySelector(".student-search-hint").textContent = button.dataset.studentMeta || "Student selected";
   field.querySelector(".student-search-results").classList.remove("open");
+  updatePaymentAmountLimit(field.closest("form"));
+}
+
+function updatePaymentAmountLimit(form) {
+  if (!form) return;
+  const amount = form.querySelector('[name=amount]');
+  const submit = form.querySelector('button[type=submit]');
+  const type = form.querySelector('[name=fee_type]').value;
+  const id = Number(form.querySelector('[name=student_id]').value || 0);
+  const note = form.querySelector('.form-note');
+  const student = (backendData.students || []).find(s => s.id === id);
+  const balance = (backendData.balances || []).find(b => b.student_id === id && b.fee_type === type);
+  const pending = (backendData.payments || []).filter(p => p.student_id === id && p.fee_type === type && p.status === 'Pending Approval').reduce((sum,p) => sum + Number(p.amount),0);
+  const flexible = ['School Bus Fee','Trip Fee'].includes(type);
+  const remaining = Math.max(0, Number(balance?.balance ?? (type === 'Uniform Fee' ? 40000 : 0)) - pending);
+  const changed = amount.dataset.feeType !== type;
+  amount.dataset.feeType = type;
+  amount.removeAttribute('max'); amount.disabled = false;
+  if (changed) amount.value = flexible ? '' : String(remaining || '');
+  if (!flexible) { amount.max = String(remaining); if (Number(amount.value) > remaining) amount.value = String(remaining); }
+  submit.disabled = !student || !backendData.period_opened || (!flexible && remaining <= 0);
+  submit.innerHTML = `${icon('receipt')} ${!student ? 'Select a Student' : !flexible && remaining <= 0 ? (balance ? 'Fee Fully Paid / Pending' : 'Review Required') : 'Record Payment'}`;
+  note.textContent = !student ? 'Select a student from this academic period.' : flexible ? 'Enter the actual amount collected manually. No fixed school bus charge is assumed.' : type === 'Uniform Fee' ? `Uniform charge: MWK 40,000. Available balance after pending payments: ${money(remaining)}.` : !balance ? 'This imported tuition row needs review before another payment can be recorded for it.' : `Tuition charged for this term: ${money(balance.amount_due)}. Available balance: ${money(remaining)}.`;
+  if(currentRole()==='School Manager') note.textContent += ' This payment requires Director/Admin approval.';
 }
 
 function admissionFormHtml() {
   return `<form class="record-form modal-form" onsubmit="event.preventDefault(); createAdmission(this);">
     <label><span>First Name</span><input name="first_name" required placeholder="Student first name"></label>
     <label><span>Last Name</span><input name="last_name" required placeholder="Student last name"></label>
-    <label><span>Student Type</span><select name="student_type"><option>Day Scholar</option><option>Boarding</option></select></label>
-    <label><span>Class</span><select name="class_name"><option>Form 1</option><option>Form 2</option><option>Form 3</option><option>Form 4</option></select></label>
-    <label><span>Section</span><select name="section"><option>A</option><option>B</option><option>C</option></select></label>
+    <label><span>Student Type</span><select name="student_type" onchange="updateAdmissionClasses(this)"><option>Preschool</option><option>Primary</option></select></label>
+    <label><span>Class</span><select name="class_name">${classOptions("", "Preschool")}</select></label>
     <label><span>Gender</span><select name="gender"><option>Female</option><option>Male</option></select></label>
     <label><span>Joined On</span><input name="joined_on" type="date"></label>
-    <label><span>Parent / Guardian</span><input name="guardian_name" required placeholder="Full name"></label>
+    <label><span>Parent / Guardian <small>(optional)</small></span><input name="guardian_name" placeholder="Full name"></label>
     <label><span>Parent Email</span><input name="guardian_email" type="email" placeholder="name@example.com"></label>
     <label><span>Parent Phone</span><input name="guardian_phone" placeholder="+265 ..."></label>
-    <p class="form-note">Tuition balances are created automatically for Term 1, Term 2, and Term 3: MWK 120,000 for Day Scholars and MWK 550,000 for Boarding students.</p>
+    <p class="form-note">Tuition balances are created automatically for all three terms: MWK 70,000 for Preschool (Nursery and Reception) and MWK 75,000 for Primary (Standard 1–8).</p>
     <button class="btn primary" type="submit">${icon("user-plus")} Save Admission</button>
   </form>`;
 }
 
 function openAdmissionModal() {
   openModal("Register Student", admissionFormHtml(), "wide");
+}
+
+function openStudentEditModal(studentId) {
+  const student = backendData.students?.find((item) => Number(item.id) === Number(studentId));
+  if (!student) return showToast("Student unavailable", "Refresh the student records and try again.", "error");
+  const canDelete = currentRole() === "Director";
+  openModal("Edit Student", `<form class="record-form modal-form" onsubmit="event.preventDefault(); updateStudent(${student.id}, this);">
+    <label><span>First Name</span><input name="first_name" value="${escapeHtml(student.first_name)}" required></label>
+    <label><span>Last Name</span><input name="last_name" value="${escapeHtml(student.last_name)}" required></label>
+    <label><span>Student Type</span><select name="student_type" onchange="updateAdmissionClasses(this)"><option ${student.student_type === "Preschool" ? "selected" : ""}>Preschool</option><option ${student.student_type === "Primary" ? "selected" : ""}>Primary</option></select></label>
+    <label><span>Class</span><select name="class_name">${classOptions(student.class_name, student.student_type)}</select></label>
+    <label><span>Gender</span><select name="gender"><option ${student.gender === "Female" ? "selected" : ""}>Female</option><option ${student.gender === "Male" ? "selected" : ""}>Male</option></select></label>
+    <label><span>Guardian Name</span><input name="guardian_name" type="text" value="${escapeHtml(student.guardian?.name||'')}"></label>
+    <label><span>Guardian Phone</span><input name="guardian_phone" type="text" value="${escapeHtml(student.guardian?.phone||'')}"></label>
+    <label><span>Guardian Email</span><input name="guardian_email" type="email" value="${escapeHtml(student.guardian?.email||'')}"></label>
+    <label><span>Guardian Relationship</span><input name="guardian_relationship" type="text" value="${escapeHtml(student.guardian?.relationship||'')}"></label>
+    <label><span>Guardian Address</span><input name="guardian_address" type="text" value="${escapeHtml(student.guardian?.address||'')}"></label>
+    <button class="btn primary" type="submit">${icon("edit")} Save Changes</button>
+    ${canDelete ? `<button class="btn danger" type="button" onclick="deleteStudent(${student.id}, '${escapeHtml(`${student.first_name} ${student.last_name}`)}')">${icon("trash")} Delete Student</button>` : ""}
+  </form>`, "wide");
+}
+
+async function updateStudent(studentId, form) {
+  try {
+    const result = await apiRequest(`/students/${studentId}`, { method: "PATCH", body: JSON.stringify({ ...Object.fromEntries(new FormData(form).entries()), role: currentRole() }) });
+    closeModal(); showToast(result.pending_approval ? "Edit sent for approval" : "Student updated", result.pending_approval ? "The Director must approve these changes before they take effect." : "The student record and tuition have been updated.", "success"); await loadBackendData(true);
+  } catch (error) { showToast("Student not updated", error.message, "error"); }
+}
+
+async function deleteStudent(studentId, studentName) {
+  if (currentRole() !== "Director" || !confirm(`Delete ${studentName}? This cannot be undone.`)) return;
+  try {
+    await apiRequest(`/students/${studentId}`, { method: "DELETE", body: JSON.stringify({ role: currentRole() }) });
+    closeModal(); showToast("Student deleted", `${studentName} was removed from active student records.`, "success"); await loadBackendData(true);
+  } catch (error) { showToast("Student not deleted", error.message, "error"); }
 }
 
 function openParentModal() {
@@ -491,32 +641,96 @@ function openParentModal() {
   </form>`);
 }
 
+function openParentEditModal(parentCode) {
+  const guardian = backendData.guardians.find((item) => `P${String(item.id).padStart(6, "0")}` === parentCode);
+  const name = guardian?.name || "Parent / Guardian";
+  if (!guardian) return showToast("Guardian unavailable", "Refresh guardian records and try again.", "error");
+  openModal("Edit Guardian", `<form class="record-form modal-form" onsubmit="event.preventDefault(); updateGuardian(${guardian.id}, this);"><label><span>Full Name</span><input name="name" value="${escapeHtml(name)}" required></label><label><span>Email</span><input name="email" type="email" value="${escapeHtml(guardian.email || "")}"></label><label><span>Phone</span><input name="phone" value="${escapeHtml(guardian.phone || "")}"></label><button class="btn primary" type="submit">${icon("edit")} Save Changes</button></form>`, "wide");
+}
+
+async function updateGuardian(guardianId, form) {
+  try {
+    const payload = { ...Object.fromEntries(new FormData(form).entries()), role: currentRole() };
+    const result = await apiRequest(`/guardians/${guardianId}`, { method: "PATCH", body: JSON.stringify(payload) });
+    closeModal(); showToast(result.pending_approval?"Request sent for approval":"Guardian updated",result.pending_approval?"The Director can review this in Change Approvals.":"Guardian details have been saved.","success"); await loadBackendData(true);
+  } catch (error) { showToast("Guardian not updated", error.message, "error"); }
+}
+
+function openGuardianFollowUp(studentId) {
+  const student = backendData.students.find((item) => Number(item.id) === Number(studentId));
+  if (!student) return showToast("Student unavailable", "Refresh admissions and try again.", "error");
+  const guardian = student.guardian || {};
+  openModal(`Guardian Follow-up — ${escapeHtml(`${student.first_name} ${student.last_name}`)}`, `<form class="record-form modal-form" onsubmit="event.preventDefault(); saveGuardianFollowUp(${student.id}, this);"><label><span>Full Name</span><input name="name" value="${escapeHtml(guardian.name === "Guardian details pending" ? "" : guardian.name || "")}" required></label><label><span>Email</span><input name="email" type="email" value="${escapeHtml(guardian.email || "")}"></label><label><span>Phone</span><input name="phone" value="${escapeHtml(guardian.phone || "")}"></label><button class="btn primary" type="submit">${icon("users")} Save Guardian Details</button></form>`, "wide");
+}
+
+async function saveGuardianFollowUp(studentId, form) {
+  try {
+    const payload = { ...Object.fromEntries(new FormData(form).entries()), role: currentRole() };
+    const result = await apiRequest(`/students/${studentId}/guardian`, { method: "PUT", body: JSON.stringify(payload) });
+    closeModal(); showToast(result.pending_approval?"Request sent for approval":"Guardian updated",result.pending_approval?"The Director can review this in Change Approvals.":"Guardian details were linked to the student.","success"); await loadBackendData(true);
+  } catch (error) { showToast("Follow-up not updated", error.message, "error"); }
+}
+
+function openGuardianStudentsModal(guardianId) {
+  const guardian = backendData.guardians.find((item) => Number(item.id) === Number(guardianId));
+  if (!guardian) return showToast("Guardian unavailable", "Refresh guardian records and try again.", "error");
+  const key = (value) => String(value || "").trim().toLowerCase();
+  const linked = backendData.guardians.filter((item) => Number(item.id) === Number(guardianId) || (key(item.name) === key(guardian.name) && ((guardian.email && key(item.email) === key(guardian.email)) || (guardian.phone && key(item.phone) === key(guardian.phone))))).map((item) => item.student).filter(Boolean);
+  openModal(`${escapeHtml(guardian.name)} — Students`, linked.length ? `<input class="select" type="search" placeholder="Search student or admission number" aria-label="Search linked students" oninput="this.nextElementSibling.querySelectorAll('.request-item').forEach(row=>row.hidden=!row.textContent.toLowerCase().includes(this.value.trim().toLowerCase()))"><div class="request-list">${linked.map((student) => `<article class="request-item"><div class="person-line"><span class="avatar">${initials(`${student.first_name} ${student.last_name}`)}</span><div><strong>${escapeHtml(`${student.first_name} ${student.last_name}`)}</strong><span class="muted">${escapeHtml(student.admission_no || "Admission pending")} · ${escapeHtml(student.class_name)}${student.section ? ` ${escapeHtml(student.section)}` : ""}</span></div><span class="badge green">${escapeHtml(student.status || "Active")}</span></div></article>`).join("")}</div>` : `<p class="muted">No students are currently linked to this guardian.</p>`, "wide");
+}
+
+function openStudentResults(name, className) {
+  const subjects = ["English", "Chichewa", "Mathematics", "Science and Technology", "Social Studies", "Life Skills", "Expressive Arts", "Agriculture", "Bible Knowledge", "Computer Studies"];
+  const scores = [78, 72, 84, 75, 80, 83, 76, 79, 81, 88];
+  openModal(`${name} — Academic Results`, studentResultsHtml(subjects, scores, className), "wide");
+}
+
+function openStudentDetails(studentId) {
+  const student = backendData.students?.find((item) => Number(item.id) === Number(studentId));
+  if (!student) return showToast("Student unavailable", "Refresh the records and try again.", "error");
+  const balances = (backendData.balances || []).filter((item) => Number(item.student_id) === Number(studentId));
+  const guardian = student.guardian;
+  openModal(`${escapeHtml(student.first_name)} ${escapeHtml(student.last_name)} — Student Record`, `<article class="detail-card"><div><h3>${escapeHtml(student.admission_no || "Admission pending")}</h3><p>${escapeHtml(student.class_name)} · ${escapeHtml(student.student_type || "Student")}</p><p>Guardian: ${escapeHtml(guardian?.name || "Not recorded")} · ${escapeHtml(guardian?.phone || "No phone")}</p></div></article>${canViewFinance()?`<h3>Fee Balances</h3><div class="table-wrap"><table class="student-record-fees"><thead><tr><th>Fee Type</th><th>Term</th><th>Due</th><th>Paid</th><th>Balance</th><th>Status</th></tr></thead><tbody>${balances.map((balance) => `<tr><td>${balance.fee_type}</td><td>${balance.term}</td><td>${money(balance.amount_due)}</td><td>${money(balance.amount_paid)}</td><td><strong>${money(balance.balance)}</strong></td><td><span class="badge ${statusClass(balance.status)}">• ${balance.status}</span></td></tr>`).join("") || `<tr><td colspan="6">No balances recorded.</td></tr>`}</tbody></table></div>`:""}<div class="student-record-actions"><button class="btn primary student-results-btn" onclick="openStudentResults('${escapeHtml(`${student.first_name} ${student.last_name}`)}','${escapeHtml(student.class_name)}')">${icon("chart-line", 17)} View Academic Results</button></div>`, "wide");
+}
+
+function studentResultsHtml(subjects, scores, className) {
+  return `<div class="filters"><select class="select"><option>${className}</option><option>Standard 1</option><option>Standard 2</option><option>Standard 3</option><option>Standard 4</option></select><select class="select"><option>Term 1</option><option>Term 2</option><option>Term 3</option></select><select id="results-subject" class="select" onchange="updateStudentResults()"><option value="">All Subjects</option>${subjects.map((subject) => `<option>${subject}</option>`).join("")}</select></div><div id="results-content"><div class="results-overview"><div class="results-pie"></div><strong>76%<small>Average score</small></strong></div><div class="results-list">${subjects.map((subject, index) => `<div><span>${subject}</span><b>${scores[index]}%</b><i><i style="width:${scores[index]}%"></i></i></div>`).join("")}</div></div>`;
+}
+
+function updateStudentResults() {
+  const subject = document.getElementById("results-subject")?.value;
+  const content = document.getElementById("results-content");
+  if (!content || !subject) return;
+  const marks = [["Assignments", 82], ["Weekly Tests", 74], ["Final Exam", 78]];
+  const average = Math.round(marks.reduce((sum, [, mark]) => sum + mark, 0) / marks.length);
+  content.innerHTML = `<div class="results-overview"><div class="results-pie"></div><strong>${average}%<small>${subject} average</small></strong></div><div class="results-list results-breakdown">${marks.map(([label, mark]) => `<div><span>${label}</span><b>${mark}%</b><i><i style="width:${mark}%"></i></i></div>`).join("")}</div>`;
+}
+
 function openTeacherModal() {
   openModal("Add Teacher", `<form class="record-form modal-form" onsubmit="event.preventDefault(); closeModal(); showToast('Teacher saved','Teacher profile is ready for timetable assignment.','success');">
     <label><span>Name</span><input required placeholder="Teacher full name"></label>
     <label><span>Subject</span><input required placeholder="Subject"></label>
-    <label><span>Email</span><input type="email" placeholder="teacher@hillside.edu"></label>
+    <label><span>Email</span><input type="email" placeholder="teacher@excelprimaryschool.org"></label>
     <label><span>Phone</span><input placeholder="+265 ..."></label>
     <button class="btn primary" type="submit">${icon("presentation")} Save Teacher</button>
   </form>`);
 }
 
 function paymentFormHtml() {
-  return `<form class="record-form modal-form" onsubmit="event.preventDefault(); createPayment(this);">
+  return `<form class="record-form modal-form" onsubmit="event.preventDefault(); createPayment(this)">
     ${paymentStudentSearchHtml()}
-    <label><span>Fee Type</span><select name="fee_type"><option>Tuition Fee</option><option>Examination Fee</option><option>Trip Fee</option><option>Other Fee</option></select></label>
-    <label><span>Academic Year</span><select name="academic_year"><option>${activeAcademicYear()}</option><option>2024 / 2025</option><option>2026 / 2027</option></select></label>
-    <label><span>Term</span><select name="term"><option>Term 1</option><option>Term 2</option><option>Term 3</option></select></label>
-    <label><span>Amount (MWK)</span><input name="amount" type="number" min="1" value="120000" required></label>
+    <label><span>Fee Type</span><select name="fee_type" onchange="updatePaymentAmountLimit(this.form)">${['Tuition Fee','Uniform Fee','School Bus Fee','Trip Fee'].map(type=>`<option>${type}</option>`).join('')}</select></label>
+    <label><span>Academic Year</span><input name="academic_year" value="${escapeHtml(activeAcademicYear())}" readonly></label>
+    <label><span>Term</span><input name="term" value="${escapeHtml(activeTerm())}" readonly></label>
+    <label><span>Amount Collected (MWK)</span><input name="amount" type="number" min="1" step="1" required></label>
     <label><span>Method</span><select name="method"><option>Mobile Money</option><option>Cash</option><option>Bank Transfer</option></select></label>
     <label class="wide-field"><span>Notes</span><input name="notes" placeholder="Optional receipt note"></label>
-    <p class="form-note">When saved, the matching fee balance is deducted and a printable receipt number is generated automatically.</p>
-    <button class="btn primary" type="submit">${icon("receipt")} Record Payment</button>
-  </form>`;
+    <p class="form-note">Select a student to see the fee balance.</p><button class="btn primary" type="submit" disabled> Select a Student</button></form>`;
 }
 
 function openPaymentModal() {
   openModal("Record Payment", paymentFormHtml(), "wide");
+  updatePaymentAmountLimit(document.querySelector(".modal-card form"));
 }
 
 function openDetailsModal(title = "Record Details", detail = "School record") {
@@ -543,25 +757,51 @@ function openReceiptModal(receiptNo) {
   </div>`, "receipt-modal");
 }
 
+function studentPayments(studentId) {
+  return (backendData.payments || [])
+    .filter((payment) => Number(payment.student_id) === Number(studentId))
+    .sort((a, b) => new Date(b.paid_at) - new Date(a.paid_at));
+}
+
+function openStudentPaymentHistory(studentId) {
+  const student = backendData.students?.find((item) => Number(item.id) === Number(studentId));
+  const payments = studentPayments(studentId);
+  const studentName = student ? `${student.first_name} ${student.last_name}` : "Student";
+  openModal(`${escapeHtml(studentName)} — Payment History`, payments.length ? `<div class="table-wrap payment-history-wrap"><table class="payment-history-table"><thead><tr><th>Receipt</th><th>Payment / Term</th><th>Amount</th><th>Method</th><th>Date / Time</th><th>Actions</th></tr></thead><tbody>${payments.map((payment) => { const paidAt = dateTimeParts(payment.paid_at); return `<tr><td><a onclick="openReceiptModal('${payment.receipt_no}')">${payment.receipt_no}</a></td><td><span class="cell-stack"><strong>${payment.fee_type}</strong><small>${payment.term || "Term 1"}</small></span></td><td><strong>${money(payment.amount)}</strong></td><td>${payment.method}</td><td><span class="cell-stack"><strong>${paidAt.date}</strong><small>${paidAt.time}</small></span></td><td><span class="row-tools"><button class="icon-mini" title="Preview receipt" onclick="openReceiptModal('${payment.receipt_no}')">${icon("receipt", 16)}</button><button class="icon-mini" title="Download receipt" onclick="downloadReceipt('${payment.receipt_no}')">${icon("download", 16)}</button></span></td></tr>`; }).join("")}</tbody></table></div>` : `<p class="muted">No payments have been recorded for this student.</p>`, "wide payment-history-modal");
+}
+
+function downloadReceipt(receiptNo) {
+  const payment = backendData.payments?.find((item) => item.receipt_no === receiptNo);
+  if (!payment) return showToast("Receipt unavailable", "No recorded transaction was found for this student.", "error");
+  const studentName = payment.student ? `${payment.student.first_name} ${payment.student.last_name}` : "Student";
+  const paidAt = dateTimeParts(payment.paid_at);
+  const documentHtml = `<!doctype html><html><head><meta charset="utf-8"><title>${payment.receipt_no}</title><style>body{font:16px Arial;max-width:680px;margin:40px auto;color:#17213d}h1{color:#18783e}table{width:100%;border-collapse:collapse}td{padding:10px;border-bottom:1px solid #ddd}td:first-child{font-weight:bold}</style></head><body><h1>Excel Primary School</h1><h2>Payment Receipt ${payment.receipt_no}</h2><table><tr><td>Student</td><td>${escapeHtml(studentName)}</td></tr><tr><td>Payment Type</td><td>${escapeHtml(payment.fee_type)}</td></tr><tr><td>Term</td><td>${escapeHtml(payment.term || "Term 1")}</td></tr><tr><td>Academic Year</td><td>${escapeHtml(payment.academic_year || activeAcademicYear())}</td></tr><tr><td>Amount</td><td>${money(payment.amount)}</td></tr><tr><td>Method</td><td>${escapeHtml(payment.method)}</td></tr><tr><td>Date / Time</td><td>${paidAt.date} · ${paidAt.time}</td></tr><tr><td>Balance After</td><td>${money(payment.balance_after || 0)}</td></tr></table></body></html>`;
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(new Blob([documentHtml], { type: "text/html" }));
+  link.download = `${payment.receipt_no}.html`;
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+}
+
 function backendStudentRows() {
-  if (!backendData.students?.length) return students;
+  if (!backendData.students?.length) return [];
   return backendData.students.map((student) => [
     student.admission_no,
     `${student.first_name} ${student.last_name}`,
     `${student.class_name}${student.section ? `, ${student.section}` : ""}`,
-    student.roll_no || "0000",
+    student.admission_no || student.roll_no || "Not issued",
     student.gender || "Not set",
-    student.joined_on ? new Date(student.joined_on).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "Today"
+    student.joined_on ? new Date(student.joined_on).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "Not recorded"
   ]);
 }
 
 function backendParentRows() {
-  if (!backendData.guardians?.length) return parents;
+  if (!backendData.guardians?.length) return [];
   return backendData.guardians.map((guardian) => [
     `P${String(guardian.id).padStart(6, "0")}`,
     guardian.name,
     `Added on ${guardian.created_at ? new Date(guardian.created_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : todayLabel()}`,
-    guardian.email || "not-set@hillside.edu",
+    guardian.email || "not-set@excelprimaryschool.org",
     guardian.phone || "Not set",
     guardian.student ? `${guardian.student.first_name} ${guardian.student.last_name}` : "Student",
     guardian.student ? `${guardian.student.class_name}-${guardian.student.section || ""}` : ""
@@ -569,34 +809,46 @@ function backendParentRows() {
 }
 
 function backendPaymentRows() {
-  if (!backendData.payments?.length) return null;
-  return backendData.payments.map((payment) => [
-    payment.receipt_no,
-    payment.student ? `${payment.student.first_name} ${payment.student.last_name}` : "Student",
-    payment.fee_type,
-    payment.term || "Term 1",
-    payment.academic_year || activeAcademicYear(),
-    payment.student ? `${payment.student.class_name} ${payment.student.section || ""}` : "N/A",
-    payment.amount,
-    payment.balance_after || 0,
-    payment.method,
-    payment.status,
-    payment.paid_at ? new Date(payment.paid_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : todayLabel()
-  ]);
+  if (!backendData.payments?.length) return [];
+  return backendData.payments.map((payment) => {
+    const paidAt = dateTimeParts(payment.paid_at);
+    return [
+      payment.receipt_no,
+      payment.student ? `${payment.student.first_name} ${payment.student.last_name}` : "Student",
+      payment.fee_type,
+      payment.term || "Term 1",
+      payment.academic_year || activeAcademicYear(),
+      payment.student ? `${payment.student.class_name} ${payment.student.section || ""}` : "N/A",
+      payment.amount,
+      payment.balance_after || 0,
+      payment.method,
+      payment.status,
+      paidAt.date,
+      paidAt.time
+    ];
+  });
 }
 
+let latestAdmissionId = null;
 async function createAdmission(form) {
+  const button=form.querySelector('button[type=submit]');
+  if(button?.disabled)return;
+  if(button)button.disabled=true;
   const payload = Object.fromEntries(new FormData(form).entries());
   payload.created_by_role = currentRole();
   try {
-    await apiRequest("/students", { method: "POST", body: JSON.stringify(payload) });
-    form.reset();
-    closeModal();
-    showToast("Admission saved", "The student and parent record were added to the school register.", "success");
+    const result=await apiRequest('/students', {method:'POST',body:JSON.stringify(payload)});
+    latestAdmissionId=result.student.id;
+    localStorage.setItem('erpAcademicYear',result.academic_year);
+    localStorage.setItem('erpTerm',result.term);
+    form.reset();closeModal();
+    backendLoaded=false;
     await loadBackendData(true);
-  } catch (error) {
-    showToast("Admission not saved", error.message, "error");
-  }
+    location.hash='#/admissions';app();
+    requestAnimationFrame(()=>document.querySelector('.admissions-table [data-new-admission="true"]')?.scrollIntoView({behavior:'smooth',block:'center'}));
+
+  } catch(error) {showToast('Admission not saved',error.message,'error');}
+  finally {if(button)button.disabled=false;}
 }
 
 async function createPayment(form) {
@@ -608,15 +860,24 @@ async function createPayment(form) {
   }
   const payload = Object.fromEntries(new FormData(form).entries());
   payload.amount = Number(payload.amount || 0);
+  payload.created_by_role = currentRole();
   try {
     await apiRequest("/payments", { method: "POST", body: JSON.stringify(payload) });
     form.reset();
     closeModal();
-    showToast("Payment recorded", "The receipt has been added to the finance register.", "success");
+    showToast(currentRole() === "Director" ? "Payment recorded" : "Payment submitted", currentRole() === "Director" ? "The balance and receipt were updated." : "The Director must approve this payment before the balance changes.", "success");
     await loadBackendData(true);
   } catch (error) {
     showToast("Payment not recorded", error.message, "error");
   }
+}
+
+async function approvePayment(paymentId) {
+  try {
+    await apiRequest(`/payments/${paymentId}/approve`, { method: "PATCH", body: JSON.stringify({ role: currentRole() }) });
+    showToast("Payment approved", "The student balance and receipt status are now updated.", "success");
+    await loadBackendData(true);
+  } catch (error) { showToast("Payment not approved", error.message, "error"); }
 }
 
 async function sendMessage(form) {
@@ -640,6 +901,11 @@ function app() {
     document.getElementById("app").innerHTML = loginPage();
     return;
   }
+  if (!backendLoaded || backendError) {
+    document.getElementById('app').innerHTML = `<div class="app-shell">${sidebar(current)}<main class="main">${topbar()}<section class="content"><div class="loading-placeholder" aria-label="Loading"><div></div><div></div><div></div></div>${backendError?`<p>${escapeHtml(backendError)}</p><button class="btn ghost" onclick="loadBackendData(true)">Retry</button>`:''}</section></main></div>`;
+    if (!backendLoading && !backendError) loadBackendData();
+    return;
+  }
   const sidebarTop = Number(sessionStorage.getItem("erpSidebarScroll") || 0);
   const collapsed = localStorage.getItem("erpSidebarCollapsed") === "true";
   document.getElementById("app").innerHTML = `
@@ -648,42 +914,64 @@ function app() {
       <main class="main">
         ${topbar()}
         <section class="content is-entering">${page(current)}</section>
-        <footer class="footer"><span>Copyright © Hillside Secondary School.</span><span>For a better tomorrow</span></footer>
+        <footer class="footer"><span>Copyright © Excel Primary School.</span><span>Creating the difference</span></footer>
       </main>
     </div>`;
   if (!backendLoaded && !backendLoading) loadBackendData();
   const sidebarEl = document.querySelector(".sidebar");
+  compactTableToolbars();
   if (sidebarEl) {
     sidebarEl.scrollTop = sidebarTop;
     sidebarEl.addEventListener("scroll", () => {
       sessionStorage.setItem("erpSidebarScroll", String(sidebarEl.scrollTop));
     }, { passive: true });
   }
+  applyRosterFilters("promotion"); applyRosterFilters("fees");
   requestAnimationFrame(() => {
     document.querySelector(".content")?.classList.remove("is-entering");
+    removeStatusDots();
     showLatestNotifications();
+  });
+}
+
+function compactTableToolbars() {
+  document.querySelectorAll(".section-panel").forEach((panel) => {
+    const toolbars = [...panel.children].filter((child) => child.classList?.contains("section-toolbar"));
+    const searchToolbar = toolbars.find((toolbar, index) => index > 0 && !toolbar.classList.contains("roster-toolbar") && toolbar.querySelector(".search"));
+    if (!searchToolbar) return;
+    const search = searchToolbar.querySelector(".search");
+    const mainToolbar = toolbars[0];
+    let filters = mainToolbar.querySelector(".filters");
+    if (!filters) {
+      filters = document.createElement("div");
+      filters.className = "filters";
+      mainToolbar.appendChild(filters);
+    }
+    const dateControl = filters.querySelector(".date-filter, button:first-child");
+    if (dateControl) dateControl.after(search);
+    else filters.prepend(search);
+    searchToolbar.remove();
   });
 }
 
 function sidebar(current) {
   const role = currentRole();
   const groups = navForRole(role);
+  const pendingAdmissions = Number(backendData.pending_record_approvals||0);
+  const pendingNewAdmissions = Number(backendData.pending_new_admissions||0);
+  const pendingPayments = Number(backendData.stats?.pending_payments || 0);
+  const canApprovePayments = ["Director", "Super Admin"].includes(role);
   return `<aside class="sidebar">
     <div class="brand">
       ${schoolLogo(true)}
       <button class="hamburger" title="Toggle sidebar" onclick="toggleSidebar()">${icon("menu")}</button>
-    </div>
-    <div class="sidebar-role">
-      <span>Signed in as</span>
-      <strong>${role}</strong>
-      <a href="#/login">${icon("log-out", 14)} Switch account</a>
     </div>
     ${groups.map(([title, links]) => `
       <div class="nav-group">
         <p class="nav-title">${title}</p>
         ${links.map(([id, label, iconName]) => `
           <a class="nav-link ${current === id ? "active" : ""}" href="#/${id}" onclick="sessionStorage.setItem('erpSidebarScroll', String(this.closest('.sidebar')?.scrollTop || 0))">
-            <span class="nav-icon">${icon(iconName)}</span><span>${label}</span>
+            <span class="nav-icon">${icon(iconName)}</span><span>${label}</span>${id === "admissions" && pendingNewAdmissions ? `<span class="nav-count" title="${pendingNewAdmissions} new admissions awaiting approval">${pendingNewAdmissions}</span>` : ""}${id === "approvals" && pendingAdmissions ? `<span class="nav-count" title="${pendingAdmissions} student / guardian requests awaiting approval">${pendingAdmissions}</span>` : ""}${id === "fees" && canApprovePayments && pendingPayments ? `<span class="nav-count" title="${pendingPayments} payments awaiting approval">${pendingPayments}</span>` : ""}
           </a>`).join("")}
       </div>`).join("")}
   </aside>`;
@@ -694,15 +982,13 @@ function topbar() {
   const themeIcon = currentTheme() === "dark" ? "sun" : "moon";
   const themeLabel = currentTheme() === "dark" ? "Light mode" : "Dark mode";
   return `<header class="topbar">
-    <div class="search"><input placeholder="Search" /><span class="shortcut">${icon("search", 15)}</span></div>
     <div class="top-actions">
       <button class="pill" onclick="openDetailsModal('Signed in role','${role}')">${icon("shield-check", 15)} ${role}</button>
-      <button class="pill" onclick="openAcademicYearModal()">${icon("calendar-days", 15)} Academic Year : ${activeAcademicYear()}</button>
+      <label class="period-control"><select aria-label="Academic year" onchange="selectAcademicPeriod(this.value,this.value===classRegisterData.current_year?classRegisterData.current_term:'Term 1')">${availableYears().map(year=>`<option ${year===activeAcademicYear()?'selected':''}>${year}</option>`).join('')}</select></label>
+      <label class="period-control"><select aria-label="Academic term" onchange="selectAcademicPeriod(activeAcademicYear(),this.value)">${['Term 1','Term 2','Term 3'].map(term=>`<option ${term===activeTerm()?'selected':''}>${term}</option>`).join('')}</select></label>
       <button class="icon-btn" title="${themeLabel}" onclick="toggleTheme()">${icon(themeIcon)}</button>
-      <button class="icon-btn" title="Language">MW</button>
-      <button class="icon-btn" title="Notifications" onclick="openNotificationPanel()">${icon("bell")}</button>
-      <a class="icon-btn" href="#/messaging" title="Messages">${icon("messages")}</a>
-      <a class="icon-btn logout-btn" href="#/login" title="Logout">${icon("log-out")}</a>
+      ${notificationDropdown()}
+      <a class="icon-btn logout-btn" href="#/login" onclick="event.preventDefault(); erpLogout()" title="Log out" aria-label="Log out">${icon("log-out")}</a>
       <span class="avatar small">AD</span>
     </div>
   </header>`;
@@ -717,9 +1003,9 @@ function loginPage() {
         <div class="login-logo-tile">${schoolLogo(false)}</div>
       </div>
       <div class="login-copy">
-        <p class="eyebrow">Hillside Secondary School</p>
-        <h1>For a better tomorrow.</h1>
-        <p>Hillside Secondary School keeps every learner known, supported, and prepared for the next step.</p>
+        <p class="eyebrow">Excel Primary School · Mangochi</p>
+        <h1>Creating the difference.</h1>
+        <p>Quality, affordable education from Nursery and Reception through Standard 8.</p>
       </div>
       <div class="login-stats">
         <div><strong>3,654</strong><span>Total Students</span></div>
@@ -730,7 +1016,7 @@ function loginPage() {
     <section class="login-form-panel">
       <form class="login-card" onsubmit="event.preventDefault(); demoLogin(this);">
         <div class="login-card-head">
-          <div class="login-card-logo">${schoolLogo(false)}</div>
+          <div class="login-card-logo">${schoolLogo(false, "shield")}</div>
           <h2>Welcome Back</h2>
           <p class="muted">Sign in to continue to your dashboard</p>
         </div>
@@ -767,15 +1053,74 @@ function filters(extra = "") {
   return `<div class="filters">
     ${extra}
     <button class="pill" onclick="openFilterModal('Batch and Date Filters')">${icon("calendar-days", 14)} Batch : 24 May 2025</button>
-    <select class="select" onchange="notifyAction('Class filter applied', this.value || 'All classes')"><option>Class</option><option>Form 1</option><option>Form 2</option><option>Form 3</option><option>Form 4</option></select>
-    <select class="select" onchange="notifyAction('Section filter applied', this.value || 'All sections')"><option>Section</option><option>A</option><option>B</option><option>C</option></select>
+    <select class="select" onchange="filterStudentClass(this)"><option value="">All Classes</option>${classOptions()}</select>
     <button class="pill" onclick="openSortModal()">${icon("sort", 14)} Sort By A-Z</button>
   </div>`;
 }
 
+function filterStudentClass(select) { filterDirectory(select); }
+function directorySearch() {
+  return `<div class="search directory-search"><input type="search" placeholder="Search name or admission number" aria-label="Search names" oninput="filterDirectory(this)"><span class="shortcut">${icon("search",15)}</span></div>`;
+}
+function filterDirectory(control) {
+  const panel=control.closest('.section-panel');
+  const query=panel?.querySelector('.directory-search input')?.value.trim().toLowerCase()||'';
+  const className=panel?.querySelector('select[onchange="filterStudentClass(this)"]')?.value||'';
+  panel?.querySelectorAll('.directory .profile-card').forEach(card=>{card.hidden=Boolean((query&&!card.textContent.toLowerCase().includes(query))||(className&&card.dataset.class!==className));});
+}
+
+function filterTableRows(input, tableSelector) {
+  const query = input.value.trim().toLowerCase();
+  (input.closest(".section-panel")||input.closest(".modal-card")||document).querySelectorAll(`${tableSelector} tbody tr`).forEach((row) => {
+    row.hidden = Boolean(query && !row.innerText.toLowerCase().includes(query));
+  });
+}
+
+function applyAdmissionFilters(control) {
+  const panel = control.closest(".section-panel");
+  const query = panel.querySelector("[data-admission-search]")?.value.trim().toLowerCase() || "";
+  const className = panel.querySelector("[data-admission-class]")?.value || "";
+  const status = panel.querySelector("[data-admission-status]")?.value || "";
+  panel.querySelectorAll(".admissions-table tbody tr").forEach((row) => {
+    row.hidden = Boolean((query && !row.innerText.toLowerCase().includes(query)) || (className && row.dataset.class !== className) || (status && row.dataset.status !== status));
+  });
+}
+
+function applyBalanceFilters(control) {
+  const panel = control.closest(".section-panel");
+  const query = panel.querySelector("[data-balance-search]")?.value.trim().toLowerCase() || "";
+  const status = panel.querySelector("[data-balance-status]")?.value || "";
+  const range = panel.querySelector("[data-balance-range]")?.value || "";
+  const className = panel.querySelector("[data-balance-class]")?.value || "";
+  panel.querySelectorAll(".balance-table tbody tr").forEach((row) => {
+    const balance = Number(row.dataset.balance || 0);
+    const matchesRange = !range
+      || (range === "cleared" && balance === 0)
+      || (range === "outstanding" && balance > 0)
+      || (range === "under-50000" && balance > 0 && balance < 50000)
+      || (range === "50000-plus" && balance >= 50000);
+    row.hidden = Boolean((query && !row.innerText.toLowerCase().includes(query)) || (status && row.dataset.status !== status) || (className && !row.innerText.includes(className)) || !matchesRange);
+  });
+}
+
+function recordFilters() {
+  return `<div class="filters">
+    <select class="select" onchange="updateFilterSections(this); notifyAction('Class filter applied', this.value || 'All classes')"><option value="">Class</option>${classOptions()}</select>
+    <select class="select" data-section-filter onchange="notifyAction('Section filter applied', this.value || 'All sections')"><option value="">Section</option></select>
+    <select class="select" onchange="notifyAction('Term filter applied', this.value || 'All terms')"><option value="">Term</option><option>Term 1</option><option>Term 2</option><option>Term 3</option></select>
+    <button class="pill" onclick="openSortModal()">${icon("sort", 14)} Alphabetical A–Z</button>
+  </div>`;
+}
+
+function updateFilterSections(classSelect) {
+  const sectionSelect = classSelect.closest(".filters").querySelector("[data-section-filter]");
+  const options = ["A", "B"];
+  sectionSelect.innerHTML = `<option value="">Section</option>${options.map((section) => `<option>${section}</option>`).join("")}`;
+}
+
 function dashboard() {
   const activeRole = currentRole();
-  if (activeRole === "Super Admin") return superAdminDashboard();
+  if (activeRole === "Super Admin") return directorDashboard();
   return roleDashboard(activeRole);
 }
 
@@ -791,7 +1136,7 @@ function superAdminDashboard() {
     <div class="grid metrics">${metrics.map(metricCard).join("")}</div>
     <div class="grid two">
       <section class="card">${cardHead("Access Control", `<span class="muted">Least privilege</span>`)}<div class="request-list">
-        ${[["Director account", "Leadership access enabled", "green"], ["Finance Officer", "Payments and receipts only", "blue"], ["Teacher Demo", "Assigned student view", "amber"], ["Dormant account review", "1 user needs confirmation", "red"]].map(([title, meta, color]) => `<article class="request-item"><div class="person-line"><span class="nav-icon">${icon("shield-check")}</span><div><strong>${title}</strong><span class="muted">${meta}</span></div><span class="badge ${color}">Open</span></div></article>`).join("")}
+        ${[["Director account", "Leadership access enabled", "green"], ["School Manager", "Payments and receipts only", "blue"], ["Teacher Demo", "Assigned student view", "amber"], ["Dormant account review", "1 user needs confirmation", "red"]].map(([title, meta, color]) => `<article class="request-item"><div class="person-line"><span class="nav-icon">${icon("shield-check")}</span><div><strong>${title}</strong><span class="muted">${meta}</span></div><span class="badge ${color}">Open</span></div></article>`).join("")}
       </div></section>
       <section class="card">${cardHead("Maintenance Status", `<span class="muted">${icon("calendar-days", 14)} Today</span>`)}<div class="request-list">
         ${[["Configuration cache", "Ready to clear after deployment", "blue"], ["Database backup", "Last backup: today 14:52", "green"], ["Storage link", "Public files reachable", "green"], ["Audit review", "Payment deletion request flagged", "amber"]].map(([title, meta, color]) => `<article class="request-item"><div class="person-line"><span class="nav-icon">${icon("database")}</span><div><strong>${title}</strong><span class="muted">${meta}</span></div><span class="badge ${color}">Check</span></div></article>`).join("")}
@@ -808,7 +1153,7 @@ function systemAdminTable() {
 function roleDashboard(role) {
   if (role === "Director") return directorDashboard();
   if (role === "Admissions Officer") return admissionsDashboard();
-  if (role === "Finance Officer" || role === "Finance") return financeDashboard();
+  if (role === "School Manager" || role === "Finance") return financeDashboard();
   if (role === "Exams Officer") return examsDashboard();
   if (role === "Teacher") return teacherDashboard();
   return dashboard();
@@ -816,28 +1161,24 @@ function roleDashboard(role) {
 
 function metricCard([iconName, number, label, left, right, badge]) {
   return `<section class="card metric">
-    <div class="metric-main"><span class="metric-icon">${iconPaths[iconName] ? icon(iconName, 30) : iconName}</span><div><h3>${number}</h3><p>${label}</p></div><span class="badge ${badge}" style="margin-left:auto">1.2%</span></div>
+    <div class="metric-main"><span class="metric-icon">${iconPaths[iconName] ? icon(iconName, 30) : iconName}</span><div><h3>${number}</h3><p>${label}</p></div><span class="badge ${badge}" style="margin-left:auto">${activeTerm()}</span></div>
     <div class="metric-foot"><span>${left}</span><i class="vline"></i><span>${right}</span></div>
   </section>`;
 }
 
 function directorDashboard() {
-  const metrics = [
-    ["graduation-cap", "3654", "Active Students", "New : 284", "Transfers : 07", "blue"],
-    ["wallet", "MWK 12.4M", "Fees Expected", "Collected : MWK 10.3M", "Balance : MWK 2.1M", "green"],
-    ["file-chart", "812", "Exam Eligible", "Approved : 36", "Blocked : 18", "amber"],
-    ["shield-check", "18", "Approvals", "Payment Edits", "Audit Items", "red"]
+  const stats=backendData.stats||{};
+  const metrics=[
+    ['graduation-cap',String(stats.students||0),'Active Students',`Pending : ${stats.pending_admissions||0}`,`${activeAcademicYear()} · ${activeTerm()}`,'blue'],
+    ['wallet',money(stats.balances_due||0),'Fees Expected',`Collected : ${money(stats.payments_total||0)}`,`Balance : ${money(stats.balances_outstanding||0)}`,'green'],
+    ['user-plus',String((backendData.students||[]).filter(s=>s.joined_on?.slice(0,10)===backendData.server_date).length),"Today's Admissions",'Registered today',`Follow-ups : ${backendData.admission_follow_ups?.length||0}`,'amber'],
+    ['banknote',money(stats.payments_today||0),"Today's Fees",'Payments received',`Pending approvals : ${stats.pending_payments||0}`,'red']
   ];
-  return `${pageHead("Director Dashboard", "Dashboard / Director", `<a class="btn ghost" href="#/login">${icon("log-out")} Switch Role</a><a class="btn primary" href="#/analytics">${icon("bar-chart")} View Analytics</a>`)}
-    <section class="director-hero"><div><p class="eyebrow">Executive Overview</p><h2>Hillside Secondary School</h2><p>Monitor admissions, fees, arrears, exam eligibility, and approvals from one workspace.</p></div><div class="director-score"><strong>92%</strong><span>Operational Health</span></div></section>
-    <div class="grid metrics">${metrics.map(metricCard).join("")}</div>
-    <div class="grid two">
-      <section class="card">${cardHead("Collections & Arrears", `<span class="muted">${icon("calendar-days", 14)} This Term</span>`)}${bars()}</section>
-      <section class="card">${cardHead("Director Actions", `<span class="muted">Priority</span>`)}<div class="request-list">
-        ${[["Approve payment edit", "Accounts Office", "red"], ["Review exam eligibility exception", "Exams Office", "amber"], ["Open arrears report", "Form 4", "blue"], ["Audit deleted receipt request", "Finance", "red"]].map(([title, meta, color]) => `<article class="request-item"><div class="person-line"><span class="nav-icon">${icon("shield-check")}</span><div><strong>${title}</strong><span class="muted">${meta}</span></div><span class="badge ${color}">Open</span></div></article>`).join("")}
-      </div></section>
-    </div>
-    <section class="section-panel" style="margin-top:24px"><div class="section-toolbar"><h2>Key Director Reports</h2><div class="filters"><a class="btn ghost" href="#/financial-reports">${icon("banknote")} Financial</a><a class="btn ghost" href="#/enrollment-reports">${icon("user-plus")} Enrollment</a><a class="btn ghost" href="#/compliance-reports">${icon("shield")} Compliance</a></div></div><div class="table-wrap">${directorTable()}</div></section>`;
+  return `<div class="director-dashboard">${pageHead('Director Dashboard','Dashboard / Director',`<button class="btn ghost" onclick="openPaymentModal()">${icon('receipt')} Record Payment</button><button class="btn primary" onclick="openAdmissionModal()">${icon('user-plus')} New Admission</button>`)}${periodNotice()}
+    <div class="grid metrics">${metrics.map(metricCard).join('')}</div>
+    <div class="grid two"><section class="card director-chart-card">${cardHead('Collections & Arrears',`<span class="muted">${icon('calendar-days',14)} ${activeTerm()}</span>`)}${periodCollectionBars()}</section>
+    <section class="card director-calendar">${cardHead('School Calendar',`<span class="muted">${activeAcademicYear()}</span>`)}${calendar()}</section></div>
+    <section class="section-panel director-fees-table"><div class="section-toolbar"><h2>Fees Collection</h2>${feesFilters()}</div><div class="table-wrap">${feesTable()}</div></section></div>`;
 }
 
 function directorTable() {
@@ -846,23 +1187,69 @@ function directorTable() {
 }
 
 function financeDashboard() {
-  const outstanding = backendData.stats?.balances_outstanding ? money(backendData.stats.balances_outstanding) : "MWK 2,050,050";
-  return `${pageHead("Fees Management", "Dashboard / Finance / Fees Group", `<button class="icon-btn" title="Refresh" onclick="loadBackendData(true); showToast('Refreshed','Latest finance records loaded.','success')">${icon("refresh")}</button><button class="icon-btn" title="Print" onclick="window.print()">${icon("printer")}</button><button class="btn ghost" onclick="notifyAction('Export prepared','Finance records are ready for download.')">${icon("download")} Export</button>`)}
-    <div class="stats-strip finance-strip">
-      <div class="money-stack">
-        ${moneyCard("banknote", money(backendData.stats?.payments_total || 5050050), "Fees Collected", "green")}
-        ${moneyCard("wallet", outstanding, "Pending Fees", "amber")}
-        ${moneyCard("triangle-alert", outstanding, "Overdue Payments", "red")}
-      </div>
-      <section class="card trend-card">${cardHead("Fees Collection Trend", `<span class="muted">${icon("calendar-days", 14)} This Month</span>`)}${lineAreaChart("blue", true)}</section>
-      <div class="finance-progress-grid">
-        ${progressCard("Tuition Fee", 80, "MWK 3,000,000/2,600,000 Collected", "var(--cyan)")}
-        ${progressCard("Books & Supplies", 63, "MWK 2,500,000/1,000,000 Collected", "var(--blue)")}
-        ${progressCard("Activities", 20, "MWK 1,500,000/500,000 Collected", "var(--amber)")}
-        ${progressCard("Miscellaneous", 98, "MWK 500,000/430,000 Collected", "var(--green)")}
-      </div>
-    </div>
-    <section class="section-panel"><div class="section-toolbar"><h2>Fees Collection</h2><div class="filters"><button class="pill" onclick="openPaymentModal()">${icon("receipt", 14)} Record Payment</button><button class="pill">+ Generate Invoice</button><select class="select"><option>This Month</option></select><select class="select"><option>All Status</option></select><select class="select"><option>All Classes</option></select></div></div><div class="section-toolbar"><span>Row Per Page <select class="select"><option>10</option></select> Entries</span><div class="search"><input placeholder="Search"></div></div><div class="table-wrap">${feesTable()}</div></section>`;
+  return `${pageHead('Fees Management','Dashboard / School Manager / Fees Group',`<button class="icon-btn" title="Refresh" onclick="loadBackendData(true)">${icon('refresh')}</button><button class="icon-btn" title="Print table" onclick="printFeesTable()">${icon('printer')}</button><button class="btn ghost" onclick="downloadVisibleTable('school-fees.csv')">${icon('download')} Export</button><button class="btn ghost" onclick="openAdmissionModal()">${icon('user-plus')} New Admission</button><button class="btn primary" onclick="openPaymentModal()">${icon('receipt')} Record Payment</button>`)}${periodNotice()}
+    <div class="stats-strip finance-strip"><div class="money-stack">${feeSummaryCards()}</div>
+    <section class="card trend-card finance-trend-card">${cardHead('Fees Collection Trend',`<span class="muted">${icon('calendar-days',14)} ${activeTerm()}</span>`)}${datedCollectionBars()}</section>
+    <div class="finance-progress-grid">${feeProgressCards(3)}${financeCollectionActivityCard(backendData.finance_dashboard?.collection_activity||[])}</div></div>
+    <section class="section-panel"><div class="section-toolbar"><h2>Fees Collection</h2>${feesFilters()}</div><div class="table-wrap">${feesTable()}</div></section>`;
+}
+
+function financeCollectionActivityCard(collectionActivity = []) {
+  const methods=new Map();
+  for(const payment of (backendData.payments||[]).filter(p=>p.status==='Paid')) {
+    const method=payment.payment_method||payment.method||'Not recorded';
+    methods.set(method,(methods.get(method)||0)+Number(payment.amount));
+  }
+  const total=[...methods.values()].reduce((sum,value)=>sum+value,0);
+  const colors=['var(--green)','var(--blue)','var(--amber)','var(--cyan)'];
+  let angle=0;
+  const segments=[...methods.values()].map((value,index)=>{const start=angle;angle+=total?value/total*100:0;return `${colors[index%colors.length]} ${start}% ${angle}%`;});
+  const background=total?`radial-gradient(circle,var(--panel) 0 47%,transparent 49%),conic-gradient(${segments.join(',')})`:'var(--line)';
+  return `<section class="card progress-card collection-activity-card">${cardHead("Collection Activity", `<a class="muted" href="#/daily-collections">Daily</a>`)}<div class="activity-summary"><span class="activity-pie" style="background:${background}" role="img" aria-label="${escapeHtml([...methods].map(([method,value])=>`${method}: ${money(value)}`).join('; ')||'No collections')}"></span><div><strong>${money(total)}</strong><span class="muted">All methods</span></div></div><a class="activity-link" href="#/daily-collections">${icon("bar-chart", 15)} View breakdown</a></section>`;
+}
+
+function financePremiumDashboard(outstanding) {
+  const dashboard = backendData.finance_dashboard || {};
+  const noticeRows = dashboard.notices?.length ? dashboard.notices : backendData.notifications;
+  const notices = noticeRows?.length ? noticeRows.slice(0, 4).map((notice) => [notice.title, notice.body, notice.type || "blue"]) : [
+    ["Receipt reconciliation", "Daily collections are ready for review.", "blue"],
+    ["Arrears follow-up", "214 students require parent reminders.", "red"],
+    ["Primary fee audit", "Term 1 primary balances updated.", "amber"],
+    ["Director approval", "Payment edit queue has 3 pending items.", "green"]
+  ];
+  return `<div class="finance-command-grid">
+    <section class="card finance-board">
+      ${cardHead("Finance Notice Board", `<a class="muted" href="#/notifications">View All</a>`)}
+      <div class="finance-notices">${notices.map(([title, body, tone]) => `<article><span class="metric-icon finance-card-icon" style="background:var(--${tone}-soft);color:var(--${tone})">${icon(financeToneIcon(tone), 22)}</span><div><strong>${title}</strong><small>${body}</small></div><span class="due-pill">${todayLabel({ day: "2-digit", month: "short" })}</span></article>`).join("")}</div>
+    </section>
+    <section class="card finance-activity">
+      ${cardHead("Collection Activity", `<a class="muted" href="#/daily-collections">Daily Collections</a>`)}
+      ${financeCollectionPie(dashboard.collection_activity)}
+    </section>
+  </div>`;
+}
+
+function financeToneIcon(tone) {
+  return { green: "banknote", red: "triangle-alert", amber: "wallet", blue: "trending-up", cyan: "bar-chart" }[tone] || "layout-dashboard";
+}
+
+function financeCollectionPie(collectionActivity = []) {
+  const segments = collectionActivity?.length ? collectionActivity.map((item) => [item.label, money(item.value), item.percent, item.tone || "blue"]) : [
+    ["Mobile Money", "MWK 2.9M", 48, "green"],
+    ["Bank Transfer", "MWK 1.7M", 28, "blue"],
+    ["Cash Desk", "MWK 920K", 15, "amber"],
+    ["Failed / Reversed", "MWK 540K", 9, "red"]
+  ];
+  let cursor = 0;
+  const gradient = segments.map(([, , pct, tone]) => {
+    const start = cursor;
+    cursor += Number(pct) || 0;
+    return `var(--${tone}) ${start}% ${cursor}%`;
+  }).join(", ");
+  return `<div class="finance-pie-panel">
+    <div class="finance-pie" style="background:radial-gradient(circle at center, var(--panel) 0 42%, transparent 43%), conic-gradient(${gradient || "var(--blue) 0 100%"});" aria-label="Collection activity breakdown"></div>
+    <div class="finance-pie-legend">${segments.map(([label, value, pct, tone]) => `<article><span class="legend-dot ${tone}"></span><div><strong>${label}</strong><small>${value}</small></div><b>${pct}%</b></article>`).join("")}</div>
+  </div>`;
 }
 
 function admissionsDashboard() {
@@ -872,13 +1259,16 @@ function admissionsDashboard() {
     ["users", "3,420", "Parent Contacts", "Verified : 3,101", "Missing : 67", "amber"],
     ["file-chart", "38", "Pending Documents", "Birth Cert / Transfer", "Urgent : 9", "red"]
   ];
-  return `${pageHead("Admissions Dashboard", "Dashboard / Admissions Officer", `<a class="btn ghost" href="#/login">${icon("log-out")} Switch Role</a><button class="btn primary" onclick="openAdmissionModal()">${icon("user-plus")} New Admission</button>`)}
-    <section class="role-overview admissions-overview"><div><p class="eyebrow">Admissions Desk</p><h2>Register learners without losing the paper trail</h2><p>Student records, parent contacts, transfer documents, and class placement stay together for review.</p></div><strong>${icon("refresh", 16)} Synced</strong></section>
+  const followUps = (backendData.admission_follow_ups?.length ? backendData.admission_follow_ups : (backendData.students || []).filter((student) => !student.guardian || !student.guardian.name || student.guardian.name === "Guardian details pending" || !student.guardian.email || !student.guardian.phone)).map((student) => {
+    const missing = [!student.guardian?.name || student.guardian?.name === "Guardian details pending" ? "name" : "", !student.guardian?.email ? "email" : "", !student.guardian?.phone ? "phone" : ""].filter(Boolean).join(", ");
+    return [`Guardian ${missing ? `${missing} missing` : "details incomplete"}`, `${student.first_name} ${student.last_name} · ${student.class_name}`, "amber", student.id];
+  });
+  return `${pageHead("Admissions Dashboard", "Dashboard / Admissions Officer", `<button class="btn primary" onclick="openAdmissionModal()">${icon("user-plus")} New Admission</button>`)}
     <div class="grid metrics">${metrics.map(metricCard).join("")}</div>
-    <div class="grid two">
-      <section class="card">${cardHead("Admissions by Class", `<span class="muted">${icon("calendar-days", 14)} This Year</span>`)}${bars()}</section>
-      <section class="card">${cardHead("Follow-up Queue", `<span class="muted">Priority</span>`)}<div class="request-list">
-        ${[["Missing transfer letter", "Aarav Sharma - III A", "red"], ["Parent phone not verified", "Riya Verma - II B", "amber"], ["Assign admission number", "Kavya Malhotra - VIII B", "blue"], ["Director review requested", "Scholarship admission", "green"]].map(([title, meta, color]) => `<article class="request-item"><div class="person-line"><span class="nav-icon">${icon("user-plus")}</span><div><strong>${title}</strong><span class="muted">${meta}</span></div><span class="badge ${color}">Open</span></div></article>`).join("")}
+    <div class="grid two admissions-dashboard-grid">
+      <section class="card admissions-chart-card">${cardHead("Admitted Students by Month", `<span class="muted">${icon("calendar-days", 14)} This Year</span>`)}${admissionsByMonthChart()}</section>
+      <section class="card admissions-queue-card">${cardHead("Follow-up Queue", `<span class="muted">${followUps.length} pending</span>`)}<div class="request-list">
+        ${(followUps.length ? followUps : [["Guardian records complete", "No admissions require guardian follow-up", "green", null]]).slice(0, 6).map(([title, meta, color, studentId]) => `<article class="request-item"><div class="person-line"><span class="nav-icon">${icon(color === "green" ? "shield-check" : "users")}</span><div><strong>${title}</strong><span class="muted">${meta}</span></div>${studentId ? `<button class="badge ${color}" onclick="openGuardianFollowUp(${studentId})">Complete</button>` : `<span class="badge ${color}">Clear</span>`}</div></article>`).join("")}
       </div></section>
     </div>
     <section class="section-panel" style="margin-top:24px"><div class="section-toolbar"><h2>Recent Admissions</h2>${filters("")}</div><div class="table-wrap">${admissionsTable()}</div></section>`;
@@ -891,13 +1281,13 @@ function examsDashboard() {
     ["download", "24", "Exports Generated", "Excel / PDF", "Today : 3", "amber"],
     ["triangle-alert", "18", "Eligibility Holds", "Fees / Records", "Critical : 6", "red"]
   ];
-  return `${pageHead("Exams Dashboard", "Dashboard / Exams Officer", `<a class="btn ghost" href="#/login">${icon("log-out")} Switch Role</a><a class="btn primary" href="#/exam-export">${icon("download")} Export Lists</a>`)}
-    <section class="role-overview exams-overview"><div><p class="eyebrow">Examinations Office</p><h2>Eligibility, candidate lists, and exports</h2><p>Track Form 1 to Form 4 exam readiness, fee clearance, holds, and generated lists by term.</p></div><strong>${icon("clipboard-check", 16)} Rules active</strong></section>
+  return `${pageHead("Exams Dashboard", "Dashboard / Exams Officer", `<a class="btn primary" href="#/exam-export">${icon("download")} Export Lists</a>`)}
+    <section class="role-overview exams-overview"><div><p class="eyebrow">Examinations Office</p><h2>Eligibility, candidate lists, and exports</h2><p>Track Standard 1 to Standard 4 exam readiness, fee clearance, holds, and generated lists by term.</p></div><strong>${icon("clipboard-check", 16)} Rules active</strong></section>
     <div class="grid metrics">${metrics.map(metricCard).join("")}</div>
     <div class="grid two">
       <section class="card">${cardHead("Candidate Trend", `<span class="muted">${academicYearLabel()}</span>`)}${bars()}</section>
       <section class="card">${cardHead("Exam Readiness", `<span class="muted">Term 2</span>`)}<div class="request-list">
-        ${[["Form 4 candidate list", "812 ready", "green"], ["Fees hold list", "18 students blocked", "red"], ["Class lists export", "Excel + PDF", "blue"], ["Exam type setup", "Mid-term / Mock", "amber"]].map(([title, meta, color]) => `<article class="request-item"><div class="person-line"><span class="nav-icon">${icon("file-chart")}</span><div><strong>${title}</strong><span class="muted">${meta}</span></div><span class="badge ${color}">View</span></div></article>`).join("")}
+        ${[["Standard 4 candidate list", "812 ready", "green"], ["Fees hold list", "18 students blocked", "red"], ["Class lists export", "Excel + PDF", "blue"], ["Exam type setup", "Mid-term / Mock", "amber"]].map(([title, meta, color]) => `<article class="request-item"><div class="person-line"><span class="nav-icon">${icon("file-chart")}</span><div><strong>${title}</strong><span class="muted">${meta}</span></div><span class="badge ${color}">View</span></div></article>`).join("")}
       </div></section>
     </div>
     <section class="section-panel" style="margin-top:24px"><div class="section-toolbar"><h2>Eligible Students Snapshot</h2>${filters("")}</div><div class="table-wrap">${examCandidatesTable()}</div></section>`;
@@ -916,13 +1306,13 @@ function teacherDashboard() {
       <aside class="teacher-side">
         <section class="card pad syllabus-card"><div class="ring green">95%</div><div><h2>Syllabus</h2><p><span class="dot"></span> Completed : 95%</p><p><span class="dot" style="background:var(--red)"></span> Pending : 5%</p></div></section>
         <section class="card">${cardHead("Attendance", `<span class="muted">${icon("calendar-days", 14)} This Month</span>`)}<div class="attendance-box"><strong>Last 7 Days</strong><div class="week-row">${["M","T","W","T","F","S","S"].map((d,i) => `<span class="${i === 4 ? "absent" : i > 4 ? "off" : ""}">${d}</span>`).join("")}</div><p>${icon("calendar-days", 14)} No of total working days <strong>28 Days</strong></p><div class="attendance-stats"><span>Present <strong>25</strong></span><span>Absent <strong>2</strong></span><span>Halfday <strong>0</strong></span><span>Late <strong>1</strong></span></div></div></section>
-        <section class="card">${cardHead("Performance", `<span class="muted">This Month</span>`)}<div class="performance-list">${[["Grading Timeliness","Excellent",95],["Student Avg. Grade","Good",78],["Student Attendance","Need Improvement",68],["Parent Feedback","Below Standard",62]].map(([a,b,p]) => `<div><p><span>${a}<br><small>${b}</small></span><span>${p}%</span></p><div class="track"><span class="fill" style="width:${p}%;background:var(--green)"></span></div></div>`).join("")}</div></section>
+        <section class="card">${cardHead("Performance", `<span class="muted">This Month</span>`)}<div class="performance-list">${[["Grading Timeliness","Excellent",95,"green"],["Student Avg. Grade","Good",78,"green"],["Student Attendance","Need Improvement",68,"amber"],["Parent Feedback","Below Standard",62,"red"]].map(([a,b,p,tone]) => `<div><p><span>${a}<br><small>${b}</small></span><span>${p}%</span></p><div class="track ${tone}"><span class="fill" style="width:${p}%"></span></div></div>`).join("")}</div></section>
       </aside>
     </div>`;
 }
 
 function teacherInfoCards() {
-  return [["users", "Gender", "Female", "blue"], ["calendar-days", "Date Of Birth", "April 14, 1990", "amber"], ["messages", "Email Address", "meera@example.com", "red"], ["phone", "Phone Number", "+91 9954866445", "green"], ["graduation-cap", "Qualification", "MBA", "blue"], ["id-card", "Experience", "+10 Years", "cyan"], ["shield-check", "Certificate", "Teacher registration verified", "cyan"], ["location", "Address", "Hillside Secondary School campus area", "purple"]].map(([iconName, label, value, color]) => `<article class="info-card"><span class="soft-icon ${color}">${icon(iconName)}</span><div><strong>${label}</strong><span>${value}</span></div></article>`);
+  return [["users", "Gender", "Female", "blue"], ["calendar-days", "Date Of Birth", "April 14, 1990", "amber"], ["messages", "Email Address", "meera@example.com", "red"], ["phone", "Phone Number", "+91 9954866445", "green"], ["graduation-cap", "Qualification", "MBA", "blue"], ["id-card", "Experience", "+10 Years", "cyan"], ["shield-check", "Certificate", "Teacher registration verified", "cyan"], ["location", "Address", "Excel Primary School campus area", "purple"]].map(([iconName, label, value, color]) => `<article class="info-card"><span class="soft-icon ${color}">${icon(iconName)}</span><div><strong>${label}</strong><span>${value}</span></div></article>`);
 }
 
 function cardHead(title, right) {
@@ -937,7 +1327,7 @@ function bars(options = {}) {
   const months = ["Jan: 2025","Feb: 2025","Mar: 2025","Apr: 2025","May: 2025","Jun: 2025","Jul: 2025","Aug: 2025","Sep: 2025","Oct: 2025","Nov: 2025","Dec: 2025"];
   const total = options.total || [72, 84, 80, 86, 78, 68, 60, 74, 82, 82, 82, 82];
   const collected = options.collected || [62, 75, 71, 78, 69, 58, 47, 66, 77, 77, 77, 77];
-  const legendItems = options.legend || [["Total Fee", "soft"], ["Collected Fee", "blue"]];
+  const legendItems = options.legend || [["Total Fee", "soft"], ["Collected Fee", "green"]];
   const chartClass = options.compact ? "chart compact" : "chart";
   return `<div class="${chartClass}">
     ${chartLegend(legendItems)}
@@ -946,9 +1336,20 @@ function bars(options = {}) {
   </div>`;
 }
 
-function lineAreaChart(tone = "blue", compact = false) {
-  const fill = tone === "red" ? "rgba(239, 42, 80, .12)" : "rgba(66, 99, 230, .12)";
-  const stroke = tone === "red" ? "#ef2a50" : "#4263e6";
+function admissionsByMonthChart() {
+  const months = Array.from({ length: 12 }, (_, month) => new Date(new Date().getFullYear(), month, 1));
+  const counts = months.map((month) => (backendData.students || []).filter((student) => {
+    const joined = new Date(`${student.joined_on || ""}T00:00:00`);
+    return !Number.isNaN(joined.getTime()) && joined.getFullYear() === month.getFullYear() && joined.getMonth() === month.getMonth();
+  }).length);
+  const displayCounts = counts.some(Boolean) ? counts : [18, 22, 27, 31, 24, 20, 16, 28, 35, 30, 26, 21];
+  const max = Math.max(...displayCounts, 1);
+  return `<div class="chart"><div class="chart-legend"><span><i class="legend-marker green"></i>Admitted Students</span></div><div class="bars">${months.map((month, index) => `<span class="bar-group" title="${displayCounts[index]} admitted"><span class="bar admitted" style="height:${Math.max(8, Math.round((displayCounts[index] / max) * 100))}%"></span></span>`).join("")}</div><div class="months">${months.map((month) => `<span>${new Intl.DateTimeFormat("en-GB", { month: "short" }).format(month)}</span>`).join("")}</div></div>`;
+}
+
+function lineAreaChart(tone = "green", compact = false) {
+  const fill = tone === "red" ? "rgba(239, 42, 80, .12)" : "rgba(35, 132, 71, .14)";
+  const stroke = tone === "red" ? "#ef2a50" : "#238447";
   return `<div class="line-chart ${compact ? "compact" : ""}">
     <svg viewBox="0 0 600 220" preserveAspectRatio="none">
       <path d="M0 140 C70 128, 120 116, 170 136 S245 170, 300 128 S390 92, 450 116 S540 150, 600 92 L600 220 L0 220 Z" fill="${fill}"/>
@@ -956,6 +1357,39 @@ function lineAreaChart(tone = "blue", compact = false) {
     </svg>
     <span class="chart-tooltip ${tone}">${tone === "red" ? "MWK 500,000" : "MWK 600,000"}<small>July 2025</small></span>
   </div>`;
+}
+
+function financeTrendChart() {
+  const payments = backendData.payments || [];
+  const days = Array.from({ length: 7 }, (_, index) => { const date = new Date(); date.setDate(date.getDate() - (6 - index)); return date; });
+  const values = days.map((date) => { const day = date.toISOString().slice(0, 10); return payments.filter((payment) => payment.paid_at?.slice(0, 10) === day).reduce((sum, payment) => sum + Number(payment.amount || 0), 0); });
+  const max = Math.max(...values, 1);
+  return `<div class="recent-trend"><div class="trend-bars">${values.map((value) => `<i style="height:${Math.max(8, Math.round((value / max) * 100))}%" title="${money(value)}"></i>`).join("")}</div><div class="trend-dates">${days.map((date) => `<span>${new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short" }).format(date)}</span>`).join("")}</div><p>${icon("bar-chart", 14)} Recent payments recorded in the system</p></div>`;
+}
+
+function datedCollectionBars() {
+  const groups=new Map();
+  const paid=(backendData.payments||[]).filter(p=>p.status==='Paid');
+  for(const p of paid) {const date=(p.paid_at||p.reporting_date||'Date not recorded').slice(0,10);groups.set(date,(groups.get(date)||0)+Number(p.amount));}
+  const rows=[...groups].sort((a,b)=>a[0].localeCompare(b[0]));
+  if(!rows.length)rows.push(['No payments',0]);
+  const max=Math.max(1,...rows.map(r=>r[1]));
+  return `<div class="chart compact dated-collection-chart">${chartLegend([['Collected Fee','green']])}<div class="bars paired" style="grid-template-columns:repeat(${rows.length},minmax(0,1fr))">${rows.map(([date,value])=>`<span class="bar-group" title="${escapeHtml(date)}: ${money(value)}"><span class="bar collected" style="height:${value/max*100}%"></span></span>`).join('')}</div><div class="months" style="grid-template-columns:repeat(${rows.length},minmax(0,1fr))">${rows.map(([date])=>`<span>${escapeHtml(date)}</span>`).join('')}</div></div><p class="chart-date-note muted">${paid.some(p=>!p.paid_at&&p.reporting_date)?'Imported collection dates are estimated.':''}</p>`;
+}
+
+function feesLineChart() {
+  const paid=(backendData.payments||[]).filter(p=>p.status==='Paid');
+  const groups=new Map();
+  for(const payment of paid) {
+    const label=payment.paid_at?.slice(0,10)||payment.reporting_date||(payment.receipt_no?.startsWith('IMP-')?['1st payment','2nd payment','3rd payment'][Number(payment.receipt_no.split('-').at(-1))-1]:'Date not recorded');
+    groups.set(label,(groups.get(label)||0)+Number(payment.amount));
+  }
+  const rows=[...groups].sort((a,b)=>a[0].localeCompare(b[0]));
+  if(!rows.length)rows.push(['No payments',0]);
+  const max=Math.max(...rows.map(r=>r[1]),1);
+  const singleY=200-Math.round(rows[0][1]/max*150);
+  const points=rows.map((r,i)=>`${Math.round(i/Math.max(1,rows.length-1)*600)},${200-Math.round(r[1]/max*150)}`).join(' ');
+  return `<div class="line-chart compact"><svg viewBox="0 0 600 220" preserveAspectRatio="none" role="img" aria-label="Collections by date; allocated import dates are estimates"><polygon points="0,220 ${points} 600,220" fill="rgba(35,132,71,.14)"></polygon><polyline points="${rows.length===1?`0,${singleY} 600,${singleY}`:points}" fill="none" stroke="#238447" stroke-width="4" vector-effect="non-scaling-stroke"></polyline></svg><div class="trend-dates" style="grid-template-columns:repeat(${rows.length},minmax(0,1fr))">${rows.map(r=>`<span title="${money(r[1])}">${escapeHtml(r[0])}</span>`).join('')}</div><span class="chart-tooltip green">${money(paid.reduce((n,p)=>n+Number(p.amount),0))}<small>${activeAcademicYear()} · ${activeTerm()}</small></span></div><p class="chart-date-note muted">${paid.some(p=>!p.paid_at&&p.reporting_date)?'Imported collection dates are estimated.':''}</p>`;
 }
 
 function leaveRequests() {
@@ -967,8 +1401,19 @@ function leaveRequests() {
 }
 
 function calendar() {
-  const cells = ["S","M","T","W","T","F","S","27","28","29","30","31","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","27","19","20","21","22","23","24","25","26","27","28","29","30"];
-  return `<div class="calendar"><h3>July 2024</h3><div class="calendar-grid">${cells.map((d) => `<span class="${["6","7","12"].includes(d) ? "active" : ""}">${d}</span>`).join("")}</div></div>`;
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = today.getMonth();
+  const firstWeekday = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const monthLabel = new Intl.DateTimeFormat("en-GB", { month: "long", year: "numeric" }).format(today);
+  const holidays = [];
+  const cells = ["S", "M", "T", "W", "T", "F", "S", ...Array(firstWeekday).fill(""), ...Array.from({ length: daysInMonth }, (_, index) => String(index + 1))];
+  return `<div class="calendar"><h3>${monthLabel}</h3><div class="calendar-grid">${cells.map((day, index) => {
+    const isToday = Number(day) === today.getDate();
+    const isHoliday = holidays.includes(day);
+    return `<span class="${index < 7 ? "calendar-day" : ""} ${isToday ? "active" : ""} ${isHoliday ? "holiday" : ""}">${day}</span>`;
+  }).join("")}</div><p class="calendar-key"><i class="today"></i> Today</p></div>`;
 }
 
 function attendance() {
@@ -981,12 +1426,12 @@ function quickLinks() {
 }
 
 function directoryPage(type) {
-  const title = type[0].toUpperCase() + type.slice(1);
+  const title = type === "parents" ? "Guardians" : type[0].toUpperCase() + type.slice(1);
   const rows = type === "students" ? backendStudentRows() : type === "parents" ? backendParentRows() : teachers;
   const addHandler = type === "students" ? "openAdmissionModal()" : type === "parents" ? "openParentModal()" : "openTeacherModal()";
   return `${pageHead(title, `Dashboard / Peoples / ${title}`, `${tableActions()}<button class="btn primary" onclick="${addHandler}">${icon("user-plus")} Add ${title.slice(0, -1)}</button>`)}
     <section class="section-panel">
-      <div class="section-toolbar"><h2>${title} Grid</h2>${filters("")}</div>
+      <div class="section-toolbar"><h2>${title} Grid</h2>${filters(directorySearch())}</div>
       <div class="section-body">
         <div class="directory ${type}">
           ${rows.map((row, index) => type === "students" ? studentCard(row, index) : type === "parents" ? parentCard(row, index) : teacherCard(row, index)).join("")}
@@ -997,20 +1442,23 @@ function directoryPage(type) {
 }
 
 function studentCard(row, index) {
-  return `<article class="card profile-card">
+  const studentId = backendData.students?.[index]?.id;
+  const canEdit = ["Director", "Super Admin", "Admissions Officer", "School Manager"].includes(currentRole()) && studentId;
+  return `<article class="card profile-card" data-class="${backendData.students?.[index]?.class_name || ""}">
     <div class="profile-id"><span>${row[0]}</span><strong>⋮</strong></div>
     <div class="profile-main"><span class="avatar">${initials(row[1])}</span><div><strong>${row[1]}</strong><br><span>${row[2]}</span></div></div>
-    <div class="profile-fields"><div><div class="field-label">Roll No</div>${row[3]}</div><div><div class="field-label">Gender</div>${row[4]}</div><div><div class="field-label">Joined On</div>${row[5]}</div></div>
-    <div class="card-foot"><button class="tiny-btn" onclick="openDetailsModal('Student Details','${row[1]} - ${row[2]}')">${icon("eye")}</button><button class="tiny-btn" onclick="openDetailsModal('Call Parent','${row[1]}')">${icon("phone")}</button><button class="tiny-btn" onclick="location.hash='#/messaging'">${icon("messages")}</button></div>
+    <div class="profile-fields"><div><div class="field-label">Student ID</div>${row[3]}</div><div><div class="field-label">Gender</div>${row[4]}</div></div>
+    <div class="card-foot"><span class="student-joined"><small>Joined</small>${row[5]}</span><span class="student-actions"><button class="tiny-btn" title="View student record" onclick="openStudentDetails(${studentId || 0})">${icon("eye")}</button>${canEdit ? `<button class="tiny-btn" title="Edit student" onclick="openStudentEditModal(${studentId})">${icon("edit")}</button>` : ""}</span></div>
   </article>`;
 }
 
 function parentCard(row, index) {
+  const guardianId = backendData.guardians?.[index]?.id;
   return `<article class="card profile-card">
     <div class="profile-id"><span>${row[0]}</span><strong>⋮</strong></div>
     <div class="profile-main"><span class="avatar">${initials(row[1])}</span><div><strong>${row[1]}</strong><br><span>${row[2]}</span></div></div>
     <div class="profile-fields"><div><div class="field-label">Email</div>${row[3]}</div><div><div class="field-label">Phone</div>${row[4]}</div></div>
-    <div class="card-foot"><span class="avatar small">${initials(row[5])}</span><span>${row[5]} ${row[6]}</span><button class="btn ghost" style="margin-left:auto" onclick="openDetailsModal('Parent Details','${row[1]} - ${row[3]}')">View Details</button></div>
+    <div class="card-foot"><span class="avatar small">${initials(row[5])}</span><span>${row[5]} ${row[6]}</span><span class="student-actions" style="margin-left:auto"><button class="tiny-btn" title="View linked students" onclick="openGuardianStudentsModal(${guardianId || 0})">${icon("eye")}</button><button class="tiny-btn" title="Edit guardian" onclick="openParentEditModal('${row[0]}')">${icon("edit")}</button></span></div>
   </article>`;
 }
 
@@ -1024,44 +1472,75 @@ function teacherCard(row, index) {
 }
 
 function feesPage() {
-  return `${pageHead("Fees Management", "Dashboard / Management / Fees Group", tableActions())}
-    <div class="stats-strip fees-summary-strip">
-      <div class="money-stack">
-        ${moneyCard("banknote", money(backendData.stats?.payments_total || 5050050), "Fees Collected", "green")}
-        ${moneyCard("wallet", "MWK 3,050,050", "Pending Fees", "amber")}
-        ${moneyCard("triangle-alert", "MWK 2,050,050", "Overdue Payments", "red")}
-      </div>
-      <section class="card trend-card">${cardHead("Fees Collection Trend", `<span class="muted">${icon("calendar-days", 14)} This Month</span>`)}${lineAreaChart("blue", true)}</section>
-      <div class="grid" style="gap:24px">${progressCard("Tuition Fee", 80, "MWK 3,000,000/2,600,000 Collected", "var(--cyan)")}${progressCard("Activities", 20, "MWK 1,500,000/500,000 Collected", "var(--amber)")}</div>
-      <div class="grid" style="gap:24px">${progressCard("Books & Supplies", 63, "MWK 2,500,000/1,000,000 Collected", "var(--blue)")}${progressCard("Miscellaneous", 98, "MWK 500,000/430,000 Collected", "var(--green)")}</div>
-    </div>
-    <section class="section-panel">
-      <div class="section-toolbar"><h2>Fees Collection</h2><div class="filters"><button class="pill">+ Generate Invoice</button><select class="select"><option>This Month</option></select><select class="select"><option>All Status</option></select><select class="select"><option>All Classes</option></select></div></div>
-      <div class="section-toolbar"><span>Row Per Page <select class="select"><option>10</option></select> Entries</span><div class="search"><input placeholder="Search"></div></div>
-      <div class="table-wrap">${feesTable()}</div>
-    </section>`;
+  return `${pageHead('Fees Collection','Fees Collection / Payments',tableActions())}${periodNotice()}
+    <div class="stats-strip fees-summary-strip"><div class="money-stack">${feeSummaryCards()}</div>
+    <section class="card trend-card">${cardHead('Fees Collection Trend',`<span class="muted">${icon('calendar-days',14)} ${activeTerm()}</span>`)}${feesLineChart()}</section>
+    <div class="finance-progress-grid fees-progress-grid">${feeProgressCards()}</div></div>
+    <section class="section-panel"><div class="section-toolbar"><h2>Fees Collection</h2>${feesFilters()}</div><div class="table-wrap">${feesTable()}</div></section>
+    `;
+}
+
+function feesFilters() {
+  return `<div class="filters fees-filters"><label class="date-filter">${icon("calendar-days", 14)} <input type="date" value="${new Date().toISOString().slice(0, 10)}" onchange="this.dataset.active='true'; applyFeesFilters()"></label><div class="search fee-search"><input placeholder="Search student or receipt" aria-label="Search fee collections" oninput="applyFeesFilters()"><span class="shortcut">${icon("search", 15)}</span></div><select class="select" data-fee-status onchange="applyFeesFilters()"><option value="">All Status</option><option>Pending Approval</option><option>Paid</option><option>Partial</option></select><select class="select" data-fee-type onchange="applyFeesFilters()"><option value="">All Fee Types</option><option>Tuition Fee</option><option>Trip Fee</option><option>Uniform Fee</option><option>School Bus Fee</option></select><select class="select" data-fee-class onchange="applyFeesFilters()"><option value="">All Classes</option>${classOptions()}</select></div>`;
+}
+
+function filterFeesByType(type) {
+  const select = document.querySelector("[data-fee-type]");
+  if (select) { select.value = type; applyFeesFilters(); document.querySelector(".fees-table")?.scrollIntoView({ behavior: "smooth" }); }
+}
+
+function applyFeesFilters() {
+  const panel = document.querySelector(".fees-table");
+  const status = document.querySelector("[data-fee-status]")?.value || "";
+  const className = document.querySelector("[data-fee-class]")?.value || "";
+  const feeType = document.querySelector("[data-fee-type]")?.value || "";
+  const dateInput = document.querySelector(".fees-filters .date-filter input");
+  const date = dateInput?.dataset.active === "true" ? dateInput.value : "";
+  const query = document.querySelector(".fee-search input")?.value.trim().toLowerCase() || "";
+  panel?.querySelectorAll("tbody tr").forEach((row) => { row.hidden = Boolean((status && row.dataset.status !== status) || (feeType && row.dataset.feeType !== feeType) || (className && !row.dataset.class.includes(className)) || (date && row.dataset.date !== date) || (query && !row.innerText.toLowerCase().includes(query))); });
+}
+
+function printFeesTable() {
+  const rows = [...document.querySelectorAll(".fees-table tbody tr")].filter((row) => !row.hidden).map((row) => ({ receipt: row.children[0].innerText, student: row.children[1].innerText.replaceAll("\n", " / "), fee: row.children[2].innerText.replaceAll("\n", " / "), amount: row.children[3].innerText, balance: row.children[4].innerText.replaceAll("\n", " / "), mode: row.children[5].innerText, date: row.children[6].innerText.replaceAll("\n", " "), status: row.children[7].innerText.replace("•", "").trim() }));
+  if (!rows.length) return;
+  const table = `<table><thead><tr><th>Receipt</th><th>Student / Class</th><th>Fee / Term</th><th>Amount</th><th>Balance</th><th>Payment Mode</th><th>Paid On</th><th>Status</th></tr></thead><tbody>${rows.map((row) => `<tr><td>${row.receipt}</td><td>${row.student}</td><td>${row.fee}</td><td>${row.amount}</td><td>${row.balance}</td><td>${row.mode}</td><td>${row.date}</td><td>${row.status}</td></tr>`).join("")}</tbody></table>`;
+  const printWindow = window.open("", "_blank");
+  printWindow.document.write(`<title>Excel Primary Fees Collection</title><style>@page{size:landscape;margin:13mm}body{font:11px Arial;color:#17213d}h1{margin:0 0 4px}p{margin:0 0 18px;color:#66708a}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccd3df;padding:8px;text-align:left}th{background:#eef1f7}</style><h1>Excel Primary School — Fees Collection</h1><p>Printed ${todayLabel()} · Displayed records only</p>${table}`);
+  printWindow.document.close();
+  printWindow.print();
+}
+
+function downloadVisibleTable(filename = "excel-primary-report.xls") {
+  const table = document.querySelector(".table-wrap table");
+  if (!table) return;
+  const cloned = table.cloneNode(true);
+  cloned.querySelectorAll("tr").forEach((row) => { if (row.hidden) row.remove(); });
+  cloned.querySelectorAll("th:last-child,td:last-child").forEach((cell) => cell.remove());
+  const workbook = `<html><head><meta charset="utf-8"><style>table{border-collapse:collapse;font:12px Arial}th{background:#18783e;color:#fff;font-weight:bold}th,td{border:1px solid #b7c3bb;padding:8px;white-space:nowrap}tr:nth-child(even){background:#eef7f1}</style></head><body><h2>Excel Primary School</h2><p>Generated ${todayLabel()}</p>${cloned.outerHTML}</body></html>`;
+  const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([workbook], { type: "application/vnd.ms-excel" })); link.download = filename.replace(/\.csv$/i, ".xls"); link.click(); URL.revokeObjectURL(link.href);
 }
 
 function moneyCard(iconName, value, label, color) {
-  return `<section class="card money-card"><span class="metric-icon" style="background:var(--${color}-soft);color:var(--${color})">${iconPaths[iconName] ? icon(iconName, 28) : iconName}</span><div><h3>${value}</h3><span class="muted">${label}</span></div></section>`;
+  return `<section class="card money-card"><span class="metric-icon finance-card-icon" style="background:var(--${color}-soft);color:var(--${color})">${iconPaths[iconName] ? icon(iconName, 28) : iconName}</span><div><h3>${value}</h3><span class="muted">${label}</span></div></section>`;
 }
 
-function progressCard(title, value, detail, color) {
-  return `<section class="card progress-card"><div class="progress-row"><span>${title}</span><span>${value}%</span></div><div class="track"><span class="fill" style="width:${value}%;background:${color}"></span></div><p style="margin-top:26px"><strong>${detail.split("/")[0]}</strong>/${detail.split("/")[1] || ""}</p></section>`;
+function progressCard(title, value, detail, color, feeType = "") {
+  const tone = color.includes("red") ? "red" : color.includes("cyan") ? "cyan" : color.includes("blue") ? "blue" : color.includes("amber") ? "amber" : color.includes("green") ? "green" : "blue";
+  return `<section class="card progress-card ${tone}" ${feeType ? `role="button" tabindex="0" onclick="filterFeesByType('${feeType}')"` : ""}><div class="progress-row"><span>${title}</span><span>${value}%</span></div><div class="track ${tone}"><span class="fill" style="width:${value}%"></span></div><p style="margin-top:26px"><strong>${detail.split("/")[0]}</strong>${detail.includes("/") ? `/${detail.split("/")[1]}` : ""}</p></section>`;
 }
 
 function feesTable() {
   const liveRows = backendPaymentRows();
   if (liveRows) {
-    return `<table><thead><tr><th>□</th><th>Receipt</th><th>Student</th><th>Fee Type</th><th>Term</th><th>Class</th><th>Amount</th><th>Balance After</th><th>Payment Mode</th><th>Paid On</th><th>Status</th><th>Action</th></tr></thead><tbody>
-      ${liveRows.map((row) => `<tr><td>□</td><td><a onclick="openReceiptModal('${row[0]}')">${row[0]}</a></td><td>${row[1]}</td><td>${row[2]}</td><td>${row[3]}</td><td>${row[5]}</td><td>${money(row[6])}</td><td>${money(row[7])}</td><td>${row[8]}</td><td>${row[10]}</td><td><span class="badge ${statusClass(row[9])}">• ${row[9]}</span></td><td><span class="row-tools"><button class="icon-mini" onclick="openReceiptModal('${row[0]}')" title="Receipt">${icon("receipt", 16)}</button><button class="icon-mini" onclick="window.print()" title="Print">${icon("printer", 16)}</button></span></td></tr>`).join("")}
+    return `<table class="fees-table"><thead><tr><th>Receipt</th><th>Student / Class</th><th>Fee / Term</th><th>Amount</th><th>Balance</th><th>Mode</th><th>Paid On</th><th>Status</th><th>Action</th></tr></thead><tbody>
+      ${liveRows.map((row) => { const payment = backendData.payments.find((item) => item.receipt_no === row[0]); const paymentStatus = Number(row[7]) > 0 && row[9] === "Paid" ? "Partial" : row[9]; const isoDate = payment?.paid_at?.slice(0, 10) || ""; return `<tr data-status="${paymentStatus}" data-fee-type="${row[2]}" data-class="${row[5]}" data-date="${isoDate}"><td><a onclick="openReceiptModal('${row[0]}')">${row[0]}</a></td><td><span class="cell-stack"><strong>${row[1]}</strong><small>${row[5]}</small></span></td><td><span class="cell-stack"><strong>${row[2]}</strong><small>${row[3]}</small></span></td><td>${money(row[6])}</td><td><span class="cell-stack"><strong>${money(row[7])}</strong><small>${paymentStatus === "Pending Approval" ? "Awaiting Director" : "Calculated"}</small></span></td><td>${row[8]}</td><td><span class="cell-stack"><strong>${row[10]}</strong><small>${row[11]}</small></span></td><td><span class="badge ${statusClass(paymentStatus)}">• ${paymentStatus}</span></td><td><span class="row-tools">${["Director", "Super Admin"].includes(currentRole()) && paymentStatus === "Pending Approval" ? `<button class="approve-payment-btn" onclick="approvePayment(${payment.id})" title="Approve payment">${icon("shield-check", 14)} Approve</button>` : ""}<button class="icon-mini" onclick="openStudentPaymentHistory(${payment?.student_id || 0})" title="Payment history">${icon("eye", 16)}</button><button class="icon-mini" onclick="openReceiptModal('${row[0]}')" title="Preview receipt">${icon("receipt", 16)}</button><button class="icon-mini" onclick="downloadReceipt('${row[0]}')" title="Download receipt">${icon("download", 16)}</button></span></td></tr>`; }).join("")}
     </tbody></table>`;
   }
-  return `<table><thead><tr><th>□</th><th>ID</th><th>Student Name</th><th>Fees Type</th><th>Class</th><th>Tuition Fee</th><th>Activities Fee</th><th>Miscellaneous</th><th>Discount / Scholarship</th><th>Adjustment / Refund</th><th>Total Amount</th><th>Total Amount</th><th>Payment Mode</th><th>Status</th><th>Action</th></tr></thead><tbody>
+  return `<table class="fees-table"><thead><tr><th>ID</th><th>Student Name</th><th>Fees Type</th><th>Class</th><th>Tuition Fee</th><th>Activities Fee</th><th>Miscellaneous</th><th>Discount / Scholarship</th><th>Adjustment / Refund</th><th>Total Amount</th><th>Total Amount</th><th>Payment Mode</th><th>Status</th><th>Action</th></tr></thead><tbody>
     ${feeRows.map((r, index) => {
       const total = r.tuition + r.activities + r.misc;
       const cls = r.status === "Paid" || r.status === "Active" ? "green" : r.status === "Pending" ? "amber" : "red";
-      return `<tr><td>□</td><td><a>${r.id}</a></td><td>${r.name}</td><td>${r.type}</td><td>${r.className}</td><td>${money(r.tuition)}</td><td>${money(r.activities)}</td><td>${money(r.misc)}</td><td>${index % 3 === 0 ? "Discount MWK 500" : index % 4 === 0 ? "Scholarship MWK 1000" : "–"}</td><td>${index === 2 ? "MWK 300 Refunded" : "–"}</td><td>${money(total)}</td><td>${money(total)}</td><td>${r.mode}</td><td><span class="badge ${cls}">• ${r.status}</span></td><td>⋮</td></tr>`;
+      return `<tr data-status="${r.status}" data-class="${r.className}" data-date="${new Date().toISOString().slice(0, 10)}"><td><a>${r.id}</a></td><td>${r.name}</td><td>${r.type}</td><td>${r.className}</td><td>${money(r.tuition)}</td><td>${money(r.activities)}</td><td>${money(r.misc)}</td><td>${index % 3 === 0 ? "Discount MWK 500" : index % 4 === 0 ? "Scholarship MWK 1000" : "–"}</td><td>${index === 2 ? "MWK 300 Refunded" : "–"}</td><td>${money(total)}</td><td>${money(total)}</td><td>${r.mode}</td><td><span class="badge ${cls}">• ${r.status}</span></td><td>⋮</td></tr>`;
     }).join("")}</tbody></table>`;
 }
 
@@ -1111,13 +1590,13 @@ function curriculumPage(active = "curriculum") {
 
 function curriculumTable() {
   const rows = ["I|A|3-4|08|08|Active","I|B|3-4|03|03|Active","II|A|4-5|03|03|Active","II|B|5-6|03|03|Active","II|C|5-6|03|03|Inactive","III|A|6-7|03|03|Active","III|B|6-7|05|05|Active","IV|A|7-8|05|05|Active","IV|B|7-8|05|05|Inactive","V|A|8-9|05|05|Active"].map((x, i) => [`C13803${8 - i}`, ...x.split("|")]);
-  return `<section class="section-panel"><div class="section-toolbar"><h2>Manage Curriculum</h2><div class="filters"><button class="pill">▣ 15 Apr 2025 - 24 May 2025</button><button class="pill">▽ Filter</button><button class="pill">↕ Sort By A-Z</button></div></div><div class="section-toolbar"><span>Row Per Page <select class="select"><option>10</option></select> Entries</span><div class="search"><input placeholder="Search"></div></div><div class="table-wrap"><table><thead><tr><th>□</th><th>ID</th><th>Class</th><th>Section</th><th>Age Group</th><th>Total Topics</th><th>Weekly Goals</th><th>Status</th><th>Action</th></tr></thead><tbody>${rows.map((r) => `<tr><td>□</td><td><a>${r[0]}</a></td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td>${r[4]}</td><td>${r[5]}</td><td><span class="badge ${r[6] === "Active" ? "green" : "red"}">• ${r[6]}</span></td><td>${actionIcons()}</td></tr>`).join("")}</tbody></table></div></section>`;
+  return `<section class="section-panel"><div class="section-toolbar"><h2>Manage Curriculum</h2><div class="filters"><button class="pill">▣ 15 Apr 2025 - 24 May 2025</button><button class="pill">▽ Filter</button><button class="pill">↕ Sort By A-Z</button></div></div><div class="section-toolbar"><span>Row Per Page <select class="select"><option>10</option></select> Entries</span><div class="search"><input placeholder="Search"></div></div><div class="table-wrap"><table><thead><tr><th>ID</th><th>Class</th><th>Section</th><th>Age Group</th><th>Total Topics</th><th>Weekly Goals</th><th>Status</th><th>Action</th></tr></thead><tbody>${rows.map((r) => `<tr><td><a>${r[0]}</a></td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td>${r[4]}</td><td>${r[5]}</td><td><span class="badge ${r[6] === "Active" ? "green" : "red"}">• ${r[6]}</span></td><td>${actionIcons()}</td></tr>`).join("")}</tbody></table></div></section>`;
 }
 
 function lessonPlanning() {
   const plans = [["Class V, B","Subject : Physics","7 July 2025","Introduction Note to Physics on Today’s Tech","green",42],["Class V, A","Subject : Biometric","10 May 2025","Biometric & their Working Functionality","amber",42],["Class IV, C","Subject : Biometric","10 May 2025","Analyze and interpret literary texts","blue",42],["Class IV, C","Subject : English","10 Dec 2025","Enhance vocabulary and grammar skills","red",0]];
   const all = [...plans, ...plans, ...plans];
-  return `<section class="section-panel"><div class="section-toolbar"><h2>Syllabus / Lesson Plan</h2><div class="filters"><button class="pill">▣ 15 Apr 2025 - 24 May 2025</button><button class="pill">▽ Filter</button><button class="pill">↕ Sort By A-Z</button></div></div><div class="section-body"><div class="curriculum-cards">${all.map(([klass, subject, date, title, color, pct]) => `<article class="card lesson-plan"><div class="class-tag" style="background:var(--${color}-soft);color:var(--${color})">${klass}</div><p><span>${subject}</span><span style="float:right">${date}</span></p><h3>${title}</h3><div class="track"><span class="fill" style="width:${pct}%;background:var(--${color})"></span></div><div class="lesson-actions"><span>♢ Reschedule</span><span>♧ Share</span></div></article>`).join("")}</div></div></section>`;
+  return `<section class="section-panel"><div class="section-toolbar"><h2>Syllabus / Lesson Plan</h2><div class="filters"><button class="pill">▣ 15 Apr 2025 - 24 May 2025</button><button class="pill">▽ Filter</button><button class="pill">↕ Sort By A-Z</button></div></div><div class="section-body"><div class="curriculum-cards">${all.map(([klass, subject, date, title, color, pct]) => `<article class="card lesson-plan"><div class="class-tag" style="background:var(--${color}-soft);color:var(--${color})">${klass}</div><p><span>${subject}</span><span style="float:right">${date}</span></p><h3>${title}</h3><div class="track ${color}"><span class="fill" style="width:${pct}%"></span></div><div class="lesson-actions"><span>♢ Reschedule</span><span>♧ Share</span></div></article>`).join("")}</div></div></section>`;
 }
 
 function assessmentState() {
@@ -1149,7 +1628,7 @@ function assessmentStatus(score) {
 }
 
 function assessmentRows(state) {
-  const classes = ["Form 1", "Form 1", "Form 2", "Form 2", "Form 2", "Form 3", "Form 3", "Form 4", "Form 4", "Form 4"];
+  const classes = ["Standard 1", "Standard 1", "Standard 2", "Standard 2", "Standard 2", "Standard 3", "Standard 3", "Standard 4", "Standard 4", "Standard 4"];
   const sections = ["A", "B", "A", "B", "C", "A", "B", "A", "B", "A"];
   const subjects = ["Mathematics", "English", "Biology", "Physics", "Computer Studies"];
   const subjectOffset = Math.max(0, subjects.indexOf(state.subject)) * 3;
@@ -1176,7 +1655,7 @@ function assessmentRows(state) {
 
 function assessmentScoreCell(score) {
   const tone = assessmentTone(score);
-  return `<span class="assessment-score"><strong>${score}%</strong><span class="track table-progress assessment-progress ${tone}"><span class="fill" style="width:${score}%;background:var(--${tone})"></span></span></span>`;
+  return `<span class="assessment-score"><strong>${score}%</strong><span class="track table-progress assessment-progress ${tone}"><span class="fill" style="width:${score}%"></span></span></span>`;
 }
 
 function assessmentSelect(label, key, value, options) {
@@ -1205,7 +1684,7 @@ function assessment() {
       <div class="section-toolbar assessment-toolbar">
         <h2>Manage Assessment</h2>
         <div class="filters">
-          ${assessmentSelect("Class", "Class", state.className, ["All Classes", "Form 1", "Form 2", "Form 3", "Form 4"])}
+          ${assessmentSelect("Class", "Class", state.className, ["All Classes", "Standard 1", "Standard 2", "Standard 3", "Standard 4"])}
           ${assessmentSelect("Subject", "Subject", state.subject, ["All Subjects", "Mathematics", "English", "Biology", "Physics", "Computer Studies"])}
           ${assessmentSelect("Term", "Term", state.term, ["Term 1", "Term 2", "Term 3"])}
         </div>
@@ -1218,9 +1697,9 @@ function assessment() {
         <span><i class="legend-dot red"></i>0-34 Support</span>
       </div>
       <div class="section-toolbar"><span>Row Per Page <select class="select"><option>10</option></select> Entries</span><div class="search"><input placeholder="Search"></div></div>
-      <div class="table-wrap"><table><thead><tr><th>□</th><th>ID</th><th>Student Name</th><th>Class</th><th>Section</th><th>Subject</th><th>Test 1</th><th>Test 2</th><th>Mid Term</th><th>Final Term</th><th>${state.view}</th><th>Status</th></tr></thead><tbody>${rows.map((row) => {
+      <div class="table-wrap"><table><thead><tr><th>ID</th><th>Student Name</th><th>Class</th><th>Section</th><th>Subject</th><th>Test 1</th><th>Test 2</th><th>Mid Term</th><th>Final Term</th><th>${state.view}</th><th>Status</th></tr></thead><tbody>${rows.map((row) => {
         const activeScore = row[scoreKey];
-        return `<tr><td>□</td><td><a>${row.id}</a></td><td>${row.name}</td><td>${row.className}</td><td>${row.section}</td><td>${row.subject}</td><td>${row.test1}%</td><td>${row.test2}%</td><td>${row.mid}%</td><td>${row.final}%</td><td>${assessmentScoreCell(activeScore)}</td><td><span class="badge ${assessmentTone(activeScore)}">• ${assessmentStatus(activeScore)}</span></td></tr>`;
+        return `<tr><td><a>${row.id}</a></td><td>${row.name}</td><td>${row.className}</td><td>${row.section}</td><td>${row.subject}</td><td>${row.test1}%</td><td>${row.test2}%</td><td>${row.mid}%</td><td>${row.final}%</td><td>${assessmentScoreCell(activeScore)}</td><td><span class="badge ${assessmentTone(activeScore)}">• ${assessmentStatus(activeScore)}</span></td></tr>`;
       }).join("")}</tbody></table></div>
     </section>
   </section>`;
@@ -1228,7 +1707,7 @@ function assessment() {
 
 function inventory() {
   const items = [["Chemistry Lab Glassware", 88, "Only 8 sets left", "blue"],["Printer Paper A4", 78, "Only 20 sets left", "cyan"],["Printer Paper A4", 92, "Only 10 sets left", "cyan"],["Whiteboard Markers", 80, "Only 12 sets left", "green"],["Sports Equipment", 66, "Only 5 sets left", "amber"],["Sports Equipment", 76, "Only 7 sets left", "blue"],["Sports Equipment", 74, "Only 20 sets left", "green"],["Sports Equipment", 91, "Only 3 sets left", "amber"]];
-  return `<section class="section-panel"><div class="section-toolbar"><h2>Inventory Alerts</h2><div class="filters"><button class="pill">♧ Class II⌄</button><button class="pill">↕ Sort By A-Z</button></div></div><div class="section-body"><div class="inventory-list">${items.map(([name, pct, left, color]) => `<div class="inventory-row"><strong>${name}</strong><div class="track"><span class="fill" style="width:${pct}%;background:var(--${color})"></span></div><span>${left}</span></div>`).join("")}</div></div></section>`;
+  return `<section class="section-panel"><div class="section-toolbar"><h2>Inventory Alerts</h2><div class="filters"><button class="pill">♧ Class II⌄</button><button class="pill">↕ Sort By A-Z</button></div></div><div class="section-body"><div class="inventory-list">${items.map(([name, pct, left, color]) => `<div class="inventory-row"><strong>${name}</strong><div class="track ${color}"><span class="fill" style="width:${pct}%"></span></div><span>${left}</span></div>`).join("")}</div></div></section>`;
 }
 
 const staffRows = [
@@ -1263,10 +1742,10 @@ function payrollPage() {
     <section class="section-panel">
       <div class="section-toolbar"><h2>Payroll List</h2><div class="filters"><button class="pill">▣ 15 May 2024 - 24 Dec 2025</button><select class="select"><option>Status</option></select><select class="select"><option>Role</option></select><button class="pill">↕ Sort By A-Z</button></div></div>
       ${tableSearch()}
-      <div class="table-wrap"><table><thead><tr><th>□</th><th>ID</th><th>Name</th><th>Role</th><th>Basic Salary</th><th>Deductions</th><th>Net Salary</th><th>Status</th><th>Action</th></tr></thead><tbody>
+      <div class="table-wrap"><table><thead><tr><th>ID</th><th>Name</th><th>Role</th><th>Basic Salary</th><th>Deductions</th><th>Net Salary</th><th>Status</th><th>Action</th></tr></thead><tbody>
         ${staffRows.map((r, i) => {
           const cls = statuses[i] === "Approved" ? "green" : statuses[i] === "Pending" ? "amber" : "red";
-          return `<tr><td>□</td><td><a>P73819${8 - i}</a></td><td><span class="inline-person"><span class="avatar small">${initials(r[1])}</span>${r[1]}</span></td><td>${r[2]}</td><td>${money(salaries[i])}</td><td>${money(deductions[i])}</td><td>${money(salaries[i] - deductions[i])}</td><td><span class="badge ${cls}">• ${statuses[i]}</span></td><td><button class="btn ghost small-btn">${statuses[i] === "Approved" ? "Pay Now" : "View Payslip"}</button></td></tr>`;
+          return `<tr><td><a>P73819${8 - i}</a></td><td><span class="inline-person"><span class="avatar small">${initials(r[1])}</span>${r[1]}</span></td><td>${r[2]}</td><td>${money(salaries[i])}</td><td>${money(deductions[i])}</td><td>${money(salaries[i] - deductions[i])}</td><td><span class="badge ${cls}">• ${statuses[i]}</span></td><td><button class="btn ghost small-btn">${statuses[i] === "Approved" ? "Pay Now" : "View Payslip"}</button></td></tr>`;
         }).join("")}
       </tbody></table></div>${pagination()}
     </section>`;
@@ -1281,10 +1760,10 @@ function leavePage() {
     <section class="section-panel">
       <div class="section-toolbar"><h2>Leave Table</h2><div class="filters"><button class="pill">▣ 15 May 2024 - 24 Dec 2025</button><select class="select"><option>Status</option></select><select class="select"><option>Leave Type</option></select><button class="pill">↕ Sort By A-Z</button></div></div>
       ${tableSearch()}
-      <div class="table-wrap"><table><thead><tr><th>□</th><th>ID</th><th>Name</th><th>Leave Type</th><th>From Date</th><th>To Date</th><th>Days</th><th>Status</th><th>Action</th></tr></thead><tbody>
+      <div class="table-wrap"><table><thead><tr><th>ID</th><th>Name</th><th>Leave Type</th><th>From Date</th><th>To Date</th><th>Days</th><th>Status</th><th>Action</th></tr></thead><tbody>
         ${staffRows.map((r, i) => {
           const cls = statuses[i] === "Pending" ? "amber" : "green";
-          return `<tr><td>□</td><td><a>P73819${8 - i}</a></td><td><span class="inline-person"><span class="avatar small">${initials(r[1])}</span>${r[1]}</span></td><td>${types[i]}</td><td>${from[i]}</td><td>${from[(i + 2) % from.length]}</td><td>${days[i]}</td><td><span class="badge ${cls}">• ${statuses[i]}</span></td><td>${i % 3 === 0 ? '<button class="btn primary small-btn">Approve</button> <button class="btn ghost small-btn">Reject</button>' : '<button class="btn ghost small-btn">View</button>'}</td></tr>`;
+          return `<tr><td><a>P73819${8 - i}</a></td><td><span class="inline-person"><span class="avatar small">${initials(r[1])}</span>${r[1]}</span></td><td>${types[i]}</td><td>${from[i]}</td><td>${from[(i + 2) % from.length]}</td><td>${days[i]}</td><td><span class="badge ${cls}">• ${statuses[i]}</span></td><td>${i % 3 === 0 ? '<button class="btn primary small-btn">Approve</button> <button class="btn ghost small-btn">Reject</button>' : '<button class="btn ghost small-btn">View</button>'}</td></tr>`;
         }).join("")}
       </tbody></table></div>${pagination()}
     </section>`;
@@ -1297,8 +1776,8 @@ function performancePage() {
     <section class="section-panel">
       <div class="section-toolbar"><h2>Payroll List</h2><div class="filters"><button class="pill">▣ 15 May 2024 - 24 Dec 2025</button><select class="select"><option>Status</option></select><select class="select"><option>Role</option></select><button class="pill">↕ Sort By A-Z</button></div></div>
       ${tableSearch()}
-      <div class="table-wrap"><table><thead><tr><th>□</th><th>ID</th><th>Name</th><th>Role</th><th>Attendance</th><th>Remarks</th><th>Action</th></tr></thead><tbody>
-        ${staffRows.map((r, i) => `<tr><td>□</td><td><a>P73819${8 - i}</a></td><td><span class="inline-person"><span class="avatar small">${initials(r[1])}</span>${r[1]}</span></td><td>${r[2]}</td><td><span style="display:inline-block;width:42px">${scores[i]}%</span><span class="track table-progress"><span class="fill" style="width:${scores[i]}%;background:var(--green)"></span></span></td><td>${remarks[i]}</td><td><button class="btn ghost small-btn">View</button></td></tr>`).join("")}
+      <div class="table-wrap"><table><thead><tr><th>ID</th><th>Name</th><th>Role</th><th>Attendance</th><th>Remarks</th><th>Action</th></tr></thead><tbody>
+        ${staffRows.map((r, i) => `<tr><td><a>P73819${8 - i}</a></td><td><span class="inline-person"><span class="avatar small">${initials(r[1])}</span>${r[1]}</span></td><td>${r[2]}</td><td><span style="display:inline-block;width:42px">${scores[i]}%</span><span class="track table-progress ${scores[i] >= 90 ? "green" : scores[i] >= 80 ? "blue" : scores[i] >= 70 ? "amber" : "red"}"><span class="fill" style="width:${scores[i]}%"></span></span></td><td>${remarks[i]}</td><td><button class="btn ghost small-btn">View</button></td></tr>`).join("")}
       </tbody></table></div>${pagination()}
     </section>`;
 }
@@ -1344,8 +1823,8 @@ function messagingPage() {
         <div class="chat-body">
           <p class="chat-date">Today | 06:32 PM</p>
           ${conversation ? conversation.map((message) => chatBubble(message.body, message.direction === "out" ? "out" : "in")).join("") : `
-            ${chatBubble("Good afternoon. Please confirm whether the fee reminder should be sent to all Form 3 parents.", "in")}
-            ${chatBubble("Confirmed. Send it to Form 3 A and B first, then share the delivery report.", "out")}
+            ${chatBubble("Good afternoon. Please confirm whether the fee reminder should be sent to all Standard 3 parents.", "in")}
+            ${chatBubble("Confirmed. Send it to Standard 3 A and B first, then share the delivery report.", "out")}
             ${chatBubble("Noted. I will prepare the notice and attach the outstanding balance list.", "in")}
             ${chatBubble("Thank you. Mark urgent balances for finance review.", "out")}
           `}
@@ -1393,27 +1872,37 @@ function studentReportPage() {
     <section class="section-panel">
       <div class="section-toolbar"><h2>Manage Student Reports</h2><div class="filters"><button class="pill">▣ 15 Apr 2025 - 24 May 2025</button><button class="pill">▽ Filter</button><button class="pill">↕ Sort By A-Z</button></div></div>
       <div class="section-toolbar"><div class="filters"><select class="select"><option>Class</option></select><select class="select"><option>Section</option></select><select class="select"><option>Report Type</option></select><select class="select"><option>Period</option></select></div><div class="search"><input placeholder="Search"></div></div>
-      <div class="table-wrap"><table><thead><tr><th>□</th><th>ID</th><th>Student Name</th><th>Class</th><th>Section</th><th>Report Type</th><th>Report Period</th><th>Last Updated</th><th>Status</th><th>Action</th></tr></thead><tbody>
-        ${rows.map((r, i) => `<tr><td>□</td><td><a>C13803${8 - Math.min(i, 7)}</a></td><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td>${r[4]}</td><td>${r[5]}</td><td><span class="badge ${r[6] === "Ready" ? "green" : "amber"}">• ${r[6]}</span></td><td>${actionIcons()}</td></tr>`).join("")}
+      <div class="table-wrap"><table><thead><tr><th>ID</th><th>Student Name</th><th>Class</th><th>Section</th><th>Report Type</th><th>Report Period</th><th>Last Updated</th><th>Status</th><th>Action</th></tr></thead><tbody>
+        ${rows.map((r, i) => `<tr><td><a>C13803${8 - Math.min(i, 7)}</a></td><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td>${r[4]}</td><td>${r[5]}</td><td><span class="badge ${r[6] === "Ready" ? "green" : "amber"}">• ${r[6]}</span></td><td>${actionIcons()}</td></tr>`).join("")}
       </tbody></table></div>${pagination("08")}
     </section>`;
 }
 
+function compareAdmissions(a,b) {
+  const pending=Number(b.status==='Pending Approval')-Number(a.status==='Pending Approval');
+  const date=s=>String(s.joined_on||s.created_at||'').slice(0,10);
+  return pending||date(b).localeCompare(date(a))||String(b.created_at||'').localeCompare(String(a.created_at||''))||b.id-a.id;
+}
 function admissionsTable() {
-  const rows = backendData.students?.length ? backendData.students.map((student) => [
+  const rows = backendData.students?.length ? [...backendData.students].sort(compareAdmissions).map((student) => [
     student.admission_no,
     `${student.first_name} ${student.last_name}`,
     `${student.class_name}${student.section ? ` ${student.section}` : ""}`,
-    student.guardian ? `Parent: ${student.guardian.name}` : "Parent pending",
-    student.status
-  ]) : [
-    ["ADM-2026-001", "Thoko Banda", "Form 1", "Parent verified", "Submitted"],
-    ["ADM-2026-002", "Madalitso Phiri", "Form 2", "Missing transfer letter", "Review"],
-    ["ADM-2026-003", "Tadala Mbewe", "Form 1", "Ready for approval", "Ready"],
-    ["ADM-2026-004", "Chisomo Tembo", "Form 3", "Scholarship review", "Pending"],
-    ["ADM-2026-005", "Fatsani Zulu", "Form 1", "Documents complete", "Approved"]
-  ];
-  return `<table><thead><tr><th>Application ID</th><th>Student</th><th>Class</th><th>Stage</th><th>Status</th><th>Action</th></tr></thead><tbody>${rows.map((r) => `<tr><td><a>${r[0]}</a></td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td><span class="badge ${statusClass(r[4])}">• ${r[4]}</span></td><td>${actionIcons()}</td></tr>`).join("")}</tbody></table>`;
+    student.guardian ? student.guardian.name : "Not provided — follow up",
+    student.status,
+    student.id
+  ]) : [];
+  return `<table class="admissions-table"><thead><tr><th>Application ID</th><th>Student</th><th>Class</th><th>Parent / Guardian</th><th>Status</th><th>Action</th></tr></thead><tbody>${rows.map((r) => `<tr data-new-admission="${r[5]===latestAdmissionId}" data-class="${r[2]}" data-status="${r[4]}"><td><a>${r[0]}</a></td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td><span class="badge ${statusClass(r[4])}">• ${r[4]}</span></td><td><span class="row-tools">${["Director","Super Admin"].includes(currentRole()) && ["Pending Approval", "Pending Edit Approval"].includes(r[4]) && r[5] ? `<button class="approve-payment-btn" type="button" title="${r[4]==='Pending Approval'?'Review admission for approval':'Preview requested changes'}" aria-label="${r[4]==='Pending Approval'?'Review admission for approval':'Preview requested changes'}" onclick="reviewRecordChange(${r[5]})">${icon("shield-check", 16)}</button>` : ""}<button class="icon-mini" onclick="openDetailsModal('Admission Details','${r[0]} — ${r[1]}')" title="View admission">${icon("eye", 16)}</button><button class="icon-mini" onclick="notifyAction('Admission export prepared','${r[0]} is ready for download.')" title="Download admission">${icon("download", 16)}</button></span></td></tr>`).join("")}</tbody></table>`;
+}
+
+function approveAdmission(studentId) { return reviewRecordChange(studentId); }
+async function confirmReviewedAdmission(studentId, reviewToken, button) {
+  button.disabled=true;
+  try {
+    await apiRequest(`/students/${studentId}/approve`, { method: "PATCH", body: JSON.stringify({ role: currentRole(), review_token: reviewToken }) });
+    closeModal();showToast("Request approved", "Student and guardian changes have been saved. The requester has been notified.", "success");
+    await loadBackendData(true);
+  } catch (error) { showToast("Admission not approved", error.message, "error"); button.disabled=false; }
 }
 
 function examCandidatesTable() {
@@ -1430,33 +1919,34 @@ function examCandidatesTable() {
 function admissionsPage() {
   return `${pageHead("Admissions Register", "Dashboard / Admissions / Admissions Register", `<button class="btn primary" onclick="openAdmissionModal()">${icon("user-plus")} New Admission</button>`)}
     <div class="report-metrics">
-      ${circleMetric(String(backendData.stats?.students || 284), "New Applications", academicYearLabel(), "blue")}
-      ${circleMetric("238", "Approved", "Ready to enroll", "green")}
-      ${circleMetric("28", "Pending Review", "Documents / approvals", "amber")}
-      ${circleMetric("18", "Returned", "Needs correction", "red")}
+      ${circleMetric(String(backendData.stats?.students ?? 0), "New Applications", academicYearLabel(), "blue")}
+      ${circleMetric(String((backendData.students||[]).filter(s=>["Active","Approved"].includes(s.status)).length), "Active / Approved", activeTerm(), "green")}
+      ${circleMetric(String(backendData.stats?.pending_admissions||0), "Pending Review", "Documents / approvals", "amber")}
+      ${circleMetric(String((backendData.admission_follow_ups||[]).length), "Guardian Follow-up", "Details incomplete", "red")}
     </div>
     <section class="section-panel compact-form">
       <div class="section-toolbar"><h2>Register Student</h2><span class="muted">Student and parent records are saved together</span></div>
       <form class="record-form" onsubmit="event.preventDefault(); createAdmission(this);">
         <label><span>First Name</span><input name="first_name" required placeholder="Student first name"></label>
         <label><span>Last Name</span><input name="last_name" required placeholder="Student last name"></label>
-        <label><span>Student Type</span><select name="student_type"><option>Day Scholar</option><option>Boarding</option></select></label>
-        <label><span>Class</span><select name="class_name"><option>Form 1</option><option>Form 2</option><option>Form 3</option><option>Form 4</option></select></label>
-        <label><span>Section</span><select name="section"><option>A</option><option>B</option><option>C</option></select></label>
+        <label><span>Student Type</span><select name="student_type" onchange="updateAdmissionClasses(this)"><option>Preschool</option><option>Primary</option></select></label>
+        <label><span>Class</span><select name="class_name">${classOptions("", "Preschool")}</select></label>
         <label><span>Gender</span><select name="gender"><option>Female</option><option>Male</option></select></label>
         <label><span>Joined On</span><input name="joined_on" type="date"></label>
-        <label><span>Parent / Guardian</span><input name="guardian_name" required placeholder="Full name"></label>
+        <label><span>Parent / Guardian <small>(optional)</small></span><input name="guardian_name" placeholder="Full name"></label>
         <label><span>Parent Email</span><input name="guardian_email" type="email" placeholder="name@example.com"></label>
         <label><span>Parent Phone</span><input name="guardian_phone" placeholder="+265 ..."></label>
         <button class="btn primary" type="submit">${icon("user-plus")} Save Admission</button>
       </form>
     </section>
-    <section class="section-panel"><div class="section-toolbar"><h2>Manage Admissions</h2><div class="filters"><select class="select"><option>Class</option></select><select class="select"><option>Status</option></select><button class="pill">${icon("sort", 14)} Sort By A-Z</button></div></div>${tableSearch()}<div class="table-wrap">${admissionsTable()}</div>${pagination()}</section>`;
+    <section class="section-panel"><div class="section-toolbar"><h2>Manage Admissions</h2><div class="filters"><div class="search"><input data-admission-search type="search" placeholder="Search admissions" aria-label="Search admissions" oninput="applyAdmissionFilters(this)"><span class="shortcut">${icon("search", 15)}</span></div><select class="select" data-admission-class onchange="applyAdmissionFilters(this)"><option value="">All Classes</option>${classOptions()}</select><select class="select" data-admission-status onchange="applyAdmissionFilters(this)"><option value="">All Statuses</option><option>Pending Approval</option><option>Pending Edit Approval</option><option>Approved</option><option>Submitted</option><option>Active</option><option>Pending</option></select><button class="pill">${icon("sort", 14)} Pending First · Newest Admissions</button></div></div><div class="table-wrap">${admissionsTable()}</div>${pagination()}</section>`;
 }
 
 function balancesPage(kind) {
-  if (["student-balances", "arrears"].includes(kind) && backendData.balances?.length) {
-    const allRows = backendData.balances
+  if (kind === "daily-collections") return dailyCollectionsPage();
+  if (kind === "term-collections") return termCollectionsPage();
+  if (["student-balances", "arrears"].includes(kind)) {
+    const allRows = [...(backendData.balances || [])]
       .filter((balance) => kind === "student-balances" || Number(balance.balance) > 0)
       .map((balance) => [
         `BAL-${String(balance.id).padStart(4, "0")}`,
@@ -1467,74 +1957,206 @@ function balancesPage(kind) {
         money(balance.amount_paid),
         money(balance.balance),
         balance.status,
+        Number(balance.balance),
+        balance.student_id || balance.student?.id,
       ]);
     const title = kind === "arrears" ? "Arrears" : "Student Balances";
     return `${pageHead(title, `Dashboard / Fees & Accounts / ${title}`, tableActions())}
       <section class="section-panel">
-        <div class="section-toolbar"><h2>${kind === "arrears" ? "Outstanding Balances" : "Balance Summary"}</h2><div class="filters"><button class="pill" onclick="openAcademicYearModal()">${icon("calendar-days", 14)} ${activeAcademicYear()}</button><button class="pill" onclick="openFilterModal('Balance Filters')">${icon("filter", 14)} Filter</button><button class="pill" onclick="openSortModal()">${icon("sort", 14)} Sort By A-Z</button></div></div>
-        ${tableSearch()}
-        <div class="table-wrap"><table><thead><tr><th>ID</th><th>Student</th><th>Class</th><th>Fee / Term</th><th>Due</th><th>Paid</th><th>Balance</th><th>Status</th><th>Action</th></tr></thead><tbody>
-          ${allRows.map((row) => `<tr><td><a>${row[0]}</a></td><td>${row[1]}</td><td>${row[2]}</td><td>${row[3]}</td><td>${row[4]}</td><td>${row[5]}</td><td><strong>${row[6]}</strong></td><td><span class="badge ${statusClass(row[7])}">• ${row[7]}</span></td><td>${actionIcons()}</td></tr>`).join("")}
+        <div class="section-toolbar"><h2>${kind === "arrears" ? "Outstanding Balances" : "Balance Summary"}</h2><div class="filters"><button class="pill" onclick="openAcademicYearModal()">${icon("calendar-days", 14)} ${activeAcademicYear()}</button><select class="select" data-balance-status onchange="applyBalanceFilters(this)"><option value="">All Statuses</option><option>Unpaid</option><option>Partial</option><option>Cleared</option></select><select class="select" data-balance-class onchange="applyBalanceFilters(this)"><option value="">All Classes</option>${classOptions()}</select><select class="select" data-balance-range onchange="applyBalanceFilters(this)"><option value="">All Balances</option><option value="outstanding">Outstanding</option><option value="cleared">Zero / Cleared</option><option value="under-50000">Below MWK 50,000</option><option value="50000-plus">MWK 50,000+</option></select><button class="pill" onclick="openSortModal()">${icon("sort", 14)} Sort By A-Z</button></div></div>
+        <div class="section-toolbar"><div class="search"><input data-balance-search type="search" placeholder="Search balances" oninput="applyBalanceFilters(this)"><span class="shortcut">${icon("search", 15)}</span></div></div>
+        <div class="table-wrap"><table class="balance-table"><thead><tr><th>ID</th><th>Student</th><th>Class</th><th>Fee / Term</th><th>Due</th><th>Paid</th><th>Balance</th><th>Status</th><th>Action</th></tr></thead><tbody>
+          ${allRows.map((row) => { const latestPayment = studentPayments(row[9])[0]; return `<tr data-status="${row[7]}" data-balance="${row[8]}"><td><a>${row[0]}</a></td><td>${row[1]}</td><td>${row[2]}</td><td>${row[3]}</td><td>${row[4]}</td><td>${row[5]}</td><td><strong>${row[6]}</strong></td><td><span class="badge ${statusClass(row[7])}">• ${row[7]}</span></td><td><span class="row-tools"><button class="icon-mini" onclick="openStudentPaymentHistory(${row[9]})" title="Payment history">${icon("eye", 16)}</button><button class="icon-mini" onclick="${latestPayment ? `openReceiptModal('${latestPayment.receipt_no}')` : `showToast('No receipt','No payment has been recorded for this student.','info')`}" title="Latest receipt">${icon("receipt", 16)}</button><button class="icon-mini" onclick="${latestPayment ? `downloadReceipt('${latestPayment.receipt_no}')` : `showToast('No receipt','No payment has been recorded for this student.','info')`}" title="Download latest receipt">${icon("download", 16)}</button></span></td></tr>`; }).join("")}
         </tbody></table></div>${pagination()}
       </section>`;
+  }
+  if (kind === "receipts") {
+    const payments = backendData.payments || [];
+    return `${pageHead("Receipts", "Dashboard / Fees & Accounts / Receipts", tableActions())}
+      <section class="section-panel"><div class="section-toolbar"><h2>Receipt Register</h2><span class="muted">${payments.length} recorded payment${payments.length === 1 ? "" : "s"}</span></div>
+      <div class="section-toolbar"><div class="search"><input type="search" placeholder="Search receipt or student" oninput="filterTableRows(this, '.receipt-table')"><span class="shortcut">${icon("search", 15)}</span></div></div>
+      <div class="table-wrap"><table class="receipt-table"><thead><tr><th>Receipt</th><th>Student</th><th>Fee / Term</th><th>Amount</th><th>Method</th><th>Paid On</th><th>Status</th><th>Action</th></tr></thead><tbody>
+      ${payments.map((payment) => { const paidAt = dateTimeParts(payment.paid_at); const student = payment.student ? `${payment.student.first_name} ${payment.student.last_name}` : "Student"; return `<tr data-status="${payment.status}"><td><a onclick="openReceiptModal('${payment.receipt_no}')">${payment.receipt_no}</a></td><td>${student}</td><td>${payment.fee_type} / ${payment.term || "Term 1"}</td><td><strong>${money(payment.amount)}</strong></td><td>${payment.method}</td><td>${paidAt.date} · ${paidAt.time}</td><td><span class="badge ${statusClass(payment.status)}">• ${payment.status}</span></td><td><span class="row-tools"><button class="icon-mini" onclick="openReceiptModal('${payment.receipt_no}')" title="View receipt">${icon("receipt", 16)}</button><button class="icon-mini" onclick="downloadReceipt('${payment.receipt_no}')" title="Download receipt">${icon("download", 16)}</button></span></td></tr>`; }).join("") || `<tr><td colspan="8" class="muted">No payments have been recorded yet.</td></tr>`}
+      </tbody></table></div></section>`;
   }
   const map = {
     receipts: ["Receipts", "Fees & Accounts / Receipts", "Receipt Register", [["RCPT-7821", "Roshni Negi", "Tuition Fee", "MWK 5,550", "Online", "Approved"], ["RCPT-7820", "Akash Rawat", "Tuition Fee", "MWK 5,950", "Mobile Money", "Approved"], ["RCPT-7819", "Vivaan Mehta", "Activities", "MWK 3,800", "Cash", "Pending"], ["RCPT-7818", "Riya Verma", "Monthly Fee", "MWK 3,630", "Mobile Money", "Approved"]]],
     "student-balances": ["Student Balances", "Fees & Accounts / Student Balances", "Balance Summary", [["BAL-1001", "Roshni Negi", "III A", "MWK 0", "Cleared", "Ready"], ["BAL-1002", "Akash Rawat", "IV B", "MWK 1,250", "Partial", "Pending"], ["BAL-1003", "Aarav Sharma", "III A", "MWK 0", "Cleared", "Ready"], ["BAL-1004", "Vivaan Mehta", "I B", "MWK 4,300", "Arrears", "Review"]]],
     arrears: ["Arrears", "Fees & Accounts / Arrears", "Arrears Follow-up", [["ARR-4101", "Vivaan Mehta", "I B", "MWK 4,300", "Parent called", "Review"], ["ARR-4102", "Riya Verma", "II B", "MWK 2,700", "SMS sent", "Pending"], ["ARR-4103", "Ishaan Bansal", "VI A", "MWK 6,200", "Director review", "Review"], ["ARR-4104", "Neha Gupta", "IX A", "MWK 1,800", "Payment plan", "Pending"]]],
-    "daily-collections": ["Daily Collections", "Fees & Accounts / Daily Collections", "Daily Collection Register", [["DAY-0615", "Cash", "42 payments", "MWK 72,000", "Accounts Office", "Ready"], ["DAY-0615-M", "Mobile Money", "81 payments", "MWK 118,000", "Accounts Office", "Ready"], ["DAY-0615-B", "Bank", "18 payments", "MWK 55,000", "Accounts Office", "Ready"]]],
-    "term-collections": ["Term Collections", "Fees & Accounts / Term Collections", "Term Collection Summary", [["TERM-1", "Tuition", "1,820 payments", "MWK 4,820,000", "82%", "Ready"], ["TERM-1-A", "Activities", "1,540 payments", "MWK 930,000", "74%", "Ready"], ["TERM-1-B", "Books & Supplies", "1,120 payments", "MWK 710,000", "63%", "Pending"]]]
+    "daily-collections": ["Daily Collections", "Fees & Accounts / Daily Collections", "Daily Collection Register", [["DAY-0615", "Standard 1", "Term 1 · 42 students", "MWK 72,000", "Cash", "Ready"], ["DAY-0615-M", "Standard 3", "Term 1 · 81 students", "MWK 118,000", "Mobile Money", "Ready"], ["DAY-0615-B", "Standard 4", "Term 2 · 18 students", "MWK 55,000", "Bank Transfer", "Ready"]]],
+    "term-collections": ["Term Collections", "Fees & Accounts / Term Collections", "Term Collection Summary", [["TERM-1-F1", "Standard 1", "Term 1 · 186 students", "MWK 4,820,000", "Tuition Fee", "Ready"], ["TERM-1-F2", "Standard 2", "Term 1 · 174 students", "MWK 930,000", "Activities Fee", "Ready"], ["TERM-2-F3", "Standard 3", "Term 2 · 206 students", "MWK 710,000", "Uniform Fee", "Pending"], ["TERM-2-F4", "Standard 4", "Term 2 · 246 students", "MWK 1,200,000", "Tuition Fee", "Ready"]]]
   };
   const [title, crumbs, heading, rows] = map[kind];
   return inventoryTablePage(title, crumbs, heading, ["ID", "Student / Type", "Class / Count", "Amount", "Notes", "Status"], rows);
 }
 
+function collectionTypes() { return [...new Set(['Tuition Fee','Uniform Fee','School Bus Fee','Trip Fee',...(backendData.payments||[]).map(p=>p.fee_type),...(backendData.balances||[]).map(b=>b.fee_type)])]; }
+let collectionDate='';
+function collectionPayments(type, date='', className='') { return (backendData.payments||[]).filter(p=>p.status==='Paid'&&(!type||p.fee_type===type)&&(!date||p.paid_at?.slice(0,10)===date)&&(!className||p.student?.class_name===className)); }
+function termCollectionsPage() { return collectionSummaryPage(false); }
+function dailyCollectionsPage() { return collectionSummaryPage(true); }
+function collectionSummaryPage(daily) {
+  const date=daily?(collectionDate||backendData.server_date||new Date().toISOString().slice(0,10)):'';
+  return `${pageHead(daily?'Daily Collections':'Term Collections',`${activeAcademicYear()} / ${activeTerm()}`)}${periodNotice()}<section class="section-panel"><div class="section-toolbar"><h2>Collections by Payment Type</h2><div class="collection-summary-actions">${daily?`<label>Date <input class="select" type="date" value="${date}" onchange="collectionDate=this.value;app()"></label>`:'<span class="muted">Open a class to filter by month or week.</span>'}</div></div><div class="table-wrap"><table><thead><tr><th>Payment Type</th><th>Payments</th><th>Collected</th><th>View Classes</th></tr></thead><tbody>${collectionTypes().map((type,i)=>{const rows=collectionPayments(type,date);return `<tr><td>${escapeHtml(type)}</td><td>${rows.length}</td><td>${money(rows.reduce((n,p)=>n+Number(p.amount),0))}</td><td><button class="icon-mini" title="View classes for ${escapeHtml(type)}" onclick="openCollectionClasses(${i},'${date}')">${icon('eye',16)}</button></td></tr>`;}).join('')}</tbody></table></div></section>`;
+}
+function openCollectionClasses(index,date) {
+  const type=collectionTypes()[index];
+  openModal(`${escapeHtml(type)} — ${escapeHtml(date||activeTerm())}`,`<div class="collection-modal-meta"><span>${escapeHtml(activeAcademicYear())} · ${activeTerm()}</span></div><div class="table-wrap"><table><thead><tr><th>Class</th><th>Payments</th><th>Collected</th><th>View</th></tr></thead><tbody>${excelClasses.map((name,i)=>{const rows=collectionPayments(type,date,name);return `<tr><td>${name}</td><td>${rows.length}</td><td>${money(rows.reduce((n,p)=>n+Number(p.amount),0))}</td><td><button class="icon-mini" title="View ${name} collections" onclick="openCollectionClass(${index},'${date}',${i})">${icon('eye',16)}</button></td></tr>`;}).join('')}</tbody></table></div>`,'wide');
+}
+function collectionExportButtons(index=-1,date='',classIndex=-1,month='',week='',scope='entries') {
+  const args=`${index},'${date}',${classIndex},'${month}','${week}','${scope}'`;
+  return `<span class="collection-export-tools" role="group" aria-label="Report actions"><button class="icon-mini" title="Print this report" aria-label="Print this report" onclick="exportCollectionReport('print',${args})">${icon('printer',16)}</button><button class="icon-mini" title="Export this report to Excel" aria-label="Export this report to Excel" onclick="exportCollectionReport('excel',${args})">${icon('file-chart',16)}</button></span>`;
+}
+function collectionReportData(index,date,classIndex,month,week,scope) {
+  const type=index<0?'':collectionTypes()[index],name=classIndex<0?'':excelClasses[classIndex];
+  const payments=collectionRangePayments(collectionPayments(type,date,name),month,week);
+  const sum=rows=>rows.reduce((n,p)=>n+Number(p.amount),0);
+  let headers,rows;
+  if(scope==='types') {headers=['Payment Type','Payments','Collected (MWK)'];rows=collectionTypes().map(t=>{const items=payments.filter(p=>p.fee_type===t);return [t,items.length,sum(items)];});}
+  else if(scope==='classes') {headers=['Class','Payments','Collected (MWK)'];rows=excelClasses.map(c=>{const items=payments.filter(p=>p.student?.class_name===c);return [c,items.length,sum(items)];});}
+  else if(scope==='months') {headers=['Month','Payments','Collected (MWK)'];rows=[...new Set(payments.map(p=>p.paid_at?.slice(0,7)||'Date not recorded'))].sort().map(m=>{const items=payments.filter(p=>(p.paid_at?.slice(0,7)||'Date not recorded')===m);return [m,items.length,sum(items)];});}
+  else {headers=['Receipt','Student','Class','Payment Type','Date','Method','Amount (MWK)'];rows=payments.map(p=>[p.receipt_no,`${p.student?.first_name||''} ${p.student?.last_name||''}`.trim(),p.student?.class_name||'Not recorded',p.fee_type,p.paid_at?.slice(0,10)||'Not recorded',p.method||'Not recorded',Number(p.amount)]);}
+  const period=[activeAcademicYear(),activeTerm(),date&&'Date: '+date,month&&'Month: '+month,week&&'Week starting: '+week+' (Mon–Sun)'].filter(Boolean).join(' · ');
+  return {title:[name,type,scope==='months'?'Monthly Collection Summary':'Collection Report'].filter(Boolean).join(' — '),period,headers,rows,total:sum(payments),count:payments.length};
+}
+function exportCollectionReport(kind,index,date,classIndex,month,week,scope) {
+  const report=collectionReportData(index,date,classIndex,month,week,scope);
+  const cell=value=>typeof value==='number'?`<td class="number">${value}</td>`:`<td class="text">${escapeHtml(value??'')}</td>`;
+  const html=`<!doctype html><html><head><meta charset="utf-8"><title>${escapeHtml(report.title)}</title><style>@page{size:A4 landscape;margin:12mm}body{font:11px Arial;color:#17213d}h1{font-size:18px;margin:0 0 6px}h2{font-size:14px;margin:0 0 8px}p{margin:6px 0 12px}table{width:100%;border-collapse:collapse;table-layout:fixed}th,td{border:1px solid #ccd3df;padding:7px;text-align:left;overflow-wrap:anywhere}th{background:#eef5f0}thead{display:table-header-group}tr{break-inside:avoid}.number{text-align:right;font-variant-numeric:tabular-nums}.text{mso-number-format:"\\@"}</style></head><body><h1>Excel Primary School</h1><h2>${escapeHtml(report.title)}</h2><p>${escapeHtml(report.period)}</p><p>${report.count} payments · Total collected: <strong>${money(report.total)}</strong></p><table><thead><tr>${report.headers.map(h=>`<th>${escapeHtml(h)}</th>`).join('')}</tr></thead><tbody>${report.rows.map(row=>`<tr>${row.map(cell).join('')}</tr>`).join('')||`<tr><td colspan="${report.headers.length}">No collections for the selected dates.</td></tr>`}</tbody></table></body></html>`;
+  if(kind==='print') {
+    const win=window.open('','_blank');if(!win){showToast('Allow pop-ups to print this report');return;}
+    win.document.write(html);win.document.close();win.focus();win.print();
+  } else {
+    const link=document.createElement('a'),url=URL.createObjectURL(new Blob([html],{type:'application/vnd.ms-excel'}));
+    link.href=url;link.download=[report.title,activeAcademicYear(),activeTerm(),date,month,week].filter(Boolean).join('-').replace(/[^a-z0-9-]+/gi,'-').toLowerCase()+'.xls';
+    document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  }
+}
+
+function collectionWeekStart(date) {
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(date||''))return '';
+  const day=new Date(date+'T00:00:00Z');
+  day.setUTCDate(day.getUTCDate()-((day.getUTCDay()+6)%7));
+  return day.toISOString().slice(0,10);
+}
+function collectionRangePayments(rows,month='',week='') {
+  return rows.filter(p=>(!month||p.paid_at?.slice(0,7)===month)&&(!week||collectionWeekStart(p.paid_at?.slice(0,10))===week));
+}
+function openCollectionClass(index,date,classIndex,month='',week='') {
+  const type=collectionTypes()[index],name=excelClasses[classIndex],all=collectionPayments(type,date,name);
+  const rows=collectionRangePayments(all,month,week);
+  const months=[...new Set(all.map(p=>p.paid_at?.slice(0,7)).filter(Boolean))].sort();
+  const weeks=[...new Set(collectionRangePayments(all,month).map(p=>collectionWeekStart(p.paid_at?.slice(0,10))).filter(Boolean))].sort();
+  const controls=date?'':`<div class="collection-range-filters"><label>Month<select class="select" onchange="openCollectionClass(${index},'',${classIndex},this.value,'')"><option value="">All months</option>${months.map(m=>`<option value="${m}" ${month===m?'selected':''}>${new Date(m+'-01T00:00:00').toLocaleDateString('en-GB',{month:'long',year:'numeric'})}</option>`).join('')}</select></label><label>Week<select class="select" onchange="openCollectionClass(${index},'',${classIndex},'${month}',this.value)"><option value="">All weeks</option>${weeks.map(w=>`<option value="${w}" ${week===w?'selected':''}>Week of ${w} (Mon–Sun)</option>`).join('')}</select></label><button class="btn ghost" onclick="openCollectionClass(${index},'',${classIndex})">Clear filters</button></div>`;
+  const summary=!date&&!month&&!week?`<details class="collection-month-summary"><summary>Monthly totals</summary><div class="collection-month-actions">${collectionExportButtons(index,date,classIndex,month,week,'months')}</div><table><thead><tr><th>Month</th><th>Payments</th><th>Collected</th></tr></thead><tbody>${months.map(m=>{const entries=collectionRangePayments(all,m);return `<tr><td><button class="text-link" onclick="openCollectionClass(${index},'',${classIndex},'${m}')">${m}</button></td><td>${entries.length}</td><td>${money(entries.reduce((n,p)=>n+Number(p.amount),0))}</td></tr>`;}).join('')||'<tr><td colspan="3">No dated payments.</td></tr>'}</tbody></table></details>`:'';
+  const content=`<table class="collection-entry-table"><colgroup><col style="width:21%"><col style="width:25%"><col style="width:17%"><col style="width:17%"><col style="width:20%"></colgroup><thead><tr><th>Receipt</th><th>Student</th><th>Date</th><th>Method</th><th>Amount</th></tr></thead><tbody>${rows.map(p=>`<tr><td><span class="compact-receipt" tabindex="0" title="${escapeHtml(p.receipt_no)}" aria-label="Receipt ${escapeHtml(p.receipt_no)}">${escapeHtml(p.receipt_no)}</span></td><td>${escapeHtml((p.student?.first_name||'')+' '+(p.student?.last_name||''))}</td><td>${escapeHtml(p.paid_at?.slice(0,10)||'Not recorded')}</td><td>${escapeHtml(p.method||'Not recorded')}</td><td>${money(p.amount)}</td></tr>`).join('')||'<tr><td colspan="5">No collections for the selected dates.</td></tr>'}</tbody></table>`;
+  openModal(`${name} — ${escapeHtml(type)}`,`<div class="collection-modal-meta"><span>${escapeHtml(activeAcademicYear())} · ${activeTerm()}${date?' · '+escapeHtml(date):''}</span><button class="btn ghost" onclick="openCollectionClasses(${index},'${date}')">Back to classes</button></div>${controls}<div class="collection-class-total"><span>${rows.length} payments</span><span class="collection-total-actions"><strong>${money(rows.reduce((n,p)=>n+Number(p.amount),0))}</strong>${collectionExportButtons(index,date,classIndex,month,week)}</span></div>${summary}<div class="table-wrap">${content}</div>`,'wide collection-detail-modal');
+}
+
+function dailyReportPayments(date) {
+  const payments = (backendData.payments || []).filter((payment) => payment.status === "Paid" && payment.paid_at?.slice(0, 10) === date);
+  return payments;
+}
+
+function openDailyReport(date) {
+  const payments = dailyReportPayments(date);
+  const total = payments.reduce((sum, payment) => sum + Number(payment.amount || 0), 0);
+  openModal("Daily Collection Report", `<section class="collection-report"><header><div><strong>Excel Primary School</strong><span>Daily Fees Collection Report</span></div><b>${new Date(`${date}T00:00:00`).toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" })}</b></header><div class="report-summary"><span><small>Payments</small><strong>${payments.length}</strong></span><span><small>Total collected</small><strong>${money(total)}</strong></span><span><small>Methods</small><strong>${new Set(payments.map((payment) => payment.method)).size}</strong></span></div><table><thead><tr><th>Receipt</th><th>Student</th><th>Fee Type</th><th>Term</th><th>Method</th><th>Amount</th></tr></thead><tbody>${payments.map((payment) => `<tr><td>${payment.receipt_no}</td><td>${payment.student ? `${payment.student.first_name} ${payment.student.last_name}` : "Student"}</td><td>${payment.fee_type}</td><td>${payment.term || "Term 1"}</td><td>${payment.method}</td><td>${money(payment.amount)}</td></tr>`).join("")}</tbody></table></section>`, "wide");
+}
+
+function downloadDailyReport(date) {
+  const payments = dailyReportPayments(date);
+  const rows = payments.map((payment) => { const paidAt = dateTimeParts(payment.paid_at); return `<tr><td>${payment.receipt_no}</td><td>${payment.student ? `${payment.student.first_name} ${payment.student.last_name}` : "Student"}</td><td>${payment.student?.class_name || "N/A"}</td><td>${payment.fee_type}</td><td>${payment.term || "Term 1"}</td><td>${payment.academic_year || activeAcademicYear()}</td><td>${payment.amount}</td><td>${payment.balance_after || 0}</td><td>${payment.method}</td><td>${paidAt.date}</td><td>${paidAt.time}</td><td>${payment.status}</td><td>${payment.notes || ""}</td></tr>`; }).join("");
+  const workbook = `<html><head><meta charset="utf-8"><style>table{border-collapse:collapse;font:12px Arial}th{background:#18783e;color:#fff}th,td{border:1px solid #aaa;padding:8px}</style></head><body><h2>Excel Primary School — Daily Collections</h2><p>${date}</p><table><thead><tr><th>Receipt</th><th>Student</th><th>Class</th><th>Fee Type</th><th>Term</th><th>Academic Year</th><th>Amount</th><th>Balance After</th><th>Method</th><th>Date</th><th>Time</th><th>Status</th><th>Notes</th></tr></thead><tbody>${rows}</tbody></table></body></html>`;
+  const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([workbook], { type: "application/vnd.ms-excel" })); link.download = `excel-primary-daily-collections-${date}.xls`; link.click(); URL.revokeObjectURL(link.href);
+}
+
 function examPage(kind) {
   const map = {
-    "exam-lists": ["Candidate Lists", "Exams Management / Candidate Lists", "Exam Candidate Lists", [["EXL-2026-F1", "Form 1", "186 candidates", "Mid Term", "Excel + PDF", "Ready"], ["EXL-2026-F2", "Form 2", "174 candidates", "Mid Term", "Excel + PDF", "Ready"], ["EXL-2026-F3", "Form 3", "206 candidates", "Mock", "Excel + PDF", "Pending"], ["EXL-2026-F4", "Form 4", "246 candidates", "MSCE Prep", "Excel + PDF", "Ready"]]],
+    "exam-lists": ["Candidate Lists", "Exams Management / Candidate Lists", "Exam Candidate Lists", [["EXL-2026-F1", "Standard 1", "186 candidates", "Mid Term", "Excel + PDF", "Ready"], ["EXL-2026-F2", "Standard 2", "174 candidates", "Mid Term", "Excel + PDF", "Ready"], ["EXL-2026-F3", "Standard 3", "206 candidates", "Mock", "Excel + PDF", "Pending"], ["EXL-2026-F4", "Standard 4", "246 candidates", "MSCE Prep", "Excel + PDF", "Ready"]]],
     "eligible-students": ["Eligible Students", "Exams Management / Eligible Students", "Eligibility Register", [["ELG-001", "Roshni Negi", "III A", "Fees cleared", "Candidate no issued", "Eligible"], ["ELG-002", "Akash Rawat", "IV B", "Balance remains", "No candidate no", "Hold"], ["ELG-003", "Aarav Sharma", "III A", "Fees cleared", "Candidate no issued", "Eligible"], ["ELG-004", "Vivaan Mehta", "I B", "Missing admission file", "Records office", "Review"]]],
-    "exam-export": ["Excel / PDF Export", "Exams Management / Export", "Export Queue", [["EXP-901", "Form 4 Candidate List", "Excel", "Exams Officer", "Generated today", "Ready"], ["EXP-900", "Form 3 Candidate List", "PDF", "Exams Officer", "Generated today", "Ready"], ["EXP-899", "Eligibility Hold List", "Excel", "Director", "Pending approval", "Pending"]]],
+    "exam-export": ["Excel / PDF Export", "Exams Management / Export", "Export Queue", [["EXP-901", "Standard 4 Candidate List", "Excel", "Exams Officer", "Generated today", "Ready"], ["EXP-900", "Standard 3 Candidate List", "PDF", "Exams Officer", "Generated today", "Ready"], ["EXP-899", "Eligibility Hold List", "Excel", "Director", "Pending approval", "Pending"]]],
     "exam-settings": ["Exam Settings", "Exams Management / Exam Settings", "Exam Configuration", [["SET-01", "Mid Term", "Term 2", "Open", "Eligibility required", "Active"], ["SET-02", "Mock Exams", "Term 3", "Draft", "Director approval", "Pending"], ["SET-03", "Final Exams", "Term 3", "Draft", "Fees clearance", "Pending"]]],
-    "exam-types": ["Exam Types", "Academic Records / Exam Types", "Exam Types", [["TYPE-01", "Mid Term", "All classes", "Term 1 and 2", "Continuous assessment", "Active"], ["TYPE-02", "Mock Exam", "Form 4", "Term 3", "MSCE readiness", "Active"], ["TYPE-03", "Final Exam", "All classes", "Term 3", "Promotion decision", "Active"]]]
+    "exam-types": ["Exam Types", "Academic Records / Exam Types", "Exam Types", [["TYPE-01", "Mid Term", "All classes", "Term 1 and 2", "Continuous assessment", "Active"], ["TYPE-02", "Mock Exam", "Standard 4", "Term 3", "MSCE readiness", "Active"], ["TYPE-03", "Final Exam", "All classes", "Term 3", "Promotion decision", "Active"]]]
   };
   const [title, crumbs, heading, rows] = map[kind];
   return inventoryTablePage(title, crumbs, heading, ["ID", "Name", "Scope", "Period", "Notes", "Status"], rows);
 }
 
 function setupPage(kind) {
+  const classTeachers = Array(10).fill("Not assigned");
   const map = {
-    classes: ["Classes & Sections", "Academic Setup / Classes & Sections", "Class Setup", [["CLS-01", "Form 1", "A, B, C", "186 students", "Mr. Banda", "Active"], ["CLS-02", "Form 2", "A, B, C", "174 students", "Ms. Phiri", "Active"], ["CLS-03", "Form 3", "A, B, C", "206 students", "Mr. Mbewe", "Active"], ["CLS-04", "Form 4", "A, B", "246 students", "Ms. Tembo", "Active"]]],
-    subjects: ["Subjects", "Academic Setup / Subjects", "Subject Setup", [["SUB-01", "Mathematics", "Core", "Forms 1-4", "8 teachers", "Active"], ["SUB-02", "English", "Core", "Forms 1-4", "7 teachers", "Active"], ["SUB-03", "Physics", "Science", "Forms 3-4", "3 teachers", "Active"], ["SUB-04", "Computer Studies", "Elective", "Forms 2-4", "2 teachers", "Active"]]],
+    classes: ["Classes", "Academic Setup / Classes", "Class Setup", excelClasses.map((name, index) => [`CLS-${String(index + 1).padStart(2, "0")}`, name, classTeachers[index], index < 2 ? "Preschool" : "Primary", `${145 + index * 11} learners`])],
+    subjects: ["Subjects", "Academic Setup / Subjects", "Primary Subject Setup", [["SUB-01", "English", "Core", "Standards 1–8", "Primary", "Active"], ["SUB-02", "Chichewa", "Core", "Standards 1–8", "Primary", "Active"], ["SUB-03", "Mathematics", "Core", "Standards 1–8", "Primary", "Active"], ["SUB-04", "Science and Technology", "Core", "Standards 1–8", "Primary", "Active"], ["SUB-05", "Social Studies", "Core", "Standards 1–8", "Primary", "Active"], ["SUB-06", "Life Skills", "Core", "Standards 1–8", "Primary", "Active"], ["SUB-07", "Expressive Arts", "Practical", "All classes", "Primary", "Active"], ["SUB-08", "Agriculture", "Practical", "Standards 3–8", "Primary", "Active"]]],
     "academic-years": ["Academic Years", "Academic Setup / Academic Years", "Academic Calendar", [["AY-2026", academicYearLabel(), "Open", "3 terms", "Current year", "Active"], ["AY-2025", "2025 / 2026", "Closed", "3 terms", "Archived", "Completed"]]],
     terms: ["Terms", "Academic Setup / Terms", "Term Setup", [["TRM-01", "Term 1", "Open", "Jan - Apr", "Fees active", "Active"], ["TRM-02", "Term 2", "Draft", "May - Aug", "Exam setup", "Pending"], ["TRM-03", "Term 3", "Draft", "Sep - Dec", "Promotion setup", "Pending"]]]
   };
   const [title, crumbs, heading, rows] = map[kind];
+  if (kind === "classes") return classesPage(rows);
   return inventoryTablePage(title, crumbs, heading, ["ID", "Name", "Status / Type", "Scope", "Notes", "State"], rows);
+}
+
+function classesPage() {
+  return `${pageHead('Classes', `Classes / ${activeAcademicYear()} / ${activeTerm()}`, `<a class="btn ghost" href="#/class-register">Class Registers</a>`)}${periodNotice()}
+  <section class="section-panel"><div class="section-toolbar"><h2>Class Enrollment</h2><input class="select" type="search" placeholder="Search classes" oninput="filterTableRows(this, '.classes-table')"></div><div class="table-wrap"><table class="classes-table"><thead><tr><th>Class</th><th>Level</th><th>Students</th><th>View / Print / Excel</th></tr></thead><tbody>${excelClasses.map((name,index)=>`<tr><td>${name}</td><td>${index<2?'Preschool':'Primary'}</td><td>${(backendData.students||[]).filter(s=>s.class_name===name).length}</td><td><span class="row-tools"><button class="icon-mini" title="View ${name}" onclick="openClassStudents('${name}')">${icon('eye',16)}</button>${classExportButtons(name)}</span></td></tr>`).join('')}</tbody></table></div></section>`;
+}
+
+function openClassStudents(className) {
+  openModal(`${escapeHtml(className)} — ${escapeHtml(activeAcademicYear())} — ${activeTerm()}`, `<div class="class-modal-actions"><input class="select" type="search" placeholder="Search student or admission number" aria-label="Search class students" oninput="filterTableRows(this, '.class-student-table')"><div class="filters">${classExportButtons(className, true)}</div></div><div class="table-wrap class-table-scroll" tabindex="0" aria-label="Scrollable class student table">${classStudentTable(className)}</div>`, 'class-register-modal');
 }
 
 function adminPage(kind) {
   const map = {
-    users: ["Users", "System Administration / Users", "System Users", [["USR-001", "System Admin", "Super Admin", "admin@hillside.edu", "MFA enabled, break-glass only", "Active"], ["USR-002", "School Director", "Director", "director@hillside.edu", "Leadership workspace", "Active"], ["USR-003", "Accounts Desk", "Finance Officer", "finance@hillside.edu", "Fees and receipts", "Active"], ["USR-004", "Admissions Desk", "Admissions Officer", "admissions@hillside.edu", "Admissions and guardians", "Active"], ["USR-005", "Exams Office", "Exams Officer", "exams@hillside.edu", "Candidate lists", "Active"], ["USR-006", "Teacher Demo", "Teacher", "teacher@hillside.edu", "Assigned classes", "Active"]]],
-    roles: ["Roles & Permissions", "System Administration / Roles", "Role Permissions", [["ROLE-01", "Super Admin", "Technical administration", "Users, roles, settings, maintenance", "Restricted", "Active"], ["ROLE-02", "Director", "School leadership", "Operations, reports, approvals, read-only audit", "Approve + review", "Active"], ["ROLE-03", "Finance Officer", "Cash office", "Payments, receipts, balances", "Create + export", "Active"], ["ROLE-04", "Admissions Officer", "Admissions desk", "Students, guardians, enrollment reports", "Create + update", "Active"], ["ROLE-05", "Exams Officer", "Exams desk", "Candidate lists, eligibility, exports", "Create + submit", "Active"], ["ROLE-06", "Teacher", "Classroom", "Assigned learners and teaching records", "Read + update own", "Active"]]],
-    "audit-logs": ["Audit Logs", "Governance / Audit Logs", "Recent Audit Logs", [["AUD-9001", "Payment edit requested", "Finance Officer", "Receipt RCPT-7819", "Director approval required", "Review"], ["AUD-9000", "Student record updated", "Admissions Officer", "ADM-2026-004", "Documents added", "Completed"], ["AUD-8999", "Exam export generated", "Exams Officer", "EXP-901", "PDF + Excel", "Completed"], ["AUD-8998", "Role viewed", "Director", "Finance Officer", "No change", "Completed"], ["AUD-8997", "Backup completed", "Super Admin", "database.sqlite", "Encrypted copy stored", "Ready"]]],
-    "system-settings": ["System Settings", "System Administration / System Settings", "System Settings", [["SET-SCH", "School Profile", "Hillside Secondary School", "Logo, address, motto", "Configured", "Active"], ["SET-SEC", "Security Policy", "Super Admin", "Password, session, MFA rules", "Strict", "Active"], ["SET-AYR", "Academic Year", academicYearLabel(), "Current calendar and terms", "Open", "Active"], ["SET-NOT", "Notifications", "Email/SMS", "Parent and staff alerts", "Queue healthy", "Ready"], ["SET-INT", "Integrations", "Payments/SMS", "API keys stored securely", "Review", "Review"]]],
+    users: ["Users", "System Administration / Users", "System Users", [["USR-001", "System Admin", "Super Admin", "admin@excelprimaryschool.org", "MFA enabled, break-glass only", "Active"], ["USR-002", "School Director", "Director", "director@excelprimaryschool.org", "Leadership workspace", "Active"], ["USR-003", "Accounts Desk", "School Manager", "finance@excelprimaryschool.org", "Fees and receipts", "Active"], ["USR-004", "Admissions Desk", "Admissions Officer", "admissions@excelprimaryschool.org", "Admissions and guardians", "Active"], ["USR-005", "Exams Office", "Exams Officer", "exams@excelprimaryschool.org", "Candidate lists", "Active"], ["USR-006", "Teacher Demo", "Teacher", "teacher@excelprimaryschool.org", "Assigned classes", "Active"]]],
+    roles: ["Roles & Permissions", "System Administration / Roles", "Role Permissions", [["ROLE-01", "Super Admin", "Technical administration", "Users, roles, settings, maintenance", "Restricted", "Active"], ["ROLE-02", "Director", "School leadership", "Operations, reports, approvals, read-only audit", "Approve + review", "Active"], ["ROLE-03", "School Manager", "Cash office", "Payments, receipts, balances", "Create + export", "Active"], ["ROLE-04", "Admissions Officer", "Admissions desk", "Students, guardians, enrollment reports", "Create + update", "Active"], ["ROLE-05", "Exams Officer", "Exams desk", "Candidate lists, eligibility, exports", "Create + submit", "Active"], ["ROLE-06", "Teacher", "Classroom", "Assigned learners and teaching records", "Read + update own", "Active"]]],
+    "audit-logs": ["Audit Logs", "Governance / Audit Logs", "Recent Audit Logs", [["AUD-9001", "Payment edit requested", "School Manager", "Receipt RCPT-7819", "Director approval required", "Review"], ["AUD-9000", "Student record updated", "Admissions Officer", "ADM-2026-004", "Documents added", "Completed"], ["AUD-8999", "Exam export generated", "Exams Officer", "EXP-901", "PDF + Excel", "Completed"], ["AUD-8998", "Role viewed", "Director", "School Manager", "No change", "Completed"], ["AUD-8997", "Backup completed", "Super Admin", "database.sqlite", "Encrypted copy stored", "Ready"]]],
+    "system-settings": ["System Settings", "System Administration / System Settings", "System Settings", [["SET-SCH", "School Profile", "Excel Primary School", "Logo, address, motto", "Configured", "Active"], ["SET-SEC", "Security Policy", "Super Admin", "Password, session, MFA rules", "Strict", "Active"], ["SET-AYR", "Academic Year", academicYearLabel(), "Current calendar and terms", "Open", "Active"], ["SET-NOT", "Notifications", "Email/SMS", "Parent and staff alerts", "Queue healthy", "Ready"], ["SET-INT", "Integrations", "Payments/SMS", "API keys stored securely", "Review", "Review"]]],
     "admin-maintenance": ["Database / Admin Maintenance", "System Administration / Maintenance", "Maintenance Console", [["MAINT-01", "Database Backup", "database.sqlite", "Create encrypted backup before upgrades", "Ready", "Ready"], ["MAINT-02", "Clear Laravel Cache", "config/routes/views", "Refresh deployment cache", "Manual", "Ready"], ["MAINT-03", "Storage Link", "public storage", "Verify document access", "Healthy", "Active"], ["MAINT-04", "Composer Packages", "vendor", "Review updates in staging first", "Locked", "Review"], ["MAINT-05", "Audit Retention", "12 months", "Export compliance logs", "Scheduled", "Active"]]]
   };
   const [title, crumbs, heading, rows] = map[kind];
   return inventoryTablePage(title, crumbs, heading, ["ID", "Record", "Owner", "Scope", "Notes", "Status"], rows);
 }
 
-function approvalsPage() {
-  const rows = [["APP-1001", "Payment edit request", "Finance Officer", "Receipt RCPT-7819", "Confirm reason and approve/reject", "Review"], ["APP-1002", "Exam eligibility exception", "Exams Officer", "Form 4 candidate hold", "Director decision required", "Pending"], ["APP-1003", "Admission scholarship request", "Admissions Officer", "Fee waiver request", "Boarding learner", "Review"], ["APP-1004", "Leave escalation", "HR Desk", "Science department cover", "Needs timetable check", "Pending"], ["APP-1005", "Arrears payment plan", "Finance Officer", "3 guardians requested terms", "Approve follow-up plan", "Review"]];
-  return inventoryTablePage("Approvals", "Governance / Approvals", "Director Approval Queue", ["ID", "Request", "Submitted By", "Record", "Decision Note", "Status"], rows);
+function approvalsPage() { return `${pageHead('Change Approvals','Student & Guardian Changes')}${approvalQueuePanel()}`; }
+function approvalQueuePanel() {
+  const rows=backendData.approval_requests||[];
+  return `<section class="section-panel"><div class="section-toolbar"><h2>Pending Approval <span class="nav-count">${rows.length}</span></h2><input class="select" type="search" aria-label="Search approval requests" placeholder="Search student, ID or requester" oninput="filterTableRows(this,'.approval-table')"></div><div class="table-wrap"><table class="approval-table"><thead><tr><th>Admission No.</th><th>Student</th><th>Requested By</th><th>Request</th><th>Action</th></tr></thead><tbody>${rows.map(s=>`<tr><td>${escapeHtml(s.admission_no||'Pending')}</td><td>${escapeHtml(s.first_name+' '+s.last_name)}</td><td>${escapeHtml(s.pending_change_requested_by||s.created_by_role||'Not recorded')}</td><td>${s.status==='Pending Approval'?'New admission':'Student / guardian edit'}</td><td>${["Director","Super Admin"].includes(currentRole())?`<button class="btn primary small-btn" onclick="reviewRecordChange(${s.id})">Review changes</button>`:'<span class="badge amber">Waiting for Director</span>'}</td></tr>`).join('')||'<tr><td colspan="5">No requests awaiting approval.</td></tr>'}</tbody></table></div></section>`;
 }
+async function reviewRecordChange(id) {
+  let result;
+  try { result=await apiRequest(`/students/${id}/review`); }
+  catch(error) {showToast('Preview unavailable',error.message,'error');return;}
+  const s=result.student;
+  const changes=s.pending_changes||{};
+  const before=key=>key.startsWith('guardian_')?s.guardian?.[key.slice(9)]:s[key];
+  const fields=Object.keys(changes).filter(k=>!['section','tuition_fee'].includes(k)&&String(changes[k]??'').trim()!==String(before(k)??'').trim());
+  openModal('Review Student / Guardian Request',`<p>${escapeHtml(s.admission_no||'')} · ${escapeHtml(s.first_name+' '+s.last_name)}</p><div class="table-wrap"><table class="change-preview-table"><thead><tr><th>Field</th><th>Current</th><th>Requested</th></tr></thead><tbody>${fields.map(key=>`<tr><td>${escapeHtml(key.replaceAll('_',' '))}</td><td>${escapeHtml(before(key)||'Not recorded')}</td><td>${escapeHtml(changes[key]||'Not recorded')}</td></tr>`).join('')||(s.status==='Pending Approval'?`<tr><td>New admission</td><td>Awaiting approval</td><td>${escapeHtml(s.class_name)} · Guardian: ${escapeHtml(s.guardian?.name||'Not recorded')}</td></tr>`:'<tr><td colspan="3">No differences remain. The requested values already match the current record.</td></tr>')}</tbody></table></div><button class="btn primary" onclick="confirmReviewedAdmission(${id},'${result.review_token}',this)">Approve request</button>`,'wide');
+}
+async function refreshInbox() {
+  if(!backendLoaded||route()==='login'||document.hidden||inboxRefreshing)return;
+  inboxRefreshing=true;
+  const loadId=backendLoadId;
+  try {
+    const inbox=await apiRequest('/inbox');
+    if(route()==='login'||loadId!==backendLoadId)return;
+    Object.assign(backendData,inbox);
+    const sidebarElement=document.querySelector('.sidebar');
+    if(sidebarElement){const top=sidebarElement.scrollTop;sidebarElement.outerHTML=sidebar(route());document.querySelector('.sidebar').scrollTop=top;}
+    const wrapper=document.querySelector('.notification-wrap');
+    if(wrapper){const open=!!wrapper.querySelector('.notification-dropdown.open');wrapper.outerHTML=notificationDropdown();if(open)document.getElementById('notification-dropdown')?.classList.add('open');}
+    if(['approvals','notifications'].includes(route())&&!document.querySelector('.modal-card')&&document.activeElement?.tagName!=='INPUT')document.querySelector('.content').innerHTML=route()==='approvals'?approvalsPage():notificationsPage();
+  } catch(error) { if(error.status===401){backendLoaded=false;location.hash='#/login';} }
+  finally {inboxRefreshing=false;}
+}
+let inboxRefreshing=false;
+setInterval(refreshInbox,15000);
+window.addEventListener('focus',refreshInbox);
 
 function notificationsPage() {
-  const rows = (backendData.notifications?.length ? backendData.notifications : [
-    { title: "Fee payment confirmed", target_role: "Finance Officer", body: "Receipt is ready for finance review.", type: "success", read_at: null },
-    { title: "Admission follow-up", target_role: "Admissions Officer", body: "Transfer letter still pending.", type: "warning", read_at: null },
-    { title: "Director approval", target_role: "Director", body: "Payment edit request needs review.", type: "warning", read_at: null }
-  ]).map((item, index) => [`NOT-${String(index + 1).padStart(4, "0")}`, item.title, item.target_role || "All Staff", item.body, item.type || "info", item.read_at ? "Completed" : "Pending"]);
+  const role = currentRole();
+  const available = backendData.notifications||[];
+  const visible = available.filter((item) => !item.target_role || item.target_role === role);
+  const rows = visible.map((item, index) => [`NOT-${String(index + 1).padStart(4, "0")}`, item.title, item.target_role || "All Staff", item.body, item.type || "info", item.read_at ? "Completed" : "Pending"]);
   return inventoryTablePage("Notifications", "Communication / Notifications", "Notification Center", ["ID", "Title", "Audience", "Message", "Type", "Status"], rows);
 }
 
@@ -1551,7 +2173,7 @@ function purchasePage() {
 function stockAlertsPage() {
   return `${pageHead("Stock Alerts", "Dashboard / Inventory Management / Stock Alerts", `<button class="btn primary">⊕ Create Alert</button>`)}
     <section class="section-panel"><div class="section-toolbar"><h2>Inventory Alerts</h2><div class="filters"><button class="pill">Critical Only</button><button class="pill">↕ Sort By A-Z</button></div></div><div class="section-body"><div class="inventory-list">
-      ${[["Chemistry Lab Glassware", 88, "Only 8 sets left", "blue"], ["Printer Paper A4", 78, "Only 20 packs left", "cyan"], ["Whiteboard Markers", 80, "Only 12 boxes left", "green"], ["Sports Equipment", 66, "Only 5 sets left", "amber"], ["First Aid Kits", 40, "Only 3 kits left", "red"]].map(([name, pct, left, color]) => `<div class="inventory-row"><strong>${name}</strong><div class="track"><span class="fill" style="width:${pct}%;background:var(--${color})"></span></div><span>${left}</span></div>`).join("")}
+      ${[["Chemistry Lab Glassware", 88, "Only 8 sets left", "blue"], ["Printer Paper A4", 78, "Only 20 packs left", "cyan"], ["Whiteboard Markers", 80, "Only 12 boxes left", "green"], ["Sports Equipment", 66, "Only 5 sets left", "amber"], ["First Aid Kits", 40, "Only 3 kits left", "red"]].map(([name, pct, left, color]) => `<div class="inventory-row"><strong>${name}</strong><div class="track ${color}"><span class="fill" style="width:${pct}%"></span></div><span>${left}</span></div>`).join("")}
     </div></div></section>`;
 }
 
@@ -1571,75 +2193,24 @@ function safetyProtocolsPage() {
 }
 
 function analyticsPage() {
-  const kpis = [
-    ["Financial Report", "MWK 6,452,224", "banknote", "red", "View Details"],
-    ["Enrollment Reports", "85", "user-plus", "blue", "View Details"],
-    ["Academic Progress", "76%", "trending-up", "green", "View Details"],
-    ["Compliance Reports", "9.2/10", "file-chart", "cyan", "View Details"]
-  ];
-  const transactions = [
-    ["16 Jun 2026", "Tuition fee received", "Tuition Fees", "Income", "MWK 550,000", "Completed"],
-    ["15 Jun 2026", "Classroom repair payment", "Maintenance", "Expense", "MWK 80,000", "Pending"],
-    ["14 Jun 2026", "Books and materials sale", "Books Sale", "Income", "MWK 125,000", "Completed"],
-    ["13 Jun 2026", "Stationery purchase", "Stationery Buy", "Expense", "MWK 32,000", "Pending"],
-    ["12 Jun 2026", "Transport fees for Form 3", "Transport Fees", "Income", "MWK 180,000", "Completed"]
-  ];
-  const notices = [
-    ["New syllabus instructions", "Added on 11 Jun 2026", "20 Days", "blue"],
-    ["Environment club programme", "Added on 21 Apr 2026", "15 Days", "green"],
-    ["Exam preparation notice", "Added on 13 Mar 2026", "12 Days", "red"],
-    ["Online class preparation", "Added on 24 May 2026", "02 Days", "cyan"]
-  ];
-
-  return `${pageHead("Analytics Dashboard", "Dashboard / Reporting & Analytics / Analytics Dashboard", tableActions())}
-    <div class="analytics-kpi-grid">${kpis.map(([title, value, iconName, color, action]) => `
-      <section class="card analytics-kpi">
-        <span class="metric-icon" style="background:var(--${color}-soft);color:var(--${color})">${icon(iconName, 28)}</span>
-        <div><h2>${value}</h2><p>${title}</p></div>
-        <button class="btn primary" onclick="openDetailsModal('${title}', '${value}')">${action}</button>
-      </section>`).join("")}</div>
-    <div class="analytics-premium-grid">
-      <div class="money-stack analytics-money">
-        <section class="card money-line-card">
-          <span class="soft-icon blue">${icon("user-plus")}</span>
-          <p>Total Earnings</p><h2>MWK 5,050,050</h2>
-          ${lineAreaChart("blue", true)}
-        </section>
-        <section class="card money-line-card">
-          <span class="soft-icon red">${icon("wallet")}</span>
-          <p>Total Expenses</p><h2>MWK 4,545,024</h2>
-          ${lineAreaChart("red", true)}
-        </section>
-      </div>
-      <section class="card analytics-enrollment">
-        ${cardHead("Enrollment Trends", `<span class="muted">${icon("calendar-days", 14)} This Year - ${activeAcademicYear()}</span>`)}
-        ${bars({ compact: true, total: [32, 46, 52, 38, 68, 42, 60, 56, 36, 72, 20, 12], collected: [10, 16, 14, 6, 20, 11, 17, 16, 8, 11, 6, 4], legend: [["New Admissions", "blue"], ["Dropouts", "soft"]] })}
-      </section>
-    </div>
-    <div class="analytics-lower-grid">
-      <section class="section-panel">
-        <div class="section-toolbar"><h2>Recent Transactions</h2><div class="filters"><select class="select"><option>All Categories</option></select><select class="select"><option>This Term</option></select><div class="search"><input placeholder="Search"></div></div></div>
-        <div class="table-wrap"><table><thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Type</th><th>Amount</th><th>Status</th></tr></thead><tbody>
-          ${transactions.map((row) => `<tr>${row.map((cell, index) => index === 5 ? `<td><span class="badge ${statusClass(cell)}">• ${cell}</span></td>` : `<td>${cell}</td>`).join("")}</tr>`).join("")}
-        </tbody></table></div>
-      </section>
-      <section class="card">
-        ${cardHead("Notice Board", `<a class="muted">View All</a>`)}
-        <div class="notice-list">${notices.map(([title, date, due, color]) => `<article><span class="soft-icon ${color}">${icon(color === "red" ? "bell" : "file-chart", 16)}</span><div><strong>${title}</strong><small>${date}</small></div><span class="pill">${icon("clock", 13)} ${due}</span></article>`).join("")}</div>
-      </section>
-    </div>
-    <div class="analytics-shortcuts">
-      ${[["View Attendance", "calendar-days", "amber"], ["New Events", "megaphone", "green"], ["Finance & Accounts", "wallet", "cyan"], ["Compliance Review", "shield-check", "blue"]].map(([label, iconName, color]) => `<button class="shortcut-tile ${color}"><span>${icon(iconName)}</span><strong>${label}</strong><i>${icon("chevron-right", 15)}</i></button>`).join("")}
-    </div>`;
+  return financialReportsPage();
 }
 
 function financialReportsPage() {
-  const rows = [["FIN-501", "Daily Collections", "Accounts", "MWK 245,000", "Today", "Ready"], ["FIN-500", "Term Arrears", "Director", "MWK 2,100,000", "Term 2", "Ready"], ["FIN-499", "Receipt Register", "Accounts", "1,208", "June", "Ready"], ["FIN-498", "Fee Balance Summary", "Director", "MWK 835,000", "June", "Pending"]];
-  return inventoryTablePage("Financial Reports", "Reporting & Analytics / Financial Reports", "Financial Reports", ["ID", "Report", "Owner", "Value", "Period", "Status"], rows);
+  const rows=['Tuition Fee','Uniform Fee','School Bus Fee','Trip Fee'].map(type=>{
+    const balances=(backendData.balances||[]).filter(b=>b.fee_type===type);
+    const paid=(backendData.payments||[]).filter(p=>p.fee_type===type&&p.status==='Paid');
+    return [type,money(balances.reduce((n,b)=>n+Number(b.amount_due),0)),money(paid.reduce((n,p)=>n+Number(p.amount),0)),money(balances.reduce((n,b)=>n+Number(b.balance),0)),String(paid.length),`${activeAcademicYear()} · ${activeTerm()}`];
+  });
+  return inventoryTablePage('Financial Reports',`${activeAcademicYear()} / ${activeTerm()}`,'Fee Collection Summary',['Fee Type','Assessed','Collected','Outstanding','Payments','Period'],backendData.period_opened?rows:[],false);
 }
 
 function enrollmentReportsPage() {
-  return reportDashboard("Enrollment Reports", "Reporting & Analytics / Enrollment Reports", [["Total Enrolled", "3,654", "blue"], ["New Admissions", "284", "green"], ["Transfers", "19", "amber"], ["Withdrawals", "7", "red"]], "Enrollment by Class");
+  const rows=excelClasses.map(name=>{
+    const students=(backendData.students||[]).filter(s=>s.class_name===name);
+    return [name,String(students.length),String(students.filter(s=>s.gender==='Female').length),String(students.filter(s=>s.gender==='Male').length),activeAcademicYear(),activeTerm()];
+  });
+  return inventoryTablePage('Enrollment Reports',`${activeAcademicYear()} / ${activeTerm()}`,'Enrollment by Class',['Class','Students','Female','Male','Academic Year','Term'],rows,false);
 }
 
 function academicProgressPage() {
@@ -1651,13 +2222,13 @@ function complianceReportsPage() {
   return inventoryTablePage("Compliance Reports", "Reporting & Analytics / Compliance Reports", "Compliance Reports", ["ID", "Report", "Owner", "Cycle", "Progress", "Status"], rows);
 }
 
-function inventoryTablePage(title, crumbs, heading, columns, rows) {
+function inventoryTablePage(title, crumbs, heading, columns, rows, badgeLast = true) {
   return `${pageHead(title, `Dashboard / ${crumbs}`, tableActions())}
     <section class="section-panel">
-      <div class="section-toolbar"><h2>${heading}</h2><div class="filters"><button class="pill">▣ This Term</button><button class="pill">▽ Filter</button><button class="pill">↕ Sort By A-Z</button></div></div>
+      <div class="section-toolbar"><h2>${heading}</h2>${recordFilters()}</div>
       ${tableSearch()}
-      <div class="table-wrap"><table><thead><tr><th>□</th>${columns.map((col) => `<th>${col}</th>`).join("")}<th>Action</th></tr></thead><tbody>
-        ${rows.map((row) => `<tr><td>□</td>${row.map((cell, i) => i === 0 ? `<td><a>${cell}</a></td>` : i === row.length - 1 ? `<td><span class="badge ${statusClass(cell)}">• ${cell}</span></td>` : `<td>${cell}</td>`).join("")}<td>${actionIcons()}</td></tr>`).join("")}
+      <div class="table-wrap"><table><thead><tr>${columns.map((col) => `<th>${col}</th>`).join("")}<th>Action</th></tr></thead><tbody>
+        ${rows.map((row) => `<tr>${row.map((cell, i) => i === 0 ? `<td><a>${cell}</a></td>` : badgeLast && i === row.length - 1 ? `<td><span class="badge ${statusClass(cell)}">• ${cell}</span></td>` : `<td>${cell}</td>`).join("")}<td>${actionIcons()}</td></tr>`).join("")}
       </tbody></table></div>${pagination()}
     </section>`;
 }
@@ -1672,8 +2243,10 @@ function reportDashboard(title, crumbs, metrics, heading) {
 }
 
 function statusClass(status) {
-  if (["Active", "Approved", "Received", "Ready", "Updated", "Completed", "Cleared", "Resolved", "Eligible", "Submitted"].includes(status)) return "green";
-  if (["Pending", "Review", "Low Stock", "Due Soon", "Monitoring", "Partial", "Hold", "Draft"].includes(status)) return "amber";
+  const value = String(status || "").toLowerCase();
+  if (["paid", "active", "approved", "received", "ready", "updated", "completed", "complete", "cleared", "resolved", "eligible", "submitted", "success", "successful"].includes(value)) return "green";
+  if (["pending", "pending approval", "pending edit approval", "review", "in review", "low stock", "due soon", "monitoring", "partial", "draft", "in progress", "processing"].includes(value)) return "amber";
+  if (["failed", "fail", "overdue", "arrears", "critical", "rejected", "declined", "void", "voided", "cancelled", "canceled", "hold", "blocked", "inactive"].includes(value)) return "red";
   return "red";
 }
 
@@ -1689,9 +2262,9 @@ function actionIcons() {
   }
   const actionsByRole = {
     "Super Admin": ["eye", "settings", "database", "download"],
-    "Director": ["eye", "shield-check", "download"],
+    "Director": current === "fees" || current === "receipts" || current === "student-balances" || current === "arrears" || current === "daily-collections" || current === "term-collections" ? ["eye", "receipt", "download"] : ["eye", "shield-check", "download"],
     "Admissions Officer": ["eye", "edit", "download"],
-    "Finance Officer": ["eye", "receipt", "download"],
+    "School Manager": ["eye", "receipt", "download"],
     "Exams Officer": ["eye", "clipboard-check", "download"],
     "Teacher": ["eye"]
   };
@@ -1706,20 +2279,20 @@ function tableActions() {
   const role = currentRole();
   const common = `<button class="icon-btn" title="Refresh" onclick="loadBackendData(true); showToast('Refreshed','Latest school records loaded.','success')">${icon("refresh")}</button>`;
   if (role === "Teacher") return `${common}<button class="btn ghost" onclick="openDetailsModal('Teacher Workspace','View only access for assigned classes')">${icon("eye")} View Only</button>`;
-  if (role === "Finance Officer") return `${common}<button class="icon-btn" title="Print" onclick="window.print()">${icon("printer")}</button><button class="btn ghost" onclick="notifyAction('Export prepared','Finance records are ready for download.')">${icon("download")} Export</button><button class="btn primary" onclick="openPaymentModal()">${icon("receipt")} Record Payment</button>`;
+  if (role === "School Manager") return `${common}<button class="icon-btn" title="Print table" onclick="printFeesTable()">${icon("printer")}</button><button class="btn ghost" onclick="downloadVisibleTable('excel-primary-finance-export.csv')">${icon("download")} Export</button><button class="btn primary" onclick="openPaymentModal()">${icon("receipt")} Record Payment</button>`;
   if (role === "Admissions Officer") return `${common}<button class="btn ghost" onclick="notifyAction('Export prepared','Admissions register is ready for download.')">${icon("download")} Export</button><button class="btn primary" onclick="openAdmissionModal()">${icon("user-plus")} Register Student</button>`;
   if (role === "Exams Officer") return `${common}<button class="btn ghost" onclick="notifyAction('Export prepared','Candidate lists are ready for download.')">${icon("download")} Export</button><button class="btn primary" onclick="notifyAction('Exam list generated','A candidate list was generated for the selected class.')">${icon("file-chart")} Generate List</button>`;
-  if (role === "Director") return `${common}<button class="icon-btn" title="Print" onclick="window.print()">${icon("printer")}</button><button class="btn ghost" onclick="notifyAction('Export prepared','Leadership report is ready for download.')">${icon("download")} Export</button><button class="btn primary" onclick="openDetailsModal('Director Review','Approval queue and audit items')">${icon("shield-check")} Review</button>`;
+  if (role === "Director") return `${common}<button class="icon-btn" title="Print table" onclick="printFeesTable()">${icon("printer")}</button><button class="btn ghost" onclick="downloadVisibleTable('excel-primary-director-export.csv')">${icon("download")} Export</button><button class="btn primary" onclick="openPaymentModal()">${icon("receipt")} Record Payment</button>`;
   if (role === "Super Admin") return `${common}<button class="btn ghost" onclick="notifyAction('Backup prepared','Database backup task is ready for confirmation.')">${icon("database")} Backup</button><button class="btn primary" onclick="openDetailsModal('System Configuration','Manage users, roles, security, and maintenance settings')">${icon("settings")} Configure</button>`;
   return `${common}<button class="icon-btn" title="Print" onclick="window.print()">${icon("printer")}</button><button class="btn ghost" onclick="notifyAction('Export prepared','The current report is ready for download.')">${icon("download")} Export</button>`;
 }
 
 function tableSearch() {
-  return `<div class="section-toolbar"><span>Row Per Page <select class="select"><option>10</option></select> Entries</span><div class="search"><input placeholder="Search"></div></div>`;
+  return `<div class="section-toolbar"><div class="search"><input placeholder="Search"></div></div>`;
 }
 
 function pagination(perPage = "10") {
-  return `<div class="table-footer"><span>Row Per Page <select class="select"><option>${perPage}</option></select> Entries</span><span>Pre <b>1</b> 2 <span>....</span> 20 <a>Next</a></span></div>`;
+  return `<div class="table-footer table-pagination"><span>Pre <b>1</b> 2 <span>....</span> 20 <a>Next</a></span></div>`;
 }
 
 function placeholder(id) {
@@ -1728,7 +2301,7 @@ function placeholder(id) {
 }
 
 function accessDeniedPage(id, role) {
-  return `${pageHead("Access Restricted", `Dashboard / ${labelForRoute(id)}`, `<a class="btn ghost" href="#/dashboard">${icon("layout-dashboard")} Back to Dashboard</a><a class="btn primary" href="#/login">${icon("log-out")} Switch Account</a>`)}
+  return `${pageHead("Access Restricted", `Dashboard / ${labelForRoute(id)}`, `<a class="btn ghost" href="#/dashboard">${icon("layout-dashboard")} Back to Dashboard</a>`)}
     <section class="card pad access-card">
       <span class="soft-icon red">${icon("shield", 34)}</span>
       <div>
@@ -1741,6 +2314,11 @@ function accessDeniedPage(id, role) {
 function page(current) {
   const role = currentRole();
   if (!routeAllowed(current, role)) return accessDeniedPage(current, role);
+  if (current === "terms" || current === "academic-years") return termDatesPage();
+  if (current === "class-register") return registerPage();
+  if (current === "student-fee-accounts") return `${pageHead("Student Fee Accounts", `Fees Collection / ${activeAcademicYear()} / ${activeTerm()}`)}${periodNotice()}${studentRegisterPanel()}`;
+  if (current === "class-promotions") return promotionPage();
+  if (!backendData.students?.length && ['students','parents','analytics','financial-reports','enrollment-reports','academic-progress','student-report','exam-lists','eligible-students'].includes(current)) return `${pageHead(labelForRoute(current), `${activeAcademicYear()} / ${activeTerm()}`)}${periodNotice()}<section class="section-panel"><p class="section-note">No enrolled students or period records to display.</p></section>`;
   if (current === "dashboard") return dashboard();
   if (["students", "parents", "teachers"].includes(current)) return directoryPage(current);
   if (current === "admissions") return admissionsPage();
@@ -1750,7 +2328,7 @@ function page(current) {
   if (["users", "roles", "audit-logs", "system-settings", "admin-maintenance"].includes(current)) return adminPage(current);
   if (current === "approvals") return approvalsPage();
   if (current === "notifications") return notificationsPage();
-  if (current === "fees") return feesPage();
+  if (current === "fees") return currentRole()==='School Manager'?financeDashboard():feesPage();
   if (current === "timetable") return timetablePage();
   if (["curriculum", "lesson-planning", "assessment", "learning-materials"].includes(current)) return curriculumPage(current);
   if (current === "staff") return staffProfilesPage();
@@ -1774,5 +2352,268 @@ function page(current) {
   return placeholder(current);
 }
 
+let classRegisterData = { imports: [], entries: [], history: [], current_year: null };
+let registerSheet = 'NURSERY';
+let promotionPreview = null;
+const retainedStudents = new Set();
+
+function registerPage() {
+  const className = registerSheet==='NURSERY'?'Nursery':registerSheet==='RECEPTION'?'Reception':registerSheet.replace('STD','Standard');
+  return `${pageHead('Class Registers', `Registers / ${activeAcademicYear()} / ${activeTerm()}`)}${periodNotice()}
+  <section class="section-panel"><div class="section-toolbar register-toolbar"><h2>${escapeHtml(className)} — ${activeTerm()}</h2><div class="filters"><input class="select" type="search" placeholder="Search name or admission number" aria-label="Search register" oninput="filterTableRows(this,'.class-student-table')"><select class="select" aria-label="Class" onchange="registerSheet=this.value; app()">${['NURSERY','RECEPTION',...Array.from({length:8},(_,i)=>`STD ${i+1}`)].map(name=>`<option ${name===registerSheet?'selected':''}>${name}</option>`).join('')}</select>${classExportButtons(className,true)}</div></div><div class="table-wrap">${classStudentTable(className)}</div></section>`;
+}
+
+function nextPromotionClass(student, annual) {
+  const completed=(classRegisterData.promotion_outcomes||[]).find(row=>row.student_id===student.id);
+  if(annual&&completed)return completed.to_class;
+  if (!annual || retainedStudents.has(student.id)) return student.class_name;
+  const approvedPreview=promotionPreview?.rows.find(row=>row.student_id===student.id);
+  if (approvedPreview) return approvedPreview.to_class;
+  const index=excelClasses.indexOf(student.class_name);
+  return index<0?'Class needs review':excelClasses[index+1]||'Graduated';
+}
+
+function promotionPage() {
+  const year = classRegisterData.current_year;
+  const term = classRegisterData.current_term || 'Term 3';
+  const active = (classRegisterData.active_students || []).filter(s=>['Active','Approved'].includes(s.status)||(classRegisterData.promotion_outcomes||[]).some(r=>r.student_id===s.id));
+  const selectedClass=rosterFilters.promotion.className;
+  const completedClasses=(classRegisterData.class_approvals||[]).filter(c=>c.from_year===year);
+  const classApproved=completedClasses.some(c=>c.class_name===selectedClass);
+  const selectedCount=active.filter(s=>s.class_name===selectedClass).length;
+  const annual = term==='Term 3';
+  const allowedAnnual = ['Director','Super Admin'].includes(currentRole());
+  const start = Number((year||'2025').slice(0,4))+1;
+  const targetYear = annual?`${start} / ${start+1}`:year;
+  const targetTerm = annual?'Term 1':term==='Term 1'?'Term 2':'Term 3';
+  const targetDates=(classRegisterData.calendar||[]).find(t=>t.academic_year===targetYear&&t.term===targetTerm);
+  return `${pageHead('Promotions & Terms', 'Academic / Promotions & Terms', '<a class="btn ghost" href="#/terms">Set Term Dates</a>')}
+    <section class="section-panel"><div class="section-toolbar"><h2>Active: ${escapeHtml(year||'Not configured')} · ${term}</h2></div><div class="section-note">
+    <p><strong>Next: ${escapeHtml(targetYear)} · ${targetTerm}</strong>${targetDates?.starts_on&&targetDates?.ends_on?` <span class="muted">· ${escapeHtml(targetDates.starts_on)} to ${escapeHtml(targetDates.ends_on)}</span>`:''}</p><p>${annual?'At the end of Term 3, promote classes: Nursery → Reception → Standard 1 → … → Standard 8 → Graduated. Director or Super Admin approves each class separately. The active year switches after all classes are processed.':'Advance to the next term in the same classes. Director, Super Admin or School Manager can approve.'}</p>
+    <p>Set the closing and next term’s dates first. Opening the next period creates unpaid tuition of MWK 70,000 for preschool and MWK 75,000 for primary. Previous balances and payments stay in their original period. Uniform and bus charges are recorded when applicable.</p>
+    <div class="promotion-action-row"><div class="promotion-primary-action">${annual ? allowedAnnual?`<button class="btn primary" ${classApproved||!selectedCount?'disabled':''} onclick="previewClassPromotion(this)">${classApproved?escapeHtml(selectedClass)+' — Approved':'Preview '+escapeHtml(selectedClass)+' Promotion'}</button>`:'<p>The Director or Super Admin must approve this annual class move.</p>' : `<label><input type="checkbox" id="term-confirm"> I confirm this term has ended and the ${active.length} active students should advance to ${targetTerm} with fresh unpaid tuition.</label><p><button class="btn primary" onclick="advanceSchoolTerm(this)">Approve Advance to ${targetTerm}</button></p>`}
+    </div>${rosterFilterToolbar("promotion",true)}</div>
+    ${annual && promotionPreview?`<p><strong>${promotionPreview.rows.filter(r=>r.outcome==='Promoted').length} promoted · ${promotionPreview.rows.filter(r=>r.outcome==='Retained').length} retained · ${promotionPreview.rows.filter(r=>r.outcome==='Graduated').length} graduating</strong></p><label><input type="checkbox" id="promotion-confirm"> I have reviewed ${escapeHtml(selectedClass)} and confirm the academic year has ended.</label><p><button class="btn primary" onclick="approveClassPromotion(this)">Approve ${escapeHtml(selectedClass)} Promotion</button></p>`:''}
+    <p id="promotion-error" role="alert"></p></div>
+    <div class="promotion-filter-summary"><span>${annual?'Approval applies only to '+escapeHtml(selectedClass)+'. '+completedClasses.length+' classes approved.':'Term advancement keeps students in their current classes.'} Retained selections stay saved when switching classes.</span><span data-roster-count="promotion"></span></div><div class="table-wrap"><table class="promotion-roster"><thead><tr>${annual&&allowedAnnual?'<th>Retain</th>':''}<th>Admission No.</th><th>Student</th><th>Current Class <small class="cell-stack">${escapeHtml(year)} · ${term}</small></th><th>Next Class <small class="cell-stack">${escapeHtml(targetYear)} · ${targetTerm}</small></th></tr></thead><tbody>${active.map(s=>`<tr data-class="${escapeHtml(s.class_name)}" data-gender="${escapeHtml(s.gender||'')}" data-status="${(annual&&(classRegisterData.promotion_outcomes||[]).find(r=>r.student_id===s.id)?.outcome)|| (retainedStudents.has(s.id)?'Retained':annual&&s.class_name==='Standard 8'?'Graduated':annual?'Promoted':'Continuing')}">${annual&&allowedAnnual?`<td><input type="checkbox" ${(classRegisterData.promotion_outcomes||[]).some(r=>r.student_id===s.id)?'disabled':''} aria-label="Retain ${escapeHtml(s.first_name+' '+s.last_name)}" ${retainedStudents.has(s.id)||(classRegisterData.promotion_outcomes||[]).some(r=>r.student_id===s.id&&r.outcome==='Retained')?'checked':''} onchange="this.checked?retainedStudents.add(${s.id}):retainedStudents.delete(${s.id});promotionPreview=null;app()"></td>`:''}<td>${escapeHtml(s.admission_no)}</td><td>${escapeHtml(s.first_name+' '+s.last_name)}</td><td>${escapeHtml(s.class_name)}</td><td>${escapeHtml(nextPromotionClass(s,annual))}${annual&&allowedAnnual&&(classRegisterData.promotion_outcomes||[]).some(r=>r.student_id===s.id)?` <button class="icon-mini" title="Edit approved decision" onclick="editPromotionDecision(${s.id})">${icon('edit',16)}</button>`:''}</td></tr>`).join('')}</tbody></table></div></section>
+    <section class="section-panel"><div class="section-toolbar"><h2>Approved Changes</h2></div><div class="table-wrap"><table><thead><tr><th>From</th><th>To</th><th>Approved</th></tr></thead><tbody>${(classRegisterData.class_approvals||[]).map(c=>`<tr><td>${escapeHtml(c.from_year)} · ${escapeHtml(c.class_name)}</td><td>${escapeHtml(c.to_year)} Term 1 · ${c.student_count} pupils</td><td>${escapeHtml(c.approved_by_name)} · ${escapeHtml(c.approved_at)}${annual&&allowedAnnual&&c.from_year===year?` <button class="icon-mini" title="Edit approved class decisions" onclick="setRosterFilter('promotion','className','${c.class_name}');document.querySelector('.promotion-roster').scrollIntoView({behavior:'smooth'})">${icon('edit',16)}</button>`:''}</td></tr>`).join('')}${classRegisterData.history.filter(r=>!(classRegisterData.class_approvals||[]).some(c=>c.promotion_id===r.id)).map(r=>`<tr><td>${escapeHtml(r.from_year)} Term 3</td><td>${escapeHtml(r.to_year)} Term 1</td><td>${escapeHtml(r.approved_by_name)} · ${escapeHtml(r.approved_at)}</td></tr>`).join('')}${(classRegisterData.term_history||[]).map(r=>`<tr><td>${escapeHtml(r.academic_year)} ${r.from_term}</td><td>${r.to_term}</td><td>${escapeHtml(r.approved_at)}</td></tr>`).join('') || ''}</tbody></table></div></section>`;
+}
+
+function editPromotionDecision(studentId) {
+  const row=(classRegisterData.promotion_outcomes||[]).find(r=>r.student_id===studentId);
+  if(!row)return;
+  openModal('Edit Approved Promotion',`<p>Original class: ${escapeHtml(row.from_class)} · Current decision: ${escapeHtml(row.outcome)}</p><form onsubmit="event.preventDefault();savePromotionDecision(${row.id},'${row.outcome}',this)"><label>Decision <select class="select" name="decision"><option value="retain" ${row.outcome==='Retained'?'selected':''}>Retain in ${escapeHtml(row.from_class)}</option><option value="promote" ${row.outcome!=='Retained'?'selected':''}>${row.from_class==='Standard 8'?'Graduate':'Promote to next class'}</option></select></label><p>Corrections are available until all classes have been approved.</p><button class="btn primary">Save Correction</button><p class="form-note" role="alert"></p></form>`);
+}
+async function savePromotionDecision(id,expected,form) {
+  const button=form.querySelector('button');button.disabled=true;
+  try {await apiRequest(`/class-promotions/students/${id}`,{method:'PATCH',body:JSON.stringify({retain:form.elements.decision.value==='retain',expected_outcome:expected})});promotionPreview=null;closeModal();await loadBackendData(true);showToast('Promotion corrected');}
+  catch(error){form.querySelector('.form-note').textContent=error.message;}finally{button.disabled=false;}
+}
+function exportFeeAccounts(kind) {
+  const table=document.querySelector('.student-fee-register')?.cloneNode(true);if(!table)return;
+  table.querySelectorAll('tr[hidden]').forEach(r=>r.remove());
+  table.querySelectorAll('th:last-child,td:last-child').forEach(c=>c.remove());
+  const f=rosterFilters.fees;
+  const title=`Student Fee Accounts — ${activeAcademicYear()} — ${activeTerm()}`;
+  const filters=[f.className||'All Classes',f.gender,f.status,f.query&&'Search: '+f.query].filter(Boolean).join(' · ');
+  const html=`<html><head><meta charset="utf-8"><title>${escapeHtml(title)}</title><style>@page{size:landscape}body{font:12px Arial}table{border-collapse:collapse;width:100%}th,td{border:1px solid #aaa;padding:8px;text-align:left}small{display:block}td{mso-number-format:"\\@"}</style></head><body><h2>Excel Primary School</h2><h3>${escapeHtml(title)}</h3><p>${escapeHtml(filters)} · ${table.querySelectorAll('tbody tr[data-class]').length} students · MWK</p>${table.outerHTML}</body></html>`;
+  if(kind==='print'){const win=window.open('','_blank');if(!win){showToast('Allow pop-ups to print');return;}win.document.write(html);win.document.close();win.focus();win.print();}
+  else {const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([html],{type:'application/vnd.ms-excel'}));a.download='student-fee-accounts.xls';a.click();URL.revokeObjectURL(a.href);}
+}
+
+function selectedClassRetentions() {
+  const ids=new Set((classRegisterData.active_students||[]).filter(s=>s.class_name===rosterFilters.promotion.className).map(s=>s.id));
+  return [...retainedStudents].filter(id=>ids.has(id));
+}
+async function previewClassPromotion(button) {
+  button.disabled = true;
+  try {
+    promotionPreview = await apiRequest('/class-promotions/preview', {method:'POST', body:JSON.stringify({from_year:classRegisterData.current_year, class_name:rosterFilters.promotion.className, retain:selectedClassRetentions()})});
+    app();
+  } catch (error) { document.getElementById('promotion-error').textContent = error.message; }
+  finally { button.disabled = false; }
+}
+
+async function approveClassPromotion(button) {
+  if (!promotionPreview || !document.getElementById('promotion-confirm')?.checked) {
+    document.getElementById('promotion-error').textContent = 'Review the preview and confirm that the academic year has ended.'; return;
+  }
+  button.disabled = true;
+  try {
+    const result=await apiRequest('/class-promotions/approve', {method:'POST', body:JSON.stringify({from_year:promotionPreview.from_year, token:promotionPreview.token, class_name:promotionPreview.class_name, retain:selectedClassRetentions(), confirmed:true})});
+    const nextYear=promotionPreview.to_year;
+    for(const row of promotionPreview.rows)retainedStudents.delete(row.student_id);
+    promotionPreview = null;
+    if(result.year_complete){localStorage.setItem("erpAcademicYear",nextYear);localStorage.setItem("erpTerm","Term 1");}
+    await loadBackendData(true);
+    showToast(`${result.class_name} promotion approved`,result.year_complete?'All classes are complete. Term 1 is now active.':`${result.remaining_students} pupils remain in classes awaiting approval.`, 'success');
+  } catch (error) { document.getElementById('promotion-error').textContent = error.message; }
+  finally { button.disabled = false; }
+}
+
+async function erpLogout() {
+  try {
+    const result = await apiRequest('/logout', {method:'POST'});
+    document.querySelector('meta[name="csrf-token"]').content = result.csrf_token;
+    latestAdmissionId=null; backendData = {}; backendLoaded = false; classRegisterData = {imports:[],entries:[],history:[],current_year:null};
+    promotionPreview = null; retainedStudents.clear(); location.hash = '#/login';
+  } catch (error) { showToast('Sign out failed', error.message, 'error'); }
+}
+
+for (const role of Object.keys(roleNavGroups)) {
+  const groups=roleNavGroups[role];
+  if (['Director','Super Admin','School Manager'].includes(role)) {
+    for(const group of groups) group[1]=group[1].filter(item=>!['terms','academic-years','class-promotions','class-register'].includes(item[0]));
+    groups.splice(1,0,['Academic Periods',[['class-promotions','Promotions & Terms','graduation-cap'],['terms','Term Dates','calendar-days'],['class-register','Class Registers','book-open']]]);
+    if(role==='Super Admin') groups.push(['School Records',[['classes','Classes','network'],['students','Students','users'],['fees','Fees Management','wallet'],['student-balances','Student Balances','banknote']]]);
+  } else if(flatNav(groups).some(item=>item[0]==='classes')) groups.push(['Class Registers',[['class-register','Class Registers','book-open']]]);
+}
+
+
+for (const role of ['Director','School Manager','Super Admin']) {
+  const groups=roleNavGroups[role];
+  const main=groups.find(g=>g[0]==='Main');
+  const academic=groups.find(g=>g[0]==='Academic Periods');
+  const admissionsIds=['admissions','students','parents','classes'];
+  const feesIds=['fees','receipts','student-balances','arrears','daily-collections','term-collections'];
+  const items=new Map(flatNav(groups).map(item=>[item[0],item]));
+  const admissions=admissionsIds.filter(id=>items.has(id)).map(id=>items.get(id));
+  const fees=feesIds.filter(id=>items.has(id)).map(id=>items.get(id));
+  const rest=groups.filter(g=>g!==main&&g!==academic).map(([label,links])=>[label,links.filter(item=>!admissionsIds.includes(item[0])&&!feesIds.includes(item[0]))]).filter(g=>g[1].length);
+  roleNavGroups[role]=[main,['Admissions',admissions],['Fees',fees],academic,...rest].filter(g=>g&&g[1].length);
+}
+
+for(const role of ['Director','Super Admin','School Manager','Admissions Officer']) {
+  const groups=roleNavGroups[role];
+  for(const group of groups)group[1]=group[1].filter(item=>item[0]!=='approvals');
+  const admissions=groups.find(g=>g[0]==='Admissions')||groups.find(g=>g[0].includes('Admission'))||groups[0];
+  admissions[1].push(['approvals','Change Approvals','shield-check']);
+}
+
+for (const groups of Object.values(roleNavGroups)) {
+  const group=groups.find(g=>g[1].some(i=>i[0]==='fees'));
+  if(group) { group[0]='Fees'; group[1].find(i=>i[0]==='fees')[1]='Fees Collection'; group[1].splice(1,0,['student-fee-accounts','Student Fee Accounts','book-open']); const order=['fees','student-fee-accounts','student-balances','arrears','receipts','daily-collections','term-collections']; group[1].sort((a,b)=>(order.indexOf(a[0])<0?99:order.indexOf(a[0]))-(order.indexOf(b[0])<0?99:order.indexOf(b[0]))); }
+}
+
+let backendLoadId = 0;
+function activeTerm() { return backendData.term || localStorage.getItem('erpTerm') || classRegisterData.current_term || 'Term 3'; }
+function availableYears() {
+  const current = classRegisterData.current_year || backendData.current_year || '2025 / 2026';
+  const start = Number(current.slice(0,4));
+  return [...new Set([current,`${start+1} / ${start+2}`,...(classRegisterData.calendar||[]).map(t=>t.academic_year),activeAcademicYear()])].sort();
+}
+function canManagePeriods() { return ['Director','Super Admin','School Manager'].includes(currentRole()); }
+function canCollectFees() { return canManagePeriods(); }
+async function selectAcademicPeriod(year, term) {
+  localStorage.setItem('erpAcademicYear',year); localStorage.setItem('erpTerm',term);
+  promotionPreview=null; retainedStudents.clear(); closeModal();
+  backendLoaded=false; const pending=loadBackendData(true); app(); await pending;
+}
+function periodNotice() {
+  return backendData.period_opened?'':`<p class="period-notice">${escapeHtml(activeAcademicYear())} · ${activeTerm()} has not been opened. No students or fees are carried into it until the approved term advancement or annual promotion.</p>`;
+}
+function classExportButtons(className, labels=false) {
+  return `<button class="${labels?'btn ghost':'icon-mini'}" title="Print ${className} table" onclick="exportClass('${className}','print')">${icon('printer',16)}${labels?' Print':''}</button><button class="${labels?'btn ghost':'icon-mini'}" title="Download ${className} Excel workbook" onclick="exportClass('${className}','export')">${icon('download',16)}${labels?' Excel (.xlsx)':''}</button>`;
+}
+function exportClass(className, kind) {
+  const params=new URLSearchParams({academic_year:activeAcademicYear(),term:activeTerm(),class_name:className});
+  if(kind==='print') window.open(`/erp-api/classes/print?${params}`,'_blank','noopener');
+  else {const a=document.createElement('a');a.href=`/erp-api/classes/export?${params}`;a.download='';document.body.append(a);a.click();a.remove();}
+}
+function canViewFinance() { return ["Director","School Manager","Super Admin"].includes(currentRole()); }
+function classStudentTable(className) {
+  const pupils=(backendData.students||[]).filter(s=>s.class_name===className);
+  return `<table class="class-student-table"><thead><tr>${['Admission No.','Student','Gender','Guardian','Phone',...(canViewFinance()?['Fees Due','Fees Paid','Balance','Status']:[])].map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${pupils.map(s=>{
+    const balances=(backendData.balances||[]).filter(b=>b.student_id===s.id);
+    const review=!balances.length;
+    const paymentReview=canViewFinance()&&(classRegisterData.entries||[]).some(e=>e.student_id===s.id&&e.issues?.length);
+    const due=balances.reduce((v,b)=>v+Number(b.amount_due),0),paid=balances.reduce((v,b)=>v+Number(b.amount_paid),0),balance=balances.reduce((v,b)=>v+Number(b.balance),0);
+    return `<tr><td>${escapeHtml(s.admission_no)}</td><td><button class="text-link" onclick="openStudentDetails(${s.id})">${escapeHtml(s.first_name+' '+s.last_name)}</button></td><td>${escapeHtml(s.gender||'Not recorded')}</td><td>${escapeHtml(s.guardian?.name||'Not recorded')}</td><td>${escapeHtml(s.guardian?.phone||'Not recorded')}</td>${canViewFinance()?`<td>${review?'—':money(due)}</td><td>${review?'—':money(paid)}</td><td>${review?'—':money(balance)}</td><td><span class="badge ${review||balance?'amber':'green'}">${paymentReview?'Payment review':review?'Review / not assessed':balance?'Outstanding':'Cleared'}</span></td>`:''}</tr>`;
+  }).join('') || '<tr><td colspan="9">No students enrolled in this class for the selected period.</td></tr>'}</tbody></table>`;
+}
+function studentFeeTable() {
+  return `<table class="student-fee-register"><thead><tr><th>Admission No.</th><th>Student / Class</th><th>Tuition Due</th><th>Tuition Paid</th><th>Tuition Balance</th><th>Uniform Paid</th><th>Bus Paid</th><th>Status</th><th>Details</th></tr></thead><tbody>${(backendData.students||[]).map(s=>{
+    const balances=(backendData.balances||[]).filter(b=>b.student_id===s.id);
+    const tuition=balances.find(b=>b.fee_type==='Tuition Fee');
+    const original=classRegisterData.entries.find(e=>e.student_id===s.id);
+    const status=original?.issues.length?'Review':tuition?.status||'Not assessed';
+    return `<tr data-class="${escapeHtml(s.class_name)}" data-gender="${escapeHtml(s.gender||'')}" data-status="${escapeHtml(status)}"><td>${escapeHtml(s.admission_no)}</td><td>${escapeHtml(s.first_name+' '+s.last_name)}<small class="cell-stack">${escapeHtml(s.class_name)}</small></td><td>${tuition?money(tuition.amount_due):'—'}</td><td>${tuition?money(tuition.amount_paid):'—'}</td><td>${tuition?money(tuition.balance):'—'}</td><td>${money(balances.find(b=>b.fee_type==='Uniform Fee')?.amount_paid||0)}</td><td>${money(balances.find(b=>b.fee_type==='School Bus Fee')?.amount_paid||0)}</td><td><span class="badge ${status==='Cleared'?'green':'amber'}">${status}</span></td><td><button class="icon-mini" title="Student fee details" onclick="openStudentFeeDetails(${s.id})">${icon('eye',16)}</button></td></tr>`;
+  }).join('') || '<tr><td colspan="9">No enrolled students in this academic period.</td></tr>'}</tbody></table>`;
+}
+function openStudentFeeDetails(id) {
+  const s=backendData.students.find(s=>s.id===id); if(!s)return;
+  const balances=backendData.balances.filter(b=>b.student_id===id);
+  openModal(`${escapeHtml(s.first_name+' '+s.last_name)} — Fees`, `<p>${escapeHtml(s.admission_no)} · ${escapeHtml(s.class_name)} · ${activeAcademicYear()} · ${activeTerm()}</p><div class="table-wrap"><table><thead><tr><th>Fee</th><th>Due</th><th>Paid</th><th>Balance</th><th>Status</th></tr></thead><tbody>${balances.map(b=>`<tr><td>${escapeHtml(b.fee_type)}</td><td>${money(b.amount_due)}</td><td>${money(b.amount_paid)}</td><td>${money(b.balance)}</td><td>${escapeHtml(b.status)}</td></tr>`).join('')}</tbody></table></div><button class="btn ghost" onclick="openStudentPaymentHistory(${id})">Payment History</button>`, 'class-register-modal');
+}
+function termDatesPage() {
+  const editable=canManagePeriods();
+  const rows=availableYears().flatMap(year=>['Term 1','Term 2','Term 3'].map(term=>{
+    const record=(classRegisterData.calendar||[]).find(r=>r.academic_year===year&&r.term===term)||{};
+    return `<tr><td>${escapeHtml(year)}</td><td>${term}</td><td>${escapeHtml(record.starts_on||'Not set')}</td><td>${escapeHtml(record.ends_on||'Not set')}</td><td>${record.closed_at?'Closed':record.opened_at?'Open':'Not opened'}</td><td>${editable?`<button class="btn ghost" onclick="editTermDates('${year}','${term}')">Set Dates</button>`:''}</td></tr>`;
+  }));
+  return `${pageHead('Term Dates','Academic / Term Dates',editable?'<a class="btn primary" href="#/class-promotions">Promotions & Terms</a>':'')}<section class="section-panel"><p class="section-note">Director, Super Admin and School Manager can set dates. Dates must not overlap. Setting dates does not enroll students or open a term.</p><div class="table-wrap"><table><thead><tr><th>Academic Year</th><th>Term</th><th>Starts</th><th>Ends</th><th>Status</th><th>Action</th></tr></thead><tbody>${rows.join('')}</tbody></table></div></section>`;
+}
+function editTermDates(year,term) {
+  const record=(classRegisterData.calendar||[]).find(r=>r.academic_year===year&&r.term===term)||{};
+  openModal(`${escapeHtml(year)} · ${term}`,`<form class="record-form modal-form" onsubmit="event.preventDefault();saveTermDates(this)"><input type="hidden" name="academic_year" value="${escapeHtml(year)}"><input type="hidden" name="term" value="${term}"><label>Start Date<input name="starts_on" type="date" value="${record.starts_on||''}" required></label><label>End Date<input name="ends_on" type="date" value="${record.ends_on||''}" required></label><button class="btn primary" type="submit">Save Dates</button><p class="form-note" role="alert"></p></form>`);
+}
+async function saveTermDates(form) {
+  const button=form.querySelector('button');button.disabled=true;
+  try {await apiRequest('/school-terms',{method:'PUT',body:JSON.stringify(Object.fromEntries(new FormData(form)))});promotionPreview=null;closeModal();await loadBackendData(true);showToast('Term dates saved');}
+  catch(error){form.querySelector('.form-note').textContent=error.message;}finally{button.disabled=false;}
+}
+async function advanceSchoolTerm(button) {
+  if(!document.getElementById('term-confirm')?.checked){document.getElementById('promotion-error').textContent='Confirm the term advancement first.';return;}
+  button.disabled=true;
+  try {const result=await apiRequest('/term-transitions',{method:'POST',body:JSON.stringify({academic_year:classRegisterData.current_year,term:classRegisterData.current_term,confirmed:true})});await selectAcademicPeriod(result.academic_year,result.term);showToast('Term advanced','Fresh unpaid tuition is ready.');}
+  catch(error){document.getElementById('promotion-error').textContent=error.message;}finally{button.disabled=false;}
+}
+
+
+const rosterFilters={promotion:{query:'',className:'Nursery',gender:'',status:''},fees:{query:'',className:'',gender:'',status:''}};
+function rosterFilterToolbar(kind, compact=false) {
+  const f=rosterFilters[kind];
+  const states=kind==='promotion'?['Promoted','Retained','Graduated','Continuing']:['Unpaid','Partial','Cleared','Review','Not assessed'];
+  return `<div class="section-toolbar roster-toolbar ${compact?'promotion-inline-filters':''} ${kind==='fees'?'fee-account-filters':''}"><div class="filters"><div class="search"><input aria-label="Search ${kind} students" placeholder="Search student or admission no." value="${escapeHtml(f.query)}" oninput="setRosterFilter('${kind}','query',this.value)"></div>
+    <select class="select" aria-label="${kind} class filter" onchange="setRosterFilter('${kind}','className',this.value)">${kind==='promotion'?'':'<option value="">All Classes</option>'}${classOptions(f.className)}</select>
+    <select class="select" aria-label="${kind} gender filter" onchange="setRosterFilter('${kind}','gender',this.value)"><option value="">All Genders</option>${['Female','Male'].map(v=>`<option ${f.gender===v?'selected':''}>${v}</option>`).join('')}</select>
+    <select class="select" aria-label="${kind} status filter" onchange="setRosterFilter('${kind}','status',this.value)"><option value="">${kind==='promotion'?'All Outcomes':'All Statuses'}</option>${states.map(v=>`<option ${f.status===v?'selected':''}>${v}</option>`).join('')}</select>
+    <button class="pill" onclick="resetRosterFilters('${kind}')">Clear Filters</button></div>${compact?'':`<span class="muted" data-roster-count="${kind}"></span>`}</div>${kind==='promotion'&&!compact?'<p class="muted roster-filter-note">Filters change the view only. Approval includes the full roster; retained selections remain saved when filtering.</p>':''}`;
+}
+function setRosterFilter(kind,key,value) { rosterFilters[kind][key]=value;if(kind==='promotion'&&key==='className'){promotionPreview=null;app();}else applyRosterFilters(kind); }
+function resetRosterFilters(kind) { rosterFilters[kind]={query:'',className:kind==='promotion'?rosterFilters[kind].className||'Nursery':'',gender:'',status:''};app(); }
+function applyRosterFilters(kind) {
+  const table=document.querySelector(kind==='promotion'?'.promotion-roster':'.student-fee-register');if(!table)return;
+  const f=rosterFilters[kind];let visible=0;const rows=[...table.querySelectorAll('tbody tr[data-class]')];
+  for(const row of rows){row.hidden=Boolean((f.className&&row.dataset.class!==f.className)||(f.gender&&row.dataset.gender!==f.gender)||(f.status&&row.dataset.status!==f.status)||(f.query&&!row.textContent.toLowerCase().includes(f.query.trim().toLowerCase())));if(!row.hidden)visible++;}
+  const label=document.querySelector(`[data-roster-count="${kind}"]`);if(label)label.textContent=`${visible} of ${f.className?rows.filter(r=>r.dataset.class===f.className).length:rows.length} students${f.className?' · '+f.className:''}`;
+}
+function studentRegisterPanel() {
+  return `<section class="section-panel student-register-panel"><div class="section-toolbar"><h2>Student Fee Accounts — ${activeTerm()}</h2><div class="filters"><button class="btn ghost" onclick="exportFeeAccounts('print')">${icon('printer',16)} Print</button><button class="btn ghost" onclick="exportFeeAccounts('excel')">${icon('download',16)} Excel</button></div></div>${rosterFilterToolbar('fees')}<div class="table-wrap">${studentFeeTable()}</div></section>`;
+}
+function feeSummaryCards() {
+  const stats=backendData.stats||{};
+  const term=(classRegisterData.calendar||[]).find(t=>t.academic_year===activeAcademicYear()&&t.term===activeTerm());
+  const overdue=term?.ends_on&&term.ends_on<backendData.server_date?stats.balances_outstanding||0:0;
+  return moneyCard('banknote',money(stats.payments_total||0),'Fees Collected','green')+moneyCard('wallet',money(stats.balances_outstanding||0),'Pending Fees','amber')+moneyCard('triangle-alert',money(overdue),'Overdue Payments','red');
+}
+function feeProgressCards(limit=4) {
+  return ['Tuition Fee','Uniform Fee','School Bus Fee','Trip Fee'].slice(0,limit).map((type,index)=>{
+    const balances=(backendData.balances||[]).filter(b=>b.fee_type===type);
+    const due=balances.reduce((n,b)=>n+Number(b.amount_due),0);
+    const paid=(backendData.payments||[]).filter(p=>p.fee_type===type&&p.status==='Paid').reduce((n,p)=>n+Number(p.amount),0);
+    return progressCard(type,due?Math.min(100,Math.round(paid/due*100)):0,`${money(paid)} / ${money(due)} Collected`,['var(--cyan)','var(--blue)','var(--amber)','var(--green)'][index],type);
+  }).join('');
+}
+function periodCollectionBars(compact=false) {
+  const rows=excelClasses.map(name=>{
+    const balances=(backendData.balances||[]).filter(b=>b.student?.class_name===name);
+    return {name,due:balances.reduce((n,b)=>n+Number(b.amount_due),0),paid:balances.reduce((n,b)=>n+Number(b.amount_paid),0)};
+  });
+  const max=Math.max(1,...rows.map(r=>r.due));
+  return `<div class="chart period-collection-chart ${compact?'compact':''}">${chartLegend([['Assessed Fee','soft'],['Collected Fee','green']])}<div class="bars paired">${rows.map(r=>`<span class="bar-group" title="${r.name}: ${money(r.paid)} collected / ${money(r.due)} assessed"><span class="bar total" style="height:${r.due/max*100}%"></span><span class="bar collected" style="height:${r.paid/max*100}%"></span></span>`).join('')}</div><div class="months">${rows.map(r=>`<span>${r.name.replace('Standard ','Std ')}</span>`).join('')}</div></div>`;
+}
+
 window.addEventListener("hashchange", app);
+document.addEventListener("click", closeNotificationDropdown);
 app();

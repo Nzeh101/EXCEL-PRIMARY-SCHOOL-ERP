@@ -9,6 +9,8 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 #[Fillable([
     'admission_no',
+    'admission_year',
+    'academic_year',
     'first_name',
     'last_name',
     'class_name',
@@ -20,6 +22,8 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
     'joined_on',
     'status',
     'created_by_role',
+    'pending_changes',
+    'pending_change_requested_by',
 ])]
 class Student extends Model
 {
@@ -27,6 +31,7 @@ class Student extends Model
     {
         return [
             'joined_on' => 'date',
+            'pending_changes' => 'array',
         ];
     }
 

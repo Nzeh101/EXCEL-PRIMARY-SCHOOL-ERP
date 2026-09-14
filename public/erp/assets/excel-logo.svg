@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 150" role="img" aria-labelledby="title">
+  <title id="title">Excel Primary School</title>
+  <g transform="translate(8 7)">
+    <path d="M68 2 130 25v45c0 35-24 57-62 72C30 127 6 105 6 70V25Z" fill="#f4cf45"/>
+    <path d="M68 12 119 31v38c0 27-17 46-51 60-34-14-51-33-51-60V31Z" fill="#176b3a"/>
+    <path d="m34 57 34-15 34 15-34 15Z" fill="#fff"/>
+    <path d="M45 66v20c14 9 32 9 46 0V66L68 76Z" fill="#f4cf45"/>
+    <path d="M101 58v27" stroke="#fff" stroke-width="5" stroke-linecap="round"/>
+  </g>
+  <text x="154" y="76" fill="#176b3a" font-family="Arial, sans-serif" font-size="62" font-weight="800" letter-spacing="2">EXCEL</text>
+  <text x="158" y="113" fill="#3e634d" font-family="Arial, sans-serif" font-size="25" font-weight="700" letter-spacing="3">PRIMARY SCHOOL</text>
+  <text x="159" y="139" fill="#9b7a00" font-family="Arial, sans-serif" font-size="15" font-weight="700" letter-spacing="2">CREATING THE DIFFERENCE</text>
+</svg>

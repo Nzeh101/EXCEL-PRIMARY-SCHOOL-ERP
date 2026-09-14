@@ -16,6 +16,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'balance_after',
     'method',
     'status',
+    'created_by_role',
+    'approved_by_role',
+    'approved_at',
     'paid_at',
     'notes',
 ])]
@@ -25,6 +28,7 @@ class Payment extends Model
     {
         return [
             'paid_at' => 'datetime',
+            'approved_at' => 'datetime',
             'amount' => 'integer',
         ];
     }
