@@ -453,6 +453,7 @@ function openModal(title, body, size = "") {
     </section>
   </div>`;
   removeStatusDots(modalRoot());
+  prepareMobileRecords(modalRoot());
 }
 
 function removeStatusDots(root = document) {
@@ -981,6 +982,8 @@ function app() {
   if (!backendLoaded && !backendLoading) loadBackendData();
   const sidebarEl = document.querySelector(".sidebar");
   compactTableToolbars();
+  prepareMobileRecords();
+  document.querySelector(".app-shell")?.insertAdjacentHTML("beforeend", mobileNavigation(current));
   if (sidebarEl) {
     sidebarEl.scrollTop = sidebarTop;
     sidebarEl.addEventListener("scroll", () => {
@@ -993,6 +996,37 @@ function app() {
     removeStatusDots();
     showLatestNotifications();
   });
+}
+
+
+// Keep the original cells and controls intact for filtering, editing and exports.
+function prepareMobileRecords(root = document) {
+  root.querySelectorAll('table').forEach(table => {
+    if (!table.tHead || !table.tBodies.length) return;
+    const labels = [...table.tHead.rows[table.tHead.rows.length - 1].cells].map(cell => cell.textContent.trim());
+    table.classList.add('responsive-records');
+    [...table.tBodies].forEach(body => [...body.rows].forEach(row => {
+      let column = 0;
+      [...row.cells].forEach(cell => {
+        cell.dataset.label = labels[column] || 'Details';
+        cell.classList.toggle('record-wide', cell.colSpan > 1);
+        column += cell.colSpan;
+      });
+    }));
+  });
+}
+function mobileNavigation(current) {
+  const allowed = flatNav(navForRole());
+  const preferred = ['dashboard', 'students', 'fees'];
+  const links = preferred.map(id => allowed.find(link => link[0] === id)).filter(Boolean);
+  return `<nav class="mobile-bottom-nav" aria-label="Quick navigation">${links.map(([id,label,name]) => `<a href="#/${id}" ${current===id?'aria-current="page"':''}>${icon(name)}<span>${id==='dashboard'?'Home':label}</span></a>`).join('')}<button onclick="setMobileMenu(true)" aria-label="All pages">${icon('menu')}<span>More</span></button></nav>`;
+}
+let mobileDashboardSection = 0;
+function selectMobileDashboard(button, index) {
+  mobileDashboardSection = index;
+  const dashboard = button.closest('.director-dashboard');
+  dashboard.dataset.mobileSection = String(index);
+  dashboard.querySelectorAll('[role="tab"]').forEach(tab => tab.setAttribute('aria-selected', String(tab === button)));
 }
 
 function compactTableToolbars() {
@@ -1042,7 +1076,7 @@ function topbar() {
   const role = currentRole();
   const themeIcon = currentTheme() === "dark" ? "sun" : "moon";
   const themeLabel = currentTheme() === "dark" ? "Light mode" : "Dark mode";
-  return `<header class="topbar">
+  return `<header class="topbar"><div class="mobile-brand"><span>EXCEL <small>PRIMARY SCHOOL</small></span><span class="mobile-brand-caption">Creating the difference</span></div>
     <div class="top-actions">
       <button class="icon-btn mobile-menu-button" aria-label="Open navigation" aria-controls="school-navigation" aria-expanded="${mobileMenuOpen}" onclick="setMobileMenu(true)">${icon("menu")}</button>
       <button class="pill" onclick="openDetailsModal('Signed in role','${role}')">${icon("shield-check", 15)} ${role}</button>
@@ -1073,6 +1107,7 @@ function loginPage() {
       <div class="login-stats">
         <div><strong>${Number(document.body.dataset.studentCount || 0).toLocaleString()}</strong><span>Enrolled Students</span></div>
         <div><strong>10</strong><span>Teachers</span></div>
+        <div><strong>98%</strong><span>Fee Tracking</span></div>
       </div>
     </section>
     <section class="login-form-panel">
@@ -1236,9 +1271,9 @@ function directorDashboard() {
     ['user-plus',String((backendData.students||[]).filter(s=>s.joined_on?.slice(0,10)===backendData.server_date).length),"Today's Admissions",'Registered today',`Follow-ups : ${backendData.admission_follow_ups?.length||0}`,'amber'],
     ['banknote',money(stats.payments_today||0),"Today's Fees",'Payments received',`Pending approvals : ${stats.pending_payments||0}`,'red']
   ];
-  return `<div class="director-dashboard">${pageHead('Director Dashboard','Dashboard / Director',`<button class="btn ghost" onclick="openPaymentModal()">${icon('receipt')} Record Payment</button><button class="btn primary" onclick="openAdmissionModal()">${icon('user-plus')} New Admission</button>`)}${periodNotice()}
+  return `<div class="director-dashboard" data-mobile-section="${mobileDashboardSection}">${pageHead('Director Dashboard','Dashboard / Director',`<button class="btn ghost" onclick="openPaymentModal()">${icon('receipt')} Record Payment</button><button class="btn primary" onclick="openAdmissionModal()">${icon('user-plus')} New Admission</button>`)}${periodNotice()}
     <div class="grid metrics">${metrics.map(metricCard).join('')}</div>
-    <div class="grid two"><section class="card director-chart-card">${cardHead('Collections & Arrears',`<span class="muted">${icon('calendar-days',14)} ${activeTerm()}</span>`)}${periodCollectionBars()}</section>
+    <div class="mobile-dashboard-tabs" role="tablist" aria-label="Dashboard sections">${["Overview","Collections","Calendar"].map((label,i)=>`<button role="tab" aria-selected="${i===mobileDashboardSection}" onclick="selectMobileDashboard(this,${i})">${label}</button>`).join("")}</div><div class="grid two"><section class="card director-chart-card">${cardHead('Collections & Arrears',`<span class="muted">${icon('calendar-days',14)} ${activeTerm()}</span>`)}${periodCollectionBars()}</section>
     <section class="card director-calendar">${cardHead('School Calendar',`<span class="muted">${activeAcademicYear()}</span>`)}${calendar()}</section></div>
     <section class="section-panel director-fees-table"><div class="section-toolbar"><h2>Fees Collection</h2>${feesFilters()}</div><div class="table-wrap">${feesTable()}</div></section></div>`;
 }
@@ -2693,7 +2728,7 @@ function periodCollectionBars(compact=false) {
     return {name,due:balances.reduce((n,b)=>n+Number(b.amount_due),0),paid:balances.reduce((n,b)=>n+Number(b.amount_paid),0)};
   });
   const max=Math.max(1,...rows.map(r=>r.due));
-  return `<div class="chart period-collection-chart ${compact?'compact':''}">${chartLegend([['Assessed Fee','soft'],['Collected Fee','green']])}<div class="bars paired">${rows.map(r=>`<span class="bar-group" title="${r.name}: ${money(r.paid)} collected / ${money(r.due)} assessed"><span class="bar total" style="height:${r.due/max*100}%"></span><span class="bar collected" style="height:${r.paid/max*100}%"></span></span>`).join('')}</div><div class="months">${rows.map(r=>`<span>${r.name.replace('Standard ','Std ')}</span>`).join('')}</div></div>`;
+  return `<div class="mobile-collection-bars">${rows.map(r=>`<div><strong>${r.name}</strong><span>${money(r.paid)} / ${money(r.due)}</span><i><b style="width:${r.due ? Math.min(100,r.paid/r.due*100) : 0}%"></b></i></div>`).join("")}</div><div class="chart period-collection-chart ${compact?'compact':''}">${chartLegend([['Assessed Fee','soft'],['Collected Fee','green']])}<div class="bars paired">${rows.map(r=>`<span class="bar-group" title="${r.name}: ${money(r.paid)} collected / ${money(r.due)} assessed"><span class="bar total" style="height:${r.due/max*100}%"></span><span class="bar collected" style="height:${r.paid/max*100}%"></span></span>`).join('')}</div><div class="months">${rows.map(r=>`<span>${r.name.replace('Standard ','Std ')}</span>`).join('')}</div></div>`;
 }
 
 window.addEventListener("hashchange", () => { if(mobileMenuOpen)setMobileMenu(false); app(); window.scrollTo(0, 0); });
