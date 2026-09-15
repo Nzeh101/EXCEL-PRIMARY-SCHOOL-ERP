@@ -4213,3 +4213,26 @@ th {
   .login-card input { border-radius:12px; }
   .footer { font-size:10px; padding:12px; }
 }
+
+@media screen and (max-width: 960px) {
+  .section-body:has(> .directory.students) { padding:12px; }
+  .directory.students { grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+  .students .profile-card { border-radius:20px; position:relative; border:1px solid var(--line); box-shadow:0 4px 12px #1643290a; }
+  .students .profile-id { min-height:32px; padding:8px 10px; background:#e8f4ec; color:#12643c; font-size:10px; overflow-wrap:anywhere; }
+  .students .profile-id > strong { display:none; }
+  .students .profile-main { flex-direction:column; align-items:flex-start; gap:10px; margin:0; padding:14px 12px 10px; background:transparent; }
+  .students .profile-main .avatar { width:44px; height:44px; border-radius:15px; background:#dceee3; color:#12643c; font-size:16px; box-shadow:none; }
+  .students .profile-card:nth-child(3n+2) .avatar { background:#fff0d1; color:#805c13; }
+  .students .profile-card:nth-child(3n) .avatar { background:#e3ebff; color:#344f8d; }
+  .students .profile-main > div { min-width:0; width:100%; }
+  .students .profile-main strong { display:block; font-size:14px; line-height:1.3; overflow-wrap:anywhere; }
+  .students .profile-main br { display:none; }
+  .students .profile-main div > span { display:inline-block; font-size:11px; margin-top:6px; color:var(--muted); }
+  .students .profile-fields { grid-template-columns:1fr; gap:8px; padding:0 12px 12px; font-size:11px; overflow-wrap:anywhere; }
+  .students .field-label { font-size:9px; margin-bottom:2px; text-transform:uppercase; letter-spacing:.4px; }
+  .students .card-foot { flex-direction:column; align-items:stretch; gap:8px; padding:10px; }
+  .students .student-joined { font-size:10px; display:flex; flex-wrap:wrap; gap:4px; color:var(--muted); }
+  .students .student-actions { display:flex; gap:6px; margin:0; width:100%; }
+  .students .tiny-btn { flex:1; min-width:0; height:44px; border-radius:12px; }
+  .students .tiny-btn:first-child { color:#12643c; background:#e8f4ec; border-color:transparent; }
+}
