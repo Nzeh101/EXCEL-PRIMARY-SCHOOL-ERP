@@ -118,6 +118,24 @@ class StudentAccessTest extends TestCase
         $this->actingAs($director)->getJson('/erp-api/inbox')->assertOk()->assertJsonPath('pending_new_admissions',1)->assertJsonPath('pending_record_approvals',0)->assertJsonCount(0,'approval_requests');
     }
 
+    public function test_compact_bootstrap_preserves_roster_and_role_restrictions(): void
+    {
+        $student = $this->pupil();
+        $director = User::create(['name'=>'Director','email'=>'compact@test.test','password'=>'secret','role'=>'Director']);
+        $this->actingAs($director);
+        $normal = $this->getJson('/erp-api/bootstrap')->assertOk()->json();
+        $compact = $this->getJson('/erp-api/bootstrap?compact=1')->assertOk()->assertJsonPath('compact', true)->json();
+        $this->assertSame($normal['students'], $compact['students']);
+        $this->assertSame($normal['stats'], $compact['stats']);
+        $this->assertSame($student->id, $compact['balances'][0]['student']['student_ref']);
+        $this->assertArrayNotHasKey('first_name', $compact['balances'][0]['student']);
+        $this->assertLessThan(strlen(json_encode($normal)), strlen(json_encode($compact)));
+        $director->update(['role'=>'Admissions Officer']);
+        $this->getJson('/erp-api/bootstrap?compact=1')->assertOk()
+            ->assertJsonMissingPath('balances')->assertJsonMissingPath('payments')
+            ->assertJsonMissingPath('students.0.tuition_fee')->assertJsonMissingPath('students.0.fee_balances');
+    }
+
     private function pupil(): Student
     {
         DB::table('academic_state')->where('id',1)->update(['current_year'=>'2025 / 2026','current_term'=>'Term 3']);

@@ -32,7 +32,7 @@ Route::prefix('erp-api')->middleware(\App\Http\Middleware\RequireErpLogin::class
 
     Route::get('/bootstrap', function (Request $request, \App\Services\PeriodData $data) {
         $period = erpSelectedPeriod($request);
-        return $data->bootstrap($period['academic_year'], $period['term']);
+        return $data->bootstrap($period['academic_year'], $period['term'], $request->boolean('compact'));
     });
 
     Route::get('/dashboards/finance', function (Request $request, \App\Services\PeriodData $data) {

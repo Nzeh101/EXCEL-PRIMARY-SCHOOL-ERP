@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\DB;
 
 class PeriodData
 {
-    public function bootstrap(string $year, string $term): array
+    public function bootstrap(string $year, string $term, bool $compact = false): array
     {
         $enrollments = DB::table('student_enrollments')->where('academic_year', $year)->where('term', $term)->get()->keyBy('student_id');
         $students = Student::with(['guardian', 'feeBalances' => fn ($q) => $q->where('academic_year', $year)->where('term', $term)])->whereIn('id', $enrollments->keys())->orderBy('last_name')->orderBy('first_name')->get();
@@ -50,12 +50,30 @@ class PeriodData
             'top_arrears' => $balances->where('balance', '>', 0)->sortByDesc('balance')->take(6)->values(), 'recent_payments' => $paid->take(8)->values(), 'notices' => [],
         ];
 
-        return [...ApprovalInbox::data(request()->user()), 'students' => $students, 'guardians' => $guardians, 'payments' => $payments, 'balances' => $balances,
+        $result = [...ApprovalInbox::data(request()->user()), 'students' => $students, 'guardians' => $guardians, 'payments' => $payments, 'balances' => $balances,
             'admission_follow_ups' => $students->filter(fn ($s) => ! $s->guardian || ! $s->guardian->phone)->values(),
             'messages' => Message::orderBy('sent_at')->limit(80)->get(),
             'finance_dashboard' => $finance, 'stats' => ['students' => $students->count(), 'guardians' => $guardians->count(), 'payments_total' => $total, 'payments_today' => $today, 'balances_due' => $due, 'balances_outstanding' => $outstanding,
                 'pending_notifications' => SchoolNotification::whereNull('read_at')->count(), 'pending_admissions' => $students->whereIn('status', ['Pending Approval', 'Pending Edit Approval'])->count(), 'pending_payments' => $payments->where('status', 'Pending Approval')->count()],
             'user_role' => request()->user()->role, 'academic_year' => $year, 'term' => $term, 'current_year' => AcademicPeriod::current()->current_year, 'current_term' => AcademicPeriod::current()->current_term,
             'period_opened' => (bool) DB::table('school_terms')->where('academic_year', $year)->where('term', $term)->value('opened_at'), 'server_date' => now()->toDateString()];
+        if (! $compact) return $result;
+
+        // Send each student once; clients restore relations from the selected-period roster.
+        $result = json_decode(json_encode($result, JSON_THROW_ON_ERROR), true, 512, JSON_THROW_ON_ERROR);
+        $pack = function (array $value) use (&$pack): array {
+            foreach ($value as $key => $item) {
+                if ($key === 'student' && is_array($item) && isset($item['id'])) {
+                    $value[$key] = ['student_ref' => $item['id']];
+                } elseif (is_array($item)) {
+                    $value[$key] = $pack($item);
+                }
+            }
+            return $value;
+        };
+        $result = $pack($result);
+        $result['admission_follow_ups'] = array_map(fn ($student) => ['student_ref' => $student['id']], $result['admission_follow_ups']);
+        $result['compact'] = true;
+        return $result;
     }
 }

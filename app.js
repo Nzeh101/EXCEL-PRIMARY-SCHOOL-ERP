@@ -196,14 +196,19 @@ function toggleSidebar() {
 async function demoLogin(form) {
   const button = form.querySelector('button[type="submit"]');
   button.disabled = true;
+  button.textContent = 'Signing in…';
   try {
     const result = await apiRequest('/login', { method: 'POST', body: JSON.stringify(Object.fromEntries(new FormData(form))) });
     document.querySelector('meta[name="csrf-token"]').content = result.csrf_token;
     localStorage.setItem('erpRole', result.role);
-    await loadBackendData(true);
+    backendLoaded = false;
+    backendError = null;
+    const loading = loadBackendData(true);
     location.hash = '#/dashboard';
+    app();
+    await loading;
   } catch (error) { form.querySelector('.login-error').textContent = error.message; }
-  finally { button.disabled = false; }
+  finally { button.disabled = false; button.textContent = 'Sign In'; }
 }
 
 const students = [
@@ -326,6 +331,23 @@ async function apiRequest(path, options = {}) {
   return data;
 }
 
+function hydrateBootstrap(data) {
+  if (!data.compact) return data;
+  const roster = new Map((data.students || []).map(student => [student.id, student]));
+  const restore = value => {
+    if (Array.isArray(value)) return value.map(restore);
+    if (!value || typeof value !== 'object') return value;
+    if (Object.hasOwn(value, 'student_ref')) {
+      const { guardian, fee_balances, ...student } = roster.get(value.student_ref) || {};
+      return student;
+    }
+    return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, restore(item)]));
+  };
+  const hydrated = restore(data);
+  hydrated.admission_follow_ups = (data.admission_follow_ups || []).map(ref => roster.get(ref.student_ref)).filter(Boolean);
+  return hydrated;
+}
+
 async function loadBackendData(force = false) {
   if (backendLoaded && !force) return;
   const requestId = ++backendLoadId;
@@ -334,9 +356,19 @@ async function loadBackendData(force = false) {
   if (localStorage.getItem('erpAcademicYear')) params.set('academic_year', localStorage.getItem('erpAcademicYear'));
   if (localStorage.getItem('erpTerm')) params.set('term', localStorage.getItem('erpTerm'));
   try {
-    const [bootstrap, register] = await Promise.all([apiRequest(`/bootstrap?${params}`), apiRequest(`/class-register?${params}`)]);
+    const bootstrapRequest = apiRequest(`/bootstrap?compact=1&${params}`).then(bootstrap => {
+      if (requestId === backendLoadId) {
+        backendData = {payments:[],balances:[],finance_dashboard:{},...hydrateBootstrap(bootstrap)};
+        if (bootstrap.user_role) localStorage.setItem('erpRole', bootstrap.user_role);
+        backendLoaded = true;
+        if (route() !== 'login') app();
+      }
+      return bootstrap;
+    });
+    const [bootstrap, register] = await Promise.all([bootstrapRequest, apiRequest(`/class-register?${params}`)]);
     if (requestId !== backendLoadId) return;
-    backendData = {payments:[],balances:[],finance_dashboard:{},...bootstrap}; classRegisterData = {...register,entries:(register.entries||[]).map(e=>({cells:{},issues:[],...e}))};
+    const hydrated = hydrateBootstrap(bootstrap);
+    backendData = {payments:[],balances:[],finance_dashboard:{},...hydrated}; classRegisterData = {...register,entries:(register.entries||[]).map(e=>({cells:{},issues:[],...e}))};
     if (bootstrap.user_role) localStorage.setItem('erpRole', bootstrap.user_role);
     backendLoaded = true;
   } catch (error) {
@@ -901,7 +933,11 @@ function app() {
     document.getElementById("app").innerHTML = loginPage();
     return;
   }
-  if (!backendLoaded || backendError) {
+  if (backendLoaded && backendLoading && !backendError && current === 'dashboard') {
+    document.getElementById('app').innerHTML = `<div class="app-shell"><div inert>${sidebar(current)}</div><main class="main"><div inert>${topbar()}</div><section class="content"><p role="status">Dashboard ready. Loading remaining school records…</p><div inert>${dashboard()}</div></section></main></div>`;
+    return;
+  }
+  if (!backendLoaded || backendError || backendLoading) {
     document.getElementById('app').innerHTML = `<div class="app-shell">${sidebar(current)}<main class="main">${topbar()}<section class="content"><div class="loading-placeholder" aria-label="Loading"><div></div><div></div><div></div></div>${backendError?`<p>${escapeHtml(backendError)}</p><button class="btn ghost" onclick="loadBackendData(true)">Retry</button>`:''}</section></main></div>`;
     if (!backendLoading && !backendError) loadBackendData();
     return;
