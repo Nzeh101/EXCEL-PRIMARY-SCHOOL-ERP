@@ -85,7 +85,7 @@ function labelForRoute(id) {
 
 function routeAllowed(id, role = currentRole()) {
   if(id==="approvals")return ["Director","Super Admin","Admissions Officer","School Manager"].includes(role);
-  if (id === "notifications" && ["School Manager", "Admissions Officer"].includes(role)) return true;
+  if (id === "notifications" && ["Director", "Super Admin", "School Manager", "Admissions Officer"].includes(role)) return true;
   return id === "dashboard" || flatNav(navForRole(role)).some((item) => item[0] === id);
 }
 
@@ -1019,7 +1019,7 @@ function mobileNavigation(current) {
   const allowed = flatNav(navForRole());
   const preferred = ['dashboard', 'students', 'fees'];
   const links = preferred.map(id => allowed.find(link => link[0] === id)).filter(Boolean);
-  return `<nav class="mobile-bottom-nav" aria-label="Quick navigation">${links.map(([id,label,name]) => `<a href="#/${id}" ${current===id?'aria-current="page"':''}>${icon(name)}<span>${id==='dashboard'?'Home':label}</span></a>`).join('')}<button onclick="setMobileMenu(true)" aria-label="All pages">${icon('menu')}<span>More</span></button></nav>`;
+  return `<nav class="mobile-bottom-nav" aria-label="Quick navigation">${links.map(([id,label,name]) => `<a href="#/${id}" ${current===id?'aria-current="page"':''}>${icon(name)}<span>${id==='dashboard'?'Home':label}</span></a>`).join('')}</nav>`;
 }
 let mobileDashboardSection = 0;
 function selectMobileDashboard(button, index) {
@@ -1076,7 +1076,7 @@ function topbar() {
   const role = currentRole();
   const themeIcon = currentTheme() === "dark" ? "sun" : "moon";
   const themeLabel = currentTheme() === "dark" ? "Light mode" : "Dark mode";
-  return `<header class="topbar"><div class="mobile-brand"><span>EXCEL <small>PRIMARY SCHOOL</small></span><span class="mobile-brand-caption">Creating the difference</span></div>
+  return `<header class="topbar"><div class="mobile-brand"><span>EXCEL <small>PRIMARY SCHOOL</small></span><span class="mobile-brand-caption">${schoolLogo(true)}</span></div>
     <div class="top-actions">
       <button class="icon-btn mobile-menu-button" aria-label="Open navigation" aria-controls="school-navigation" aria-expanded="${mobileMenuOpen}" onclick="setMobileMenu(true)">${icon("menu")}</button>
       <button class="pill" onclick="openDetailsModal('Signed in role','${role}')">${icon("shield-check", 15)} ${role}</button>
@@ -1645,7 +1645,7 @@ function feesTable() {
   const liveRows = backendPaymentRows();
   if (liveRows) {
     return `<table class="fees-table"><thead><tr><th>Receipt</th><th>Student / Class</th><th>Fee / Term</th><th>Amount</th><th>Balance</th><th>Mode</th><th>Paid On</th><th>Status</th><th>Action</th></tr></thead><tbody>
-      ${liveRows.map((row) => { const payment = backendData.payments.find((item) => item.receipt_no === row[0]); const paymentStatus = Number(row[7]) > 0 && row[9] === "Paid" ? "Partial" : row[9]; const isoDate = payment?.paid_at?.slice(0, 10) || ""; return `<tr data-status="${paymentStatus}" data-fee-type="${row[2]}" data-class="${row[5]}" data-date="${isoDate}"><td><a onclick="openReceiptModal('${row[0]}')">${row[0]}</a></td><td><span class="cell-stack"><strong>${row[1]}</strong><small>${row[5]}</small></span></td><td><span class="cell-stack"><strong>${row[2]}</strong><small>${row[3]}</small></span></td><td>${money(row[6])}</td><td><span class="cell-stack"><strong>${money(row[7])}</strong><small>${paymentStatus === "Pending Approval" ? "Awaiting Director" : "Calculated"}</small></span></td><td>${row[8]}</td><td><span class="cell-stack"><strong>${row[10]}</strong><small>${row[11]}</small></span></td><td><span class="badge ${statusClass(paymentStatus)}">• ${paymentStatus}</span></td><td><span class="row-tools">${["Director", "Super Admin"].includes(currentRole()) && paymentStatus === "Pending Approval" ? `<button class="approve-payment-btn" onclick="approvePayment(${payment.id})" title="Approve payment">${icon("shield-check", 14)} Approve</button>` : ""}<button class="icon-mini" onclick="openStudentPaymentHistory(${payment?.student_id || 0})" title="Payment history">${icon("eye", 16)}</button><button class="icon-mini" onclick="openReceiptModal('${row[0]}')" title="Preview receipt">${icon("receipt", 16)}</button><button class="icon-mini" onclick="downloadReceipt('${row[0]}')" title="Download receipt">${icon("download", 16)}</button></span></td></tr>`; }).join("")}
+      ${liveRows.map((row) => { const payment = backendData.payments.find((item) => item.receipt_no === row[0]); const paymentStatus = Number(row[7]) > 0 && row[9] === "Paid" ? "Partial" : row[9]; const isoDate = payment?.paid_at?.slice(0, 10) || ""; return `<tr data-status="${paymentStatus}" data-fee-type="${row[2]}" data-class="${row[5]}" data-date="${isoDate}"><td><a onclick="openReceiptModal('${row[0]}')">${row[0]}</a></td><td><span class="cell-stack"><strong>${row[1]}</strong><small>${row[5]}</small></span></td><td><span class="cell-stack"><strong>${row[2]}</strong><small>${row[3]}</small></span></td><td>${money(row[6])}</td><td><span class="cell-stack"><strong>${money(row[7])}</strong><small>${paymentStatus === "Pending Approval" ? "Awaiting Director" : "Calculated"}</small></span></td><td>${row[8]}</td><td><span class="cell-stack"><strong>${row[10]}</strong><small>${row[11]}</small></span></td><td><span class="badge ${statusClass(paymentStatus)}">• ${paymentStatus}</span></td><td><span class="row-tools">${["Director", "Super Admin"].includes(currentRole()) && paymentStatus === "Pending Approval" ? `<button class="approve-payment-btn" onclick="approvePayment(${payment.id})" title="Approve payment">${icon("shield-check", 14)} Approve</button>` : ""}<button class="icon-mini" onclick="openReceiptModal('${row[0]}')" title="View receipt">${icon("eye", 16)}</button><button class="icon-mini" onclick="openStudentPaymentHistory(${payment?.student_id || 0})" title="Payment history">${icon("receipt", 16)}</button><button class="icon-mini" onclick="downloadReceipt('${row[0]}')" title="Download receipt">${icon("download", 16)}</button></span></td></tr>`; }).join("")}
     </tbody></table>`;
   }
   return `<table class="fees-table"><thead><tr><th>ID</th><th>Student Name</th><th>Fees Type</th><th>Class</th><th>Tuition Fee</th><th>Activities Fee</th><th>Miscellaneous</th><th>Discount / Scholarship</th><th>Adjustment / Refund</th><th>Total Amount</th><th>Total Amount</th><th>Payment Mode</th><th>Status</th><th>Action</th></tr></thead><tbody>
