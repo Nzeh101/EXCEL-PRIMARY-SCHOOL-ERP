@@ -9,7 +9,7 @@
         <link rel="apple-touch-icon" href="{{ asset('erp/assets/excel-shield-generated.png') }}">
         <link rel="stylesheet" href="{{ asset('erp/styles.css') }}?v={{ filemtime(public_path('erp/styles.css')) }}">
     </head>
-    <body>
+    <body data-demo-accounts="{{ app()->environment('production') ? 'false' : 'true' }}">
         <div id="app"></div>
         <script src="{{ asset('erp/app.js') }}?v={{ filemtime(public_path('erp/app.js')) }}"></script>
     </body>

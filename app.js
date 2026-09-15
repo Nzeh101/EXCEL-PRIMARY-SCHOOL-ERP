@@ -996,7 +996,8 @@ function topbar() {
 
 function loginPage() {
   const activeRole = currentRole();
-  const activeAccount = demoAccounts.find(([role]) => role === activeRole) || demoAccounts[0];
+  const showDemoAccounts = document.body.dataset.demoAccounts !== "false";
+  const activeAccount = showDemoAccounts ? (demoAccounts.find(([role]) => role === activeRole) || demoAccounts[0]) : ["", "", ""];
   return `<main class="login-page">
     <section class="login-brand-panel">
       <div class="login-brand">
@@ -1034,9 +1035,9 @@ function loginPage() {
         </div>
         <button class="btn primary login-submit" type="submit">Sign In</button>
         <p class="login-error"></p>
-        <div class="role-grid" onclick="if(event.target.dataset.role){const account = demoAccounts.find(([role]) => role === event.target.dataset.role); localStorage.setItem('erpRole', event.target.dataset.role); document.querySelectorAll('.role-grid span').forEach(el => el.classList.remove('selected')); event.target.classList.add('selected'); this.closest('form').querySelector('[name=email]').value = account[1]; this.closest('form').querySelector('[name=password]').value = account[2]; this.closest('form').querySelector('.login-error').textContent = '';}">
+        ${showDemoAccounts ? `<div class="role-grid" onclick="if(event.target.dataset.role){const account = demoAccounts.find(([role]) => role === event.target.dataset.role); localStorage.setItem('erpRole', event.target.dataset.role); document.querySelectorAll('.role-grid span').forEach(el => el.classList.remove('selected')); event.target.classList.add('selected'); this.closest('form').querySelector('[name=email]').value = account[1]; this.closest('form').querySelector('[name=password]').value = account[2]; this.closest('form').querySelector('.login-error').textContent = '';}">
           ${demoAccounts.map(([role]) => `<span class="${role === activeRole ? "selected" : ""}" data-role="${role}">${role}</span>`).join("")}
-        </div>
+        </div>` : ""}
       </form>
     </section>
   </main>`;
