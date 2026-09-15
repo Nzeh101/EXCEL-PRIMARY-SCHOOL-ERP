@@ -12,7 +12,7 @@ test('login navigates after authentication without waiting for school records', 
   const context = vm.createContext({
     apiRequest: async () => ({role: 'Director', csrf_token: 'fresh'}),
     document: {querySelector: () => ({content: ''})},
-    localStorage: {setItem() {}},
+    localStorage: {setItem() {}, removeItem() {}},
     FormData: class { *[Symbol.iterator]() { yield ['email', 'test@example.com']; } },
     loadBackendData: () => loading,
     location: {hash: '#/login'}, app() {}, backendLoaded: true, backendError: null,

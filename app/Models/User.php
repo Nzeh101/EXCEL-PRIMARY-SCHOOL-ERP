@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-#[Fillable(['name', 'email', 'password', 'role'])]
+#[Fillable(['name', 'email', 'password', 'role', 'email_notifications'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -22,9 +22,15 @@ class User extends Authenticatable
      *
      * @return array<string, string>
      */
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new \App\Notifications\SetSchoolPassword($token));
+    }
+
     protected function casts(): array
     {
         return [
+            'email_notifications' => 'boolean',
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];

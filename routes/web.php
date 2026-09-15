@@ -292,6 +292,7 @@ Route::prefix('erp-api')->middleware(\App\Http\Middleware\RequireErpLogin::class
 });
 
 require __DIR__.'/academic.php';
+require __DIR__.'/passwords.php';
 
 Route::get('/{any}', function () {
     return view('erp');

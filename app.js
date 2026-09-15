@@ -201,6 +201,8 @@ async function demoLogin(form) {
     const result = await apiRequest('/login', { method: 'POST', body: JSON.stringify(Object.fromEntries(new FormData(form))) });
     document.querySelector('meta[name="csrf-token"]').content = result.csrf_token;
     localStorage.setItem('erpRole', result.role);
+    localStorage.removeItem('erpAcademicYear');
+    localStorage.removeItem('erpTerm');
     backendLoaded = false;
     backendError = null;
     const loading = loadBackendData(true);
@@ -1067,7 +1069,7 @@ function loginPage() {
         </label>
         <div class="login-options">
           <label><input type="checkbox" checked /> Remember me</label>
-          <a href="#/forgot-password">Forgot Password?</a>
+          <a href="/forgot-password">Forgot Password?</a>
         </div>
         <button class="btn primary login-submit" type="submit">Sign In</button>
         <p class="login-error"></p>
@@ -2530,6 +2532,11 @@ for(const role of ['Director','Super Admin','School Manager','Admissions Officer
 for (const groups of Object.values(roleNavGroups)) {
   const group=groups.find(g=>g[1].some(i=>i[0]==='fees'));
   if(group) { group[0]='Fees'; group[1].find(i=>i[0]==='fees')[1]='Fees Collection'; group[1].splice(1,0,['student-fee-accounts','Student Fee Accounts','book-open']); const order=['fees','student-fee-accounts','student-balances','arrears','receipts','daily-collections','term-collections']; group[1].sort((a,b)=>(order.indexOf(a[0])<0?99:order.indexOf(a[0]))-(order.indexOf(b[0])<0?99:order.indexOf(b[0]))); }
+}
+
+// Keep unfinished modules available in source, but out of visible navigation.
+for (const role of Object.keys(roleNavGroups)) {
+  roleNavGroups[role] = roleNavGroups[role].filter(([label]) => !/exams|staff|communication|governance/i.test(label));
 }
 
 let backendLoadId = 0;

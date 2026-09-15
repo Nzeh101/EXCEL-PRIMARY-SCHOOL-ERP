@@ -1,0 +1,8 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="referrer" content="no-referrer"><title>Excel Primary School — Password</title><style>body{margin:0;background:#f2f5f4;color:#20382e;font:16px system-ui;display:grid;min-height:100vh;place-items:center}main{background:white;padding:32px;border-radius:16px;width:min(420px,80vw);box-shadow:0 8px 32px #1231}label,input,button{display:block;box-sizing:border-box;width:100%}input{padding:12px;margin:8px 0 20px;border:1px solid #bbc9c0;border-radius:6px}button{padding:14px;background:#18714c;color:white;border:0;border-radius:6px;font:inherit;cursor:pointer}a{color:#18714c}.error{color:#a22}</style></head><body><main><h2>Excel Primary School</h2><h1>{{ $reset ? 'Set your password' : 'Get a password link' }}</h1>
+@if(session('status'))<p role="status">{{ session('status') }}</p>@endif
+@foreach($errors->all() as $error)<p class="error" role="alert">{{ $error }}</p>@endforeach
+<form method="post" action="{{ $reset ? route('password.update') : route('password.email') }}">@csrf
+@if($reset)<input type="hidden" name="token" value="{{ $token }}">@endif
+<label>Email<input name="email" type="email" required autocomplete="username" value="{{ old('email', $email ?? '') }}"></label>
+@if($reset)<label>New password (at least 12 characters)<input name="password" type="password" required minlength="12" autocomplete="new-password"></label><label>Confirm password<input name="password_confirmation" type="password" required minlength="12" autocomplete="new-password"></label>@endif
+<button type="submit">{{ $reset ? 'Save password' : 'Email me a link' }}</button></form><p><a href="/">Go to school sign-in</a></p></main></body></html>
