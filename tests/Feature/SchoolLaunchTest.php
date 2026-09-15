@@ -9,6 +9,12 @@ use Tests\TestCase;
 class SchoolLaunchTest extends TestCase
 {
     use RefreshDatabase;
+    public function test_login_count_uses_current_enrollment_without_exposing_pupil_details(): void {
+        DB::table('academic_state')->where('id',1)->update(['current_year'=>'2026 / 2027','current_term'=>'Term 1']);
+        $student=Student::create(['admission_no'=>'PRIVATE-ID','first_name'=>'PrivateFirst','last_name'=>'PrivateLast','class_name'=>'Reception','student_type'=>'Preschool','tuition_fee'=>70000,'status'=>'Active','academic_year'=>'2026 / 2027']);
+        AcademicPeriod::enroll($student,'2026 / 2027','Term 1');
+        $this->get('/')->assertOk()->assertSee('data-student-count="1"', false)->assertDontSee('PrivateFirst')->assertDontSee('PRIVATE-ID');
+    }
     public function test_password_link_is_single_use_and_changes_login(): void {
         Notification::fake();
         $user=User::create(['name'=>'Director','email'=>'director@example.com','password'=>'old-secret','role'=>'Director']);

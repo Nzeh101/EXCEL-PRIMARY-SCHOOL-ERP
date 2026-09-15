@@ -4063,3 +4063,80 @@ th {
 .collection-summary-actions { flex-wrap:wrap; justify-content:flex-end; gap:12px; }
 .collection-month-actions { display:flex; justify-content:flex-end; margin:0 0 6px; }
 .collection-total-actions { gap:14px; }
+
+/* Phone and tablet layouts: navigation is a drawer, not a page section. */
+.mobile-menu-button, .mobile-menu-backdrop { display: none; }
+@media (max-width: 960px) {
+  .login-page { min-height: 100dvh; display: flex; flex-direction: column; }
+  .login-brand-panel { min-height: 0; padding: 20px 24px; gap: 12px; }
+  .login-brand, .login-stats, .login-copy h1, .login-copy > p:last-child { display: none; }
+  .login-copy .eyebrow { margin: 0; color: white; font-size: 12px; text-align: center; }
+  .login-form-panel { flex: 1; padding: 20px 16px max(24px, env(safe-area-inset-bottom)); align-content: start; }
+  .login-card { width: 100%; max-width: 440px; padding: 24px; }
+  .login-card-logo { margin-bottom: 12px; }
+  .login-card-logo .school-logo img { max-height: 88px; width: auto; }
+  .login-card-head h2 { font-size: 25px; }
+  .login-card-head { margin-bottom: 20px; }
+  .login-options { flex-wrap: wrap; gap: 12px; }
+  .app-shell, .app-shell.sidebar-collapsed { display: block; min-height: 100dvh; }
+  .app-shell .sidebar, .app-shell.sidebar-collapsed .sidebar {
+    position: fixed; inset: 0 auto 0 0; width: min(310px, 86vw);
+    height: 100dvh; max-height: none; padding: max(18px, env(safe-area-inset-top)) 18px 24px;
+    z-index: 1001; overflow-y: auto; overscroll-behavior: contain;
+    transform: translateX(-105%); visibility: hidden; transition: transform .2s ease, visibility .2s;
+  }
+  .mobile-menu-open .app-shell .sidebar { transform: translateX(0); visibility: visible; }
+  body.mobile-menu-open { overflow: hidden; }
+  .mobile-menu-open .mobile-menu-backdrop { display: block; position: fixed; inset: 0; width: 100%; height: 100dvh; border: 0; background: #081b2e80; z-index: 1000; }
+  .mobile-menu-button { display: inline-flex; }
+  .main, .content, .section-panel, .grid > *, .director-dashboard { min-width: 0; max-width: 100%; }
+  .topbar { padding: 10px 12px; top: 0; z-index: 50; }
+  .top-actions { display: flex; flex-wrap: wrap; gap: 8px; overflow: visible; padding: 0; width: 100%; }
+  .top-actions > .pill { margin-right: auto; }
+  .top-actions > .avatar { display: none; }
+  .top-actions .period-control { order: 10; flex: 1; min-width: 0; }
+  .period-control select { width: 100%; min-height: 40px; }
+  .content { padding: 16px 12px; }
+  .page-head { gap: 12px; }
+  .page-head h1 { font-size: 23px; overflow-wrap: anywhere; }
+  .page-actions, .section-toolbar .filters { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; min-width: 0; }
+  .section-toolbar .filters > * { flex: 1 1 140px; min-width: 0; max-width: 100%; }
+  .section-toolbar .search { width: 100%; }
+  .section-toolbar { padding: 16px; gap: 12px; }
+  .table-wrap { max-width: 100%; overflow-x: auto; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; }
+  .table-wrap table { min-width: 620px; }
+  .table-wrap .class-student-table { min-width: 850px; }
+  .table-footer { gap: 12px; }
+  .period-collection-chart { overflow-x: auto; }
+  .period-collection-chart .bars, .period-collection-chart .months { min-width: 480px; }
+  .notification-dropdown { position: fixed; top: 64px; left: 12px; right: 12px; width: auto; max-height: calc(100dvh - 90px); overflow-y: auto; }
+  .modal-backdrop { padding: 10px; align-items: center; }
+  .modal-card, .modal-card.payment-history-modal, .modal-card.class-register-modal { width: 100%; max-width: 100%; max-height: calc(100dvh - 20px); min-width: 0; }
+  .modal-body { min-width: 0; overflow: auto; padding: 16px; }
+  .modal-form, .modal-grid, .record-form { grid-template-columns: minmax(0, 1fr); }
+  .modal-form > *, .modal-grid > *, .record-form > * { min-width: 0; }
+  input, select, textarea { font-size: 16px !important; max-width: 100%; }
+  .btn, .icon-btn, .hamburger, .modal-close, .nav-link { min-height: 44px; }
+  .icon-btn, .hamburger, .modal-close { min-width: 44px; }
+  .footer { padding: 16px 12px max(16px, env(safe-area-inset-bottom)); gap: 6px; font-size: 12px; }
+  .toast-stack { width: calc(100% - 24px); max-width: 400px; right: 12px; }
+}
+@media (max-width: 380px) {
+  .login-card { padding: 20px 16px; }
+  .top-actions { gap: 5px; }
+  .top-actions > .pill { padding-inline: 8px; font-size: 12px; }
+  .top-actions .icon-btn { min-width: 40px; width: 40px; }
+}
+@media (prefers-reduced-motion: reduce) { .app-shell .sidebar { transition: none; } }
+.login-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.view-switch { display: flex; gap: 6px; flex-shrink: 0; }
+@media (max-width: 960px) {
+  .top-actions .period-control { flex: 1 0 calc(50% - 8px); }
+  .login-stats { display: grid; gap: 12px; max-width: 440px; width: 100%; margin: 0 auto; }
+  .login-stats div { min-height: 0; padding: 8px 12px; }
+  .login-stats strong { font-size: 20px; margin-bottom: 2px; }
+  .login-stats span { font-size: 12px; }
+  .login-brand-panel { padding-block: 14px; }
+  .view-switch .btn { flex: 1; }
+  .directory-list table { min-width: 560px; }
+}

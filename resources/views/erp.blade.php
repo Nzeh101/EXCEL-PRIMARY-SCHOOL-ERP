@@ -9,7 +9,7 @@
         <link rel="apple-touch-icon" href="{{ asset('erp/assets/excel-shield-generated.webp') }}">
         <link rel="stylesheet" href="{{ asset('erp/styles.css') }}?v={{ filemtime(public_path('erp/styles.css')) }}">
     </head>
-    <body data-demo-accounts="{{ app()->environment('production') ? 'false' : 'true' }}">
+    <body data-student-count="{{ $schoolStudentCount }}" data-teacher-count="10" data-demo-accounts="{{ app()->environment('production') ? 'false' : 'true' }}">
         <div id="app"></div>
         <script src="{{ asset('erp/app.js') }}?v={{ filemtime(public_path('erp/app.js')) }}"></script>
     </body>

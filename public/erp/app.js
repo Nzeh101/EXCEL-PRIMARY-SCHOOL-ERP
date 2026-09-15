@@ -187,7 +187,30 @@ function toggleTheme() {
   app();
 }
 
+let mobileMenuOpen = false;
+function setMobileMenu(open) {
+  mobileMenuOpen = open && window.matchMedia('(max-width: 960px)').matches;
+  document.body.classList.toggle('mobile-menu-open', mobileMenuOpen);
+  const sidebar = document.getElementById('school-navigation');
+  if (sidebar) sidebar.inert = window.matchMedia('(max-width: 960px)').matches && !mobileMenuOpen;
+  document.querySelector('.main')?.toggleAttribute('inert', mobileMenuOpen);
+  document.querySelectorAll('.mobile-menu-button').forEach(button => button.setAttribute('aria-expanded', String(mobileMenuOpen)));
+  if (mobileMenuOpen) sidebar?.querySelector('button')?.focus();
+  else document.querySelector('.mobile-menu-button')?.focus({preventScroll: true});
+}
+window.matchMedia('(max-width: 960px)').addEventListener('change', () => { setMobileMenu(false); app(); });
+document.addEventListener('keydown', event => {
+  if (!mobileMenuOpen) return;
+  if (event.key === 'Escape') { event.preventDefault(); setMobileMenu(false); }
+  if (event.key === 'Tab') {
+    const items = [...document.querySelectorAll('#school-navigation button, #school-navigation a')].filter(el => el.getClientRects().length);
+    const first=items[0], last=items.at(-1);
+    if (event.shiftKey && document.activeElement===first) { event.preventDefault(); last?.focus(); }
+    else if (!event.shiftKey && document.activeElement===last) { event.preventDefault(); first?.focus(); }
+  }
+});
 function toggleSidebar() {
+  if (window.matchMedia('(max-width: 960px)').matches) { setMobileMenu(!mobileMenuOpen); return; }
   const next = localStorage.getItem("erpSidebarCollapsed") === "true" ? "false" : "true";
   localStorage.setItem("erpSidebarCollapsed", next);
   app();
@@ -936,20 +959,20 @@ function app() {
     return;
   }
   if (backendLoaded && backendLoading && !backendError && current === 'dashboard') {
-    document.getElementById('app').innerHTML = `<div class="app-shell"><div inert>${sidebar(current)}</div><main class="main"><div inert>${topbar()}</div><section class="content"><p role="status">Dashboard ready. Loading remaining school records…</p><div inert>${dashboard()}</div></section></main></div>`;
+    document.getElementById('app').innerHTML = `<div class="app-shell"><div inert>${sidebar(current)}</div><main class="main" ${mobileMenuOpen ? "inert" : ""}><div inert>${topbar()}</div><section class="content"><p role="status">Dashboard ready. Loading remaining school records…</p><div inert>${dashboard()}</div></section></main></div>`;
     return;
   }
   if (!backendLoaded || backendError || backendLoading) {
-    document.getElementById('app').innerHTML = `<div class="app-shell">${sidebar(current)}<main class="main">${topbar()}<section class="content"><div class="loading-placeholder" aria-label="Loading"><div></div><div></div><div></div></div>${backendError?`<p>${escapeHtml(backendError)}</p><button class="btn ghost" onclick="loadBackendData(true)">Retry</button>`:''}</section></main></div>`;
+    document.getElementById('app').innerHTML = `<div class="app-shell">${sidebar(current)}<main class="main" ${mobileMenuOpen ? "inert" : ""}>${topbar()}<section class="content"><div class="loading-placeholder" aria-label="Loading"><div></div><div></div><div></div></div>${backendError?`<p>${escapeHtml(backendError)}</p><button class="btn ghost" onclick="loadBackendData(true)">Retry</button>`:''}</section></main></div>`;
     if (!backendLoading && !backendError) loadBackendData();
     return;
   }
   const sidebarTop = Number(sessionStorage.getItem("erpSidebarScroll") || 0);
-  const collapsed = localStorage.getItem("erpSidebarCollapsed") === "true";
+  const collapsed = !window.matchMedia("(max-width: 960px)").matches && localStorage.getItem("erpSidebarCollapsed") === "true";
   document.getElementById("app").innerHTML = `
     <div class="app-shell ${collapsed ? "sidebar-collapsed" : ""}">
       ${sidebar(current)}
-      <main class="main">
+      <main class="main" ${mobileMenuOpen ? "inert" : ""}>
         ${topbar()}
         <section class="content is-entering">${page(current)}</section>
         <footer class="footer"><span>Copyright © Excel Primary School.</span><span>Creating the difference</span></footer>
@@ -999,16 +1022,16 @@ function sidebar(current) {
   const pendingNewAdmissions = Number(backendData.pending_new_admissions||0);
   const pendingPayments = Number(backendData.stats?.pending_payments || 0);
   const canApprovePayments = ["Director", "Super Admin"].includes(role);
-  return `<aside class="sidebar">
+  return `<button class="mobile-menu-backdrop" aria-label="Close navigation" tabindex="-1" onclick="setMobileMenu(false)"></button><aside id="school-navigation" class="sidebar" aria-label="School navigation" ${window.matchMedia("(max-width: 960px)").matches && !mobileMenuOpen ? "inert" : ""}>
     <div class="brand">
       ${schoolLogo(true)}
-      <button class="hamburger" title="Toggle sidebar" onclick="toggleSidebar()">${icon("menu")}</button>
+      <button class="hamburger" title="Toggle navigation" aria-label="Toggle navigation" onclick="toggleSidebar()">${icon("menu")}</button>
     </div>
     ${groups.map(([title, links]) => `
       <div class="nav-group">
         <p class="nav-title">${title}</p>
         ${links.map(([id, label, iconName]) => `
-          <a class="nav-link ${current === id ? "active" : ""}" href="#/${id}" onclick="sessionStorage.setItem('erpSidebarScroll', String(this.closest('.sidebar')?.scrollTop || 0))">
+          <a class="nav-link ${current === id ? "active" : ""}" href="#/${id}" onclick="if(mobileMenuOpen)setMobileMenu(false); sessionStorage.setItem('erpSidebarScroll', String(this.closest('.sidebar')?.scrollTop || 0))">
             <span class="nav-icon">${icon(iconName)}</span><span>${label}</span>${id === "admissions" && pendingNewAdmissions ? `<span class="nav-count" title="${pendingNewAdmissions} new admissions awaiting approval">${pendingNewAdmissions}</span>` : ""}${id === "approvals" && pendingAdmissions ? `<span class="nav-count" title="${pendingAdmissions} student / guardian requests awaiting approval">${pendingAdmissions}</span>` : ""}${id === "fees" && canApprovePayments && pendingPayments ? `<span class="nav-count" title="${pendingPayments} payments awaiting approval">${pendingPayments}</span>` : ""}
           </a>`).join("")}
       </div>`).join("")}
@@ -1021,6 +1044,7 @@ function topbar() {
   const themeLabel = currentTheme() === "dark" ? "Light mode" : "Dark mode";
   return `<header class="topbar">
     <div class="top-actions">
+      <button class="icon-btn mobile-menu-button" aria-label="Open navigation" aria-controls="school-navigation" aria-expanded="${mobileMenuOpen}" onclick="setMobileMenu(true)">${icon("menu")}</button>
       <button class="pill" onclick="openDetailsModal('Signed in role','${role}')">${icon("shield-check", 15)} ${role}</button>
       <label class="period-control"><select aria-label="Academic year" onchange="selectAcademicPeriod(this.value,this.value===classRegisterData.current_year?classRegisterData.current_term:'Term 1')">${availableYears().map(year=>`<option ${year===activeAcademicYear()?'selected':''}>${year}</option>`).join('')}</select></label>
       <label class="period-control"><select aria-label="Academic term" onchange="selectAcademicPeriod(activeAcademicYear(),this.value)">${['Term 1','Term 2','Term 3'].map(term=>`<option ${term===activeTerm()?'selected':''}>${term}</option>`).join('')}</select></label>
@@ -1047,9 +1071,8 @@ function loginPage() {
         <p>Quality, affordable education from Nursery and Reception through Standard 8.</p>
       </div>
       <div class="login-stats">
-        <div><strong>3,654</strong><span>Total Students</span></div>
-        <div><strong>284</strong><span>Teachers</span></div>
-        <div><strong>98%</strong><span>Fee Tracking</span></div>
+        <div><strong>${Number(document.body.dataset.studentCount || 0).toLocaleString()}</strong><span>Enrolled Students</span></div>
+        <div><strong>10</strong><span>Teachers</span></div>
       </div>
     </section>
     <section class="login-form-panel">
@@ -1105,7 +1128,7 @@ function filterDirectory(control) {
   const panel=control.closest('.section-panel');
   const query=panel?.querySelector('.directory-search input')?.value.trim().toLowerCase()||'';
   const className=panel?.querySelector('select[onchange="filterStudentClass(this)"]')?.value||'';
-  panel?.querySelectorAll('.directory .profile-card').forEach(card=>{card.hidden=Boolean((query&&!card.textContent.toLowerCase().includes(query))||(className&&card.dataset.class!==className));});
+  panel?.querySelectorAll('.directory .profile-card, .directory-list tbody tr').forEach(card=>{card.hidden=Boolean((query&&!card.textContent.toLowerCase().includes(query))||(className&&card.dataset.class!==className));});
 }
 
 function filterTableRows(input, tableSelector) {
@@ -1464,18 +1487,33 @@ function quickLinks() {
   return `<div class="quick-grid">${links.map(([label, iconName, color, bg]) => `<div class="quick" style="background:${bg}"><span style="background:${color}">${icon(iconName, 22)}</span><strong>${label}</strong></div>`).join("")}</div>`;
 }
 
+function setDirectoryView(type, mode) {
+  localStorage.setItem(`erpDirectoryView:${type}`, mode === 'list' ? 'list' : 'grid');
+  app();
+}
+function directoryList(type) {
+  const students = type === 'students';
+  const rows = students ? (backendData.students || []) : (backendData.guardians || []);
+  return `<div class="table-wrap directory-list"><table><thead><tr>${(students ? ['Admission No.','Name','Class','Gender','Actions'] : ['Guardian','Email','Phone','Pupil','Class','Actions']).map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map(row=> {
+    const pupil=students?row:row.student;
+    return `<tr data-class="${escapeHtml(pupil?.class_name||'')}">${students ? `<td>${escapeHtml(row.admission_no)}</td><td>${escapeHtml(row.first_name+' '+row.last_name)}</td><td>${escapeHtml(row.class_name)}</td><td>${escapeHtml(row.gender||'Not recorded')}</td><td><button class="btn ghost" onclick="openStudentDetails(${row.id})">View</button></td>` : `<td>${escapeHtml(row.name)}</td><td>${escapeHtml(row.email||'Not recorded')}</td><td>${escapeHtml(row.phone||'Not recorded')}</td><td>${escapeHtml(pupil ? pupil.first_name+' '+pupil.last_name : 'Not linked')}</td><td>${escapeHtml(pupil?.class_name||'—')}</td><td><button class="btn ghost" onclick="openGuardianStudentsModal(${row.id})">View</button></td>`}</tr>`;
+  }).join('') || '<tr><td colspan="6">No records for the selected period.</td></tr>'}</tbody></table></div>`;
+}
 function directoryPage(type) {
+  const mode = ['students','parents'].includes(type) && localStorage.getItem(`erpDirectoryView:${type}`) === 'list' ? 'list' : 'grid';
+  const switcher = ['students','parents'].includes(type) ? `<div class="view-switch" role="group" aria-label="Directory view"><button class="btn ${mode==='grid'?'primary':'ghost'}" aria-pressed="${mode==='grid'}" onclick="setDirectoryView('${type}','grid')">Grid</button><button class="btn ${mode==='list'?'primary':'ghost'}" aria-pressed="${mode==='list'}" onclick="setDirectoryView('${type}','list')">List</button></div>` : '';
+
   const title = type === "parents" ? "Guardians" : type[0].toUpperCase() + type.slice(1);
   const rows = type === "students" ? backendStudentRows() : type === "parents" ? backendParentRows() : teachers;
   const addHandler = type === "students" ? "openAdmissionModal()" : type === "parents" ? "openParentModal()" : "openTeacherModal()";
   return `${pageHead(title, `Dashboard / Peoples / ${title}`, `${tableActions()}<button class="btn primary" onclick="${addHandler}">${icon("user-plus")} Add ${title.slice(0, -1)}</button>`)}
     <section class="section-panel">
-      <div class="section-toolbar"><h2>${title} Grid</h2>${filters(directorySearch())}</div>
+      <div class="section-toolbar"><h2>${title}</h2>${switcher}<div class="filters">${directorySearch()}<select class="select" aria-label="Filter class" onchange="filterStudentClass(this)"><option value="">All Classes</option>${classOptions()}</select></div></div>
       <div class="section-body">
-        <div class="directory ${type}">
+        ${mode === "list" ? directoryList(type) : `<div class="directory ${type}">
           ${rows.map((row, index) => type === "students" ? studentCard(row, index) : type === "parents" ? parentCard(row, index) : teacherCard(row, index)).join("")}
         </div>
-        <div class="load-more"><button class="btn primary">${icon("refresh")} Load More</button></div>
+        `}
       </div>
     </section>`;
 }
@@ -1493,7 +1531,7 @@ function studentCard(row, index) {
 
 function parentCard(row, index) {
   const guardianId = backendData.guardians?.[index]?.id;
-  return `<article class="card profile-card">
+  return `<article class="card profile-card" data-class="${escapeHtml(backendData.guardians?.[index]?.student?.class_name || '')}">
     <div class="profile-id"><span>${row[0]}</span><strong>⋮</strong></div>
     <div class="profile-main"><span class="avatar">${initials(row[1])}</span><div><strong>${row[1]}</strong><br><span>${row[2]}</span></div></div>
     <div class="profile-fields"><div><div class="field-label">Email</div>${row[3]}</div><div><div class="field-label">Phone</div>${row[4]}</div></div>
@@ -2392,14 +2430,14 @@ function page(current) {
 }
 
 let classRegisterData = { imports: [], entries: [], history: [], current_year: null };
-let registerSheet = 'NURSERY';
+let registerSheet = 'ALL';
 let promotionPreview = null;
 const retainedStudents = new Set();
 
 function registerPage() {
-  const className = registerSheet==='NURSERY'?'Nursery':registerSheet==='RECEPTION'?'Reception':registerSheet.replace('STD','Standard');
+  const className = registerSheet==='ALL'?'':registerSheet==='NURSERY'?'Nursery':registerSheet==='RECEPTION'?'Reception':registerSheet.replace('STD','Standard');
   return `${pageHead('Class Registers', `Registers / ${activeAcademicYear()} / ${activeTerm()}`)}${periodNotice()}
-  <section class="section-panel"><div class="section-toolbar register-toolbar"><h2>${escapeHtml(className)} — ${activeTerm()}</h2><div class="filters"><input class="select" type="search" placeholder="Search name or admission number" aria-label="Search register" oninput="filterTableRows(this,'.class-student-table')"><select class="select" aria-label="Class" onchange="registerSheet=this.value; app()">${['NURSERY','RECEPTION',...Array.from({length:8},(_,i)=>`STD ${i+1}`)].map(name=>`<option ${name===registerSheet?'selected':''}>${name}</option>`).join('')}</select>${classExportButtons(className,true)}</div></div><div class="table-wrap">${classStudentTable(className)}</div></section>`;
+  <section class="section-panel"><div class="section-toolbar register-toolbar"><h2>${escapeHtml(className || 'All Classes')} — ${activeTerm()} · ${(backendData.students||[]).filter(s=>!className||s.class_name===className).length} pupils</h2><div class="filters"><input class="select" type="search" placeholder="Search name or admission number" aria-label="Search register" oninput="filterTableRows(this,'.class-student-table')"><select class="select" aria-label="Class" onchange="registerSheet=this.value; app()">${['ALL','NURSERY','RECEPTION',...Array.from({length:8},(_,i)=>`STD ${i+1}`)].map(name=>`<option value="${name}" ${name===registerSheet?'selected':''}>${name==='ALL'?'All Classes':name}</option>`).join('')}</select>${className ? classExportButtons(className,true) : '<span class="muted">Select a class to print or export.</span>'}</div></div><div class="table-wrap">${classStudentTable(className)}</div></section>`;
 }
 
 function nextPromotionClass(student, annual) {
@@ -2566,13 +2604,13 @@ function exportClass(className, kind) {
 }
 function canViewFinance() { return ["Director","School Manager","Super Admin"].includes(currentRole()); }
 function classStudentTable(className) {
-  const pupils=(backendData.students||[]).filter(s=>s.class_name===className);
-  return `<table class="class-student-table"><thead><tr>${['Admission No.','Student','Gender','Guardian','Phone',...(canViewFinance()?['Fees Due','Fees Paid','Balance','Status']:[])].map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${pupils.map(s=>{
+  const pupils=(backendData.students||[]).filter(s=>!className||s.class_name===className);
+  return `<table class="class-student-table"><thead><tr>${['Admission No.','Student','Class','Gender','Guardian','Phone',...(canViewFinance()?['Fees Due','Fees Paid','Balance','Status']:[])].map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${pupils.map(s=>{
     const balances=(backendData.balances||[]).filter(b=>b.student_id===s.id);
     const review=!balances.length;
     const paymentReview=canViewFinance()&&(classRegisterData.entries||[]).some(e=>e.student_id===s.id&&e.issues?.length);
     const due=balances.reduce((v,b)=>v+Number(b.amount_due),0),paid=balances.reduce((v,b)=>v+Number(b.amount_paid),0),balance=balances.reduce((v,b)=>v+Number(b.balance),0);
-    return `<tr><td>${escapeHtml(s.admission_no)}</td><td><button class="text-link" onclick="openStudentDetails(${s.id})">${escapeHtml(s.first_name+' '+s.last_name)}</button></td><td>${escapeHtml(s.gender||'Not recorded')}</td><td>${escapeHtml(s.guardian?.name||'Not recorded')}</td><td>${escapeHtml(s.guardian?.phone||'Not recorded')}</td>${canViewFinance()?`<td>${review?'—':money(due)}</td><td>${review?'—':money(paid)}</td><td>${review?'—':money(balance)}</td><td><span class="badge ${review||balance?'amber':'green'}">${paymentReview?'Payment review':review?'Review / not assessed':balance?'Outstanding':'Cleared'}</span></td>`:''}</tr>`;
+    return `<tr><td>${escapeHtml(s.admission_no)}</td><td><button class="text-link" onclick="openStudentDetails(${s.id})">${escapeHtml(s.first_name+' '+s.last_name)}</button></td><td>${escapeHtml(s.class_name)}</td><td>${escapeHtml(s.gender||'Not recorded')}</td><td>${escapeHtml(s.guardian?.name||'Not recorded')}</td><td>${escapeHtml(s.guardian?.phone||'Not recorded')}</td>${canViewFinance()?`<td>${review?'—':money(due)}</td><td>${review?'—':money(paid)}</td><td>${review?'—':money(balance)}</td><td><span class="badge ${review||balance?'amber':'green'}">${paymentReview?'Payment review':review?'Review / not assessed':balance?'Outstanding':'Cleared'}</span></td>`:''}</tr>`;
   }).join('') || '<tr><td colspan="9">No students enrolled in this class for the selected period.</td></tr>'}</tbody></table>`;
 }
 function studentFeeTable() {
@@ -2658,6 +2696,6 @@ function periodCollectionBars(compact=false) {
   return `<div class="chart period-collection-chart ${compact?'compact':''}">${chartLegend([['Assessed Fee','soft'],['Collected Fee','green']])}<div class="bars paired">${rows.map(r=>`<span class="bar-group" title="${r.name}: ${money(r.paid)} collected / ${money(r.due)} assessed"><span class="bar total" style="height:${r.due/max*100}%"></span><span class="bar collected" style="height:${r.paid/max*100}%"></span></span>`).join('')}</div><div class="months">${rows.map(r=>`<span>${r.name.replace('Standard ','Std ')}</span>`).join('')}</div></div>`;
 }
 
-window.addEventListener("hashchange", app);
+window.addEventListener("hashchange", () => { if(mobileMenuOpen)setMobileMenu(false); app(); window.scrollTo(0, 0); });
 document.addEventListener("click", closeNotificationDropdown);
 app();
