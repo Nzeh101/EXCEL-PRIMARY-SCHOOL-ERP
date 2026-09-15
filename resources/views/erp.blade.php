@@ -5,8 +5,8 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta name="csrf-token" content="{{ csrf_token() }}">
         <title>Excel Primary School ERP</title>
-        <link rel="icon" href="{{ asset('erp/assets/excel-shield-generated.png') }}?v={{ filemtime(public_path('erp/assets/excel-shield-generated.png')) }}" type="image/png">
-        <link rel="apple-touch-icon" href="{{ asset('erp/assets/excel-shield-generated.png') }}">
+        <link rel="icon" href="{{ asset('erp/assets/excel-shield-generated.webp') }}?v={{ filemtime(public_path('erp/assets/excel-shield-generated.webp')) }}" type="image/webp">
+        <link rel="apple-touch-icon" href="{{ asset('erp/assets/excel-shield-generated.webp') }}">
         <link rel="stylesheet" href="{{ asset('erp/styles.css') }}?v={{ filemtime(public_path('erp/styles.css')) }}">
     </head>
     <body data-demo-accounts="{{ app()->environment('production') ? 'false' : 'true' }}">

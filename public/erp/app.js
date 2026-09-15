@@ -155,7 +155,7 @@ const demoAccounts = [
 ];
 
 function schoolLogo(compact = false, variant = "round") {
-  const src = variant === "shield" ? "/erp/assets/excel-shield-generated.png" : "/erp/assets/excel-round-generated.png";
+  const src = variant === "shield" ? "/erp/assets/excel-shield-generated.webp" : "/erp/assets/excel-round-generated.webp";
   return `<div class="school-logo ${compact ? "compact" : ""}" aria-label="Excel Primary School">
     <img src="${src}" alt="Excel Primary School" />
   </div>`;
