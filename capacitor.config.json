@@ -1,0 +1,14 @@
+{
+  "appId": "site.excelprimaryschool.erp",
+  "appName": "Excel Primary School",
+  "webDir": "mobile/web",
+  "server": {
+    "url": "https://excelprimaryschool.site",
+    "cleartext": false,
+    "errorPath": "offline.html"
+  },
+  "appendUserAgent": " ExcelSchoolNative/1.0",
+  "backgroundColor": "#12643c",
+  "android": { "allowMixedContent": false },
+  "ios": { "contentInset": "automatic" }
+}

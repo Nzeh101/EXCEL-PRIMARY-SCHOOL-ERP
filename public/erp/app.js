@@ -1287,7 +1287,7 @@ function financeDashboard() {
   return `${pageHead('Fees Management','Dashboard / School Manager / Fees Group',`<button class="icon-btn" title="Refresh" onclick="loadBackendData(true)">${icon('refresh')}</button><button class="icon-btn" title="Print table" onclick="printFeesTable()">${icon('printer')}</button><button class="btn ghost" onclick="downloadVisibleTable('school-fees.csv')">${icon('download')} Export</button><button class="btn ghost" onclick="openAdmissionModal()">${icon('user-plus')} New Admission</button><button class="btn primary" onclick="openPaymentModal()">${icon('receipt')} Record Payment</button>`)}${periodNotice()}
     <div class="stats-strip finance-strip"><div class="money-stack">${feeSummaryCards()}</div>
     <section class="card trend-card finance-trend-card">${cardHead('Fees Collection Trend',`<span class="muted">${icon('calendar-days',14)} ${activeTerm()}</span>`)}${datedCollectionBars()}</section>
-    <div class="finance-progress-grid">${feeProgressCards(3)}${financeCollectionActivityCard(backendData.finance_dashboard?.collection_activity||[])}</div></div>
+    <div class="finance-progress-grid">${feeProgressCards()}${financeCollectionActivityCard(backendData.finance_dashboard?.collection_activity||[])}</div></div>
     <section class="section-panel"><div class="section-toolbar"><h2>Fees Collection</h2>${feesFilters()}</div><div class="table-wrap">${feesTable()}</div></section>`;
 }
 
@@ -2719,7 +2719,7 @@ function feeProgressCards(limit=4) {
     const balances=(backendData.balances||[]).filter(b=>b.fee_type===type);
     const due=balances.reduce((n,b)=>n+Number(b.amount_due),0);
     const paid=(backendData.payments||[]).filter(p=>p.fee_type===type&&p.status==='Paid').reduce((n,p)=>n+Number(p.amount),0);
-    return progressCard(type,due?Math.min(100,Math.round(paid/due*100)):0,`${money(paid)} / ${money(due)} Collected`,['var(--cyan)','var(--blue)','var(--amber)','var(--green)'][index],type);
+    return progressCard(type,due?Math.min(100,Math.round(paid/due*1000)/10):0,`${money(paid)} / ${money(due)} Collected`,['var(--cyan)','var(--blue)','var(--amber)','var(--green)'][index],type);
   }).join('');
 }
 function periodCollectionBars(compact=false) {
