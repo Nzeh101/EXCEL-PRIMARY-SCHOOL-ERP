@@ -1285,10 +1285,11 @@ function directorTable() {
 
 function financeDashboard() {
   return `${pageHead('Fees Management','Dashboard / School Manager / Fees Group',`<button class="icon-btn" title="Refresh" onclick="loadBackendData(true)">${icon('refresh')}</button><button class="icon-btn" title="Print table" onclick="printFeesTable()">${icon('printer')}</button><button class="btn ghost" onclick="downloadVisibleTable('school-fees.csv')">${icon('download')} Export</button><button class="btn ghost" onclick="openAdmissionModal()">${icon('user-plus')} New Admission</button><button class="btn primary" onclick="openPaymentModal()">${icon('receipt')} Record Payment</button>`)}${periodNotice()}
-    <div class="stats-strip finance-strip"><div class="money-stack">${feeSummaryCards()}</div>
+    <section class="section-panel"><div class="section-toolbar"><h2>Fees Collection</h2>${feesFilters()}</div><div class="table-wrap">${feesTable()}</div></section>
+    <details class="finance-insights"><summary>Summary, fee types & trends</summary>    <div class="stats-strip finance-strip"><div class="money-stack">${feeSummaryCards()}</div>
     <section class="card trend-card finance-trend-card">${cardHead('Fees Collection Trend',`<span class="muted">${icon('calendar-days',14)} ${activeTerm()}</span>`)}${datedCollectionBars()}</section>
     <div class="finance-progress-grid">${feeProgressCards()}${financeCollectionActivityCard(backendData.finance_dashboard?.collection_activity||[])}</div></div>
-    <section class="section-panel"><div class="section-toolbar"><h2>Fees Collection</h2>${feesFilters()}</div><div class="table-wrap">${feesTable()}</div></section>`;
+</details>`;
 }
 
 function financeCollectionActivityCard(collectionActivity = []) {
@@ -1585,10 +1586,11 @@ function teacherCard(row, index) {
 
 function feesPage() {
   return `${pageHead('Fees Collection','Fees Collection / Payments',tableActions())}${periodNotice()}
-    <div class="stats-strip fees-summary-strip"><div class="money-stack">${feeSummaryCards()}</div>
+    <section class="section-panel"><div class="section-toolbar"><h2>Fees Collection</h2>${feesFilters()}</div><div class="table-wrap">${feesTable()}</div></section>
+    <details class="finance-insights"><summary>Summary, fee types & trends</summary>    <div class="stats-strip fees-summary-strip"><div class="money-stack">${feeSummaryCards()}</div>
     <section class="card trend-card">${cardHead('Fees Collection Trend',`<span class="muted">${icon('calendar-days',14)} ${activeTerm()}</span>`)}${feesLineChart()}</section>
     <div class="finance-progress-grid fees-progress-grid">${feeProgressCards()}</div></div>
-    <section class="section-panel"><div class="section-toolbar"><h2>Fees Collection</h2>${feesFilters()}</div><div class="table-wrap">${feesTable()}</div></section>
+</details>
     `;
 }
 

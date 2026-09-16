@@ -26,3 +26,13 @@ Email transaction notifications remain paused. Packaging does not alter school r
 ## Validation on 2026-09-16
 
 Capacitor add/sync succeeded for both platforms. Laravel Vite build and 26 PHP tests passed. Browser layout checks passed at 320, 375, 400, 768 and 1440px, including School Manager finance cards and four fee types. Native compilation is currently blocked: no Java runtime/Android SDK found; Xcode 26.4 reports its iOS 26.4 platform is not installed (Settings > Components). No APK or IPA has been produced.
+
+## Install on a phone
+
+Use https://excelprimaryschool.site immediately. On iPhone open it in Safari, tap Share, then Add to Home Screen. This is a home-screen web shortcut, not a native IPA.
+
+An Android test APK can be downloaded and opened from Downloads. Allow installation from the browser only if Android prompts. Test builds are not Play Store releases. Use existing school credentials; no passwords are bundled.
+
+Native iPhone distribution needs an Apple Developer team and signing. In Xcode install the iOS platform in Settings > Components, sign in through Settings > Accounts, select the school team under Signing & Capabilities, then Archive and distribute through TestFlight. Do not send Apple account passwords in chat. No native iPhone download is available yet.
+
+Android update: an isolated JDK 21 and SDK 36 were installed under /private/tmp/excel-native-tools. `assembleDebug` succeeded and apksigner verified the debug signature. APK: android/app/build/outputs/apk/debug/app-debug.apk (3.9 MB). This is an online test build, not a signed production release. Native device login/upload/printing tests remain outstanding. Keep the debug signing key private and backed up before distributing upgrades.

@@ -4299,3 +4299,19 @@ th {
  .progress-row { gap:12px; font-size:13px; }
  .finance-trend-card .chart,.finance-trend-card .line-chart { height:170px; }
 }
+
+/* Collections first: optional analysis never pushes transactions off-screen. */
+.finance-insights { margin:16px 0; border:1px solid var(--line); border-radius:14px; background:var(--panel); }
+.finance-insights > summary { cursor:pointer; padding:14px 16px; font-weight:700; color:var(--green); }
+.finance-insights > .stats-strip { padding:12px; margin:0; }
+@media screen and (max-width:960px) {
+ .finance-insights .money-stack { gap:0; }
+ .finance-insights .money-card { border:0; border-bottom:1px solid var(--line); border-radius:0; box-shadow:none; min-height:0; padding:10px 4px; }
+ .finance-insights .money-card .metric-icon { display:none; }
+ .finance-insights .money-card > div { display:flex; flex-direction:row-reverse; align-items:center; justify-content:space-between; width:100%; gap:10px; }
+ .finance-insights .money-card h3 { font-size:15px; margin:0; }
+ .finance-insights .money-card .muted { font-size:12px; }
+ .finance-progress-grid .progress-card { min-height:0!important; height:auto!important; padding:12px!important; border-radius:0; border:0; border-bottom:1px solid var(--line); box-shadow:none; }
+ .finance-progress-grid .progress-card .track { height:4px; margin-top:8px; }
+ .finance-progress-grid .progress-card p { margin:6px 0 0!important; }
+}
