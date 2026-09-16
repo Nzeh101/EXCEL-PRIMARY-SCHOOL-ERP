@@ -4315,3 +4315,24 @@ th {
  .finance-progress-grid .progress-card .track { height:4px; margin-top:8px; }
  .finance-progress-grid .progress-card p { margin:6px 0 0!important; }
 }
+
+.manager-workspace { display:flex; flex-direction:column; gap:14px; }
+@media screen and (min-width:961px) {
+ .manager-workspace > .page-head { order:0; }
+ .manager-workspace > .manager-insights { order:1; border:0; margin:0; background:none; }
+ .manager-workspace > .section-panel { order:2; }
+ .manager-insights > summary { display:none; }
+ .manager-insights > .stats-strip { padding:0; }
+}
+@media screen and (max-width:960px) {
+ .finance-insights .money-stack { display:grid!important; grid-template-columns:repeat(2,minmax(0,1fr))!important; gap:8px!important; }
+ .finance-insights .money-card { display:block; border:1px solid var(--line); border-radius:14px; padding:12px; }
+ .finance-insights .money-card .metric-icon { display:inline-flex; width:28px; height:28px; margin-bottom:8px; }
+ .finance-insights .money-card .metric-icon svg { width:18px; height:18px; }
+ .finance-insights .money-card > div { display:block; }
+ .finance-insights .money-card h3 { font-size:15px; margin-bottom:4px; overflow-wrap:anywhere; }
+ .finance-insights .finance-progress-grid { grid-template-columns:repeat(2,minmax(0,1fr))!important; gap:8px; }
+ .finance-insights .progress-card { border:1px solid var(--line); border-radius:14px; padding:10px!important; }
+ .finance-insights .progress-row { font-size:12px; gap:4px; flex-wrap:wrap; }
+ .finance-insights .progress-card p { font-size:10px; }
+}

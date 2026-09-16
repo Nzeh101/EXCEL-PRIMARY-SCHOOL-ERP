@@ -72,7 +72,7 @@ function currentRole() {
 }
 
 function navForRole(role = currentRole()) {
-  return (roleNavGroups[role] || roleNavGroups["Super Admin"]).map(([title,links])=>[title,links.filter(([id])=>id!=="approvals"||Number(backendData.pending_record_approvals||0)>0)]).filter(([,links])=>links.length);
+  return [...(roleNavGroups[role] || roleNavGroups["Super Admin"])].sort((a,b) => role === "School Manager" ? (({Main:0,Fees:1,Admissions:2}[a[0]] ?? 3) - ({Main:0,Fees:1,Admissions:2}[b[0]] ?? 3)) : 0).map(([title,links])=>[title,links.filter(([id])=>id!=="approvals"||Number(backendData.pending_record_approvals||0)>0)]).filter(([,links])=>links.length);
 }
 
 function flatNav(groups = navGroups) {
@@ -1284,12 +1284,12 @@ function directorTable() {
 }
 
 function financeDashboard() {
-  return `${pageHead('Fees Management','Dashboard / School Manager / Fees Group',`<button class="icon-btn" title="Refresh" onclick="loadBackendData(true)">${icon('refresh')}</button><button class="icon-btn" title="Print table" onclick="printFeesTable()">${icon('printer')}</button><button class="btn ghost" onclick="downloadVisibleTable('school-fees.csv')">${icon('download')} Export</button><button class="btn ghost" onclick="openAdmissionModal()">${icon('user-plus')} New Admission</button><button class="btn primary" onclick="openPaymentModal()">${icon('receipt')} Record Payment</button>`)}${periodNotice()}
+  return `<div class="manager-workspace">${pageHead('Fees Management','Dashboard / School Manager / Fees Group',`<button class="icon-btn" title="Refresh" onclick="loadBackendData(true)">${icon('refresh')}</button><button class="icon-btn" title="Print table" onclick="printFeesTable()">${icon('printer')}</button><button class="btn ghost" onclick="downloadVisibleTable('school-fees.csv')">${icon('download')} Export</button><button class="btn ghost" onclick="openAdmissionModal()">${icon('user-plus')} New Admission</button><button class="btn primary" onclick="openPaymentModal()">${icon('receipt')} Record Payment</button>`)}${periodNotice()}
     <section class="section-panel"><div class="section-toolbar"><h2>Fees Collection</h2>${feesFilters()}</div><div class="table-wrap">${feesTable()}</div></section>
-    <details class="finance-insights"><summary>Summary, fee types & trends</summary>    <div class="stats-strip finance-strip"><div class="money-stack">${feeSummaryCards()}</div>
+    <details class="finance-insights manager-insights" ${window.matchMedia("(min-width:961px)").matches ? "open" : ""}><summary>Summary, fee types & trends</summary>    <div class="stats-strip finance-strip"><div class="money-stack">${feeSummaryCards()}</div>
     <section class="card trend-card finance-trend-card">${cardHead('Fees Collection Trend',`<span class="muted">${icon('calendar-days',14)} ${activeTerm()}</span>`)}${datedCollectionBars()}</section>
     <div class="finance-progress-grid">${feeProgressCards()}${financeCollectionActivityCard(backendData.finance_dashboard?.collection_activity||[])}</div></div>
-</details>`;
+</details></div>`;
 }
 
 function financeCollectionActivityCard(collectionActivity = []) {
