@@ -1285,11 +1285,12 @@ function directorTable() {
 
 function financeDashboard() {
   return `<div class="manager-workspace">${pageHead('Fees Management','Dashboard / School Manager / Fees Group',`<button class="icon-btn" title="Refresh" onclick="loadBackendData(true)">${icon('refresh')}</button><button class="icon-btn" title="Print table" onclick="printFeesTable()">${icon('printer')}</button><button class="btn ghost" onclick="downloadVisibleTable('school-fees.csv')">${icon('download')} Export</button><button class="btn ghost" onclick="openAdmissionModal()">${icon('user-plus')} New Admission</button><button class="btn primary" onclick="openPaymentModal()">${icon('receipt')} Record Payment</button>`)}${periodNotice()}
+    <div class="compact-finance-totals money-stack">${feeSummaryCards()}</div>
     <section class="section-panel"><div class="section-toolbar"><h2>Fees Collection</h2>${feesFilters()}</div><div class="table-wrap">${feesTable()}</div></section>
-    <details class="finance-insights manager-insights" ${window.matchMedia("(min-width:961px)").matches ? "open" : ""}><summary>Summary, fee types & trends</summary>    <div class="stats-strip finance-strip"><div class="money-stack">${feeSummaryCards()}</div>
+    <section class="finance-insights">    <div class="stats-strip finance-strip">
     <section class="card trend-card finance-trend-card">${cardHead('Fees Collection Trend',`<span class="muted">${icon('calendar-days',14)} ${activeTerm()}</span>`)}${datedCollectionBars()}</section>
-    <div class="finance-progress-grid">${feeProgressCards()}${financeCollectionActivityCard(backendData.finance_dashboard?.collection_activity||[])}</div></div>
-</details></div>`;
+    <div class="finance-progress-grid">${feeProgressCards()}</div></div>
+</section></div>`;
 }
 
 function financeCollectionActivityCard(collectionActivity = []) {
@@ -1530,9 +1531,9 @@ function setDirectoryView(type, mode) {
 function directoryList(type) {
   const students = type === 'students';
   const rows = students ? (backendData.students || []) : (backendData.guardians || []);
-  return `<div class="table-wrap directory-list"><table><thead><tr>${(students ? ['Admission No.','Name','Class','Gender','Actions'] : ['Guardian','Email','Phone','Pupil','Class','Actions']).map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map(row=> {
+  return `<div class="table-wrap directory-list ${students ? 'student-list' : ''}"><table><thead><tr>${(students ? ['Name','Gender','Class','Action'] : ['Guardian','Email','Phone','Pupil','Class','Actions']).map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map(row=> {
     const pupil=students?row:row.student;
-    return `<tr data-class="${escapeHtml(pupil?.class_name||'')}">${students ? `<td>${escapeHtml(row.admission_no)}</td><td>${escapeHtml(row.first_name+' '+row.last_name)}</td><td>${escapeHtml(row.class_name)}</td><td>${escapeHtml(row.gender||'Not recorded')}</td><td><button class="btn ghost" onclick="openStudentDetails(${row.id})">View</button></td>` : `<td>${escapeHtml(row.name)}</td><td>${escapeHtml(row.email||'Not recorded')}</td><td>${escapeHtml(row.phone||'Not recorded')}</td><td>${escapeHtml(pupil ? pupil.first_name+' '+pupil.last_name : 'Not linked')}</td><td>${escapeHtml(pupil?.class_name||'—')}</td><td><button class="btn ghost" onclick="openGuardianStudentsModal(${row.id})">View</button></td>`}</tr>`;
+    return `<tr data-class="${escapeHtml(pupil?.class_name||'')}">${students ? `<td>${escapeHtml(row.first_name+' '+row.last_name)}</td><td>${escapeHtml(row.gender||'—')}</td><td>${escapeHtml(row.class_name)}</td><td><button class="btn ghost" onclick="openStudentDetails(${row.id})">View</button></td>` : `<td>${escapeHtml(row.name)}</td><td>${escapeHtml(row.email||'Not recorded')}</td><td>${escapeHtml(row.phone||'Not recorded')}</td><td>${escapeHtml(pupil ? pupil.first_name+' '+pupil.last_name : 'Not linked')}</td><td>${escapeHtml(pupil?.class_name||'—')}</td><td><button class="btn ghost" onclick="openGuardianStudentsModal(${row.id})">View</button></td>`}</tr>`;
   }).join('') || '<tr><td colspan="6">No records for the selected period.</td></tr>'}</tbody></table></div>`;
 }
 function directoryPage(type) {
@@ -1586,11 +1587,12 @@ function teacherCard(row, index) {
 
 function feesPage() {
   return `${pageHead('Fees Collection','Fees Collection / Payments',tableActions())}${periodNotice()}
+    <div class="compact-finance-totals money-stack">${feeSummaryCards()}</div>
     <section class="section-panel"><div class="section-toolbar"><h2>Fees Collection</h2>${feesFilters()}</div><div class="table-wrap">${feesTable()}</div></section>
-    <details class="finance-insights"><summary>Summary, fee types & trends</summary>    <div class="stats-strip fees-summary-strip"><div class="money-stack">${feeSummaryCards()}</div>
+    <section class="finance-insights">    <div class="stats-strip fees-summary-strip">
     <section class="card trend-card">${cardHead('Fees Collection Trend',`<span class="muted">${icon('calendar-days',14)} ${activeTerm()}</span>`)}${feesLineChart()}</section>
     <div class="finance-progress-grid fees-progress-grid">${feeProgressCards()}</div></div>
-</details>
+</section>
     `;
 }
 

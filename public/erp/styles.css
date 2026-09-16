@@ -4336,3 +4336,28 @@ th {
  .finance-insights .progress-row { font-size:12px; gap:4px; flex-wrap:wrap; }
  .finance-insights .progress-card p { font-size:10px; }
 }
+
+.compact-finance-totals { display:grid!important; grid-template-columns:repeat(3,minmax(0,1fr))!important; gap:10px; margin-bottom:14px; }
+.finance-insights .stats-strip { grid-template-columns:minmax(0,1fr) minmax(0,1fr); }
+@media screen and (max-width:960px) {
+ html { background:#12643c; }
+ .topbar { padding-top:calc(12px + env(safe-area-inset-top)); }
+ .login-brand-panel { padding-top:calc(20px + env(safe-area-inset-top)); }
+ .compact-finance-totals { gap:6px; }
+ .compact-finance-totals .money-card { display:block; min-width:0; min-height:0; padding:10px 8px; border-radius:14px; }
+ .compact-finance-totals .metric-icon { width:24px; height:24px; margin-bottom:6px; }
+ .compact-finance-totals .metric-icon svg { width:16px; height:16px; }
+ .compact-finance-totals h3 { font-size:clamp(11px,3.1vw,15px); line-height:1.3; margin:0 0 4px; overflow-wrap:anywhere; }
+ .compact-finance-totals .muted { font-size:10px; line-height:1.3; display:block; }
+ .student-list table.responsive-records { display:table; table-layout:fixed; }
+ .student-list .responsive-records thead { display:table-header-group; position:static; width:auto; height:auto; clip-path:none; overflow:visible; }
+ .student-list .responsive-records tbody { display:table-row-group; }
+ .student-list .responsive-records tbody tr { display:table-row; padding:0; margin:0; border-radius:0; }
+ .student-list .responsive-records tbody td,.student-list .responsive-records th { display:table-cell; font-size:11px; padding:10px 5px!important; border-bottom:1px solid var(--line); vertical-align:middle; overflow-wrap:anywhere; }
+ .student-list .responsive-records td::before { display:none; }
+ .student-list th:first-child { width:34%; }
+ .student-list th:nth-child(2) { width:20%; }
+ .student-list th:nth-child(3) { width:25%; }
+ .student-list th:last-child { width:21%; }
+ .student-list .btn { font-size:11px; padding:6px; width:100%; min-width:0; }
+}
